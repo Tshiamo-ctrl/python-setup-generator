@@ -385,7 +385,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>⚙️ Horilla Dev Setup Generator</h1>
+            <h1>Horilla Dev Setup Generator</h1>
             <p class="header-subtitle">Generate automated setup & teardown scripts for rapid Horilla HRMS development
                 iterations</p>
         </header>
@@ -483,6 +483,12 @@
                 <div class="form-group">
                     <label for="adminPass">Admin Password</label>
                     <input type="password" id="adminPass" value="admin123">
+                </div>
+
+                <div class="form-group">
+                    <label for="serverPort">Server Port</label>
+                    <input type="number" id="serverPort" value="8000">
+                    <p class="help-text">Port for Django development server</p>
                 </div>
 
                 <div class="button-group">
@@ -641,6 +647,16 @@
                             onclick="copyCode('cmdFresh')">Copy</button>
                         <pre id="cmdFresh" style="margin: 0; font-size: 12px;">./fresh-db.sh</pre>
                     </div>
+
+                    <p class="help-text" style="color: #0a5a6e;">4. Deploy changes:</p>
+                    <div class="code-block"
+                        style="background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: #1a1a1a;">
+                        <button class="btn-copy"
+                            style="position: absolute; right: 5px; top: 5px; font-size: 10px; padding: 3px 8px;"
+                            onclick="copyCode('cmdDeploy')">Copy</button>
+                        <pre id="cmdDeploy"
+                            style="margin: 0; font-size: 12px;">git add . && git commit -m "Update" && git push origin main</pre>
+                    </div>
                 </div>
             </div>
         </div>
@@ -674,10 +690,11 @@
             const adminUser = document.getElementById('adminUser').value || 'admin';
             const adminEmail = document.getElementById('adminEmail').value || 'admin@horilla.local';
             const adminPass = document.getElementById('adminPass').value || 'admin123';
+            const serverPort = document.getElementById('serverPort').value || '8000';
 
-            let setupScript = generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail, adminPass);
-            let freshScript = generateFreshDbScript(projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail, adminPass);
-            let serverScript = generateServerScript(projectPath, venvName);
+            let setupScript = generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail, adminPass, serverPort);
+            let freshScript = generateFreshDbScript(projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort);
+            let serverScript = generateServerScript(projectPath, venvName, serverPort);
             let envFile = generateEnvFile(dbType);
 
             document.getElementById('setupCode').textContent = setupScript;
@@ -687,7 +704,7 @@
             // Show output section
             document.getElementById('outputSection').style.display = 'block';
 
-            showFeedback("✨ Scripts generated successfully!", true);
+            showFeedback("Scripts generated successfully!", true);
         }
 
         function showFeedback(message, isGen = false) {
@@ -710,7 +727,7 @@
             document.body.removeChild(a);
         }
 
-        function generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail, adminPass) {
+        function generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail, adminPass, serverPort) {
             let script = `#!/bin/bash
 
 # Horilla HRMS - Complete Development Setup Script
@@ -720,14 +737,14 @@
 set -e  # Exit on error
 
 # Check for required tools
-command -v python3 >/dev/null 2>&1 || { echo "❌ Python3 required but not found. Exiting."; exit 1; }
-command -v git >/dev/null 2>&1 || { echo "❌ Git required but not found. Exiting."; exit 1; }
+command -v python3 >/dev/null 2>&1 || { echo "Python3 required but not found. Exiting."; exit 1; }
+command -v git >/dev/null 2>&1 || { echo "Git required but not found. Exiting."; exit 1; }
 
 PROJECT_PATH="${projectPath}"
 VENV_NAME="${venvName}"
 
-echo "🚀 Starting Horilla development setup..."
-echo "📁 Project path: \${PROJECT_PATH}"
+echo "Starting Horilla development setup..."
+echo "Project path: \${PROJECT_PATH}"
 echo ""
 
 # Ensure we are in the right directory
@@ -736,46 +753,46 @@ cd "\${PROJECT_PATH}"
 
 # Check if repo already cloned
 if [ ! -f "manage.py" ]; then
-    echo "📥 Cloning Horilla repository from official source..."
+    echo "Cloning Horilla repository from official source..."
     git clone https://github.com/horilla-opensource/horilla.git .
 else
-    echo "✓ Horilla repository already exists"
+    echo "Horilla repository already exists"
 fi
 
 # Create virtual environment if needed
 if [ ! -d "$VENV_NAME" ]; then
-    echo "🐍 Creating Python virtual environment..."
+    echo "Creating Python virtual environment..."
     python3 -m venv "$VENV_NAME"
 else
-    echo "✓ Virtual environment already exists"
+    echo "Virtual environment already exists"
 fi
 
 # Activate virtual environment
-echo "✓ Activating virtual environment..."
+echo "Activating virtual environment..."
 source "$VENV_NAME/bin/activate"
 
 # Upgrade pip and install dependencies
-echo "📦 Upgrading pip..."
+echo "Upgrading pip..."
 python3 -m pip install --upgrade pip
 
 if [ -f "requirements.txt" ]; then
-    echo "📚 Installing dependencies..."
-    python3 -m pip install -r requirements.txt || { echo "❌ Failed to install dependencies. Check your internet connection."; exit 1; }
+    echo "Installing dependencies..."
+    python3 -m pip install -r requirements.txt || { echo "Failed to install dependencies. Check your internet connection."; exit 1; }
 fi
 
 # Initialize environment file
 if [ ! -f ".env" ]; then
-    echo "⚙️ Creating .env..."
+    echo "Creating .env..."
     cp .env.example .env 2>/dev/null || echo "DEBUG=True" > .env
 fi
 
 # Database setup
 if [ -f "manage.py" ]; then
-    echo "🔄 Running migrations..."
+    echo "Running migrations..."
     python3 manage.py makemigrations # Generate migration files
     python3 manage.py migrate        # Apply migrations to DB
 else
-    echo "❌ manage.py not found. Are you in the correct directory?"
+    echo "manage.py not found. Are you in the correct directory?"
     exit 1
 fi
 
@@ -784,7 +801,7 @@ fi
             if (dbType === 'postgresql') {
                 script += `
 # PostgreSQL specific setup
-echo "🐘 PostgreSQL database configured in .env"
+echo "PostgreSQL database configured in .env"
 echo "   Make sure PostgreSQL is running locally or update .env with correct credentials"
 `;
             }
@@ -793,8 +810,8 @@ echo "   Make sure PostgreSQL is running locally or update .env with correct cre
                 script += `
 # Load initial demo data
 if [ -f "fixtures/initial_data.json" ] || python3 manage.py loaddata initial_data --help >/dev/null 2>&1; then
-    echo "📊 Loading demo data..."
-    python3 manage.py loaddata initial_data 2>/dev/null || echo "ℹ️  Note: Demo data fixture not found or already loaded"
+    echo "Loading demo data..."
+    python3 manage.py loaddata initial_data 2>/dev/null || echo "Note: Demo data fixture not found or already loaded"
 fi
 `;
             }
@@ -802,39 +819,39 @@ fi
             if (createSuper) {
                 script += `
 # Create administrator account
-echo "👤 Creating admin user..."
+echo "Creating admin user..."
 # Try Horilla-specific creation command, fallback to standard createsuperuser
 python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password="${adminPass}" 2>/dev/null || \
 python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
-echo "⚠️ Could not create superuser automatically. You may need to run it manually."
+echo "Could not create superuser automatically. You may need to run it manually."
 echo "   Target credentials: ${adminUser} / ${adminPass}"
 `;
             }
 
             script += `
 echo ""
-echo "✅ Setup complete!"
+echo "Setup complete!"
 echo ""
-echo "🎯 Next steps:"
+echo "Next steps:"
 `;
 
             if (runServer) {
                 script += `echo "   1. Run: ./dev-server.sh"`;
             } else {
-                script += `echo "   1. Run: python manage.py runserver"`;
+                script += `echo "   1. Run: python manage.py runserver 0.0.0.0:${serverPort}"`;
             }
 
             script += `
-echo "   2. Open: http://localhost:8000"
+echo "   2. Open: http://localhost:${serverPort}"
 echo "   3. Navigate to /admin for admin panel"
 echo ""
-echo "💡 Development tip: Use './fresh-db.sh' after code changes to reset database"
+echo "Development tip: Use './fresh-db.sh' after code changes to reset database"
 `;
 
             return script;
         }
 
-        function generateFreshDbScript(projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail, adminPass) {
+        function generateFreshDbScript(projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort) {
             let script = `#!/bin/bash
 
 # Horilla HRMS - Fresh Database Reset Script
@@ -846,7 +863,7 @@ set -e  # Exit on error
 PROJECT_PATH="${projectPath}"
 VENV_NAME="${venvName}"
 
-echo "⚠️  This will DROP your database and recreate it fresh"
+echo "This will DROP your database and recreate it fresh"
 if [[ "$1" != "--force" ]]; then
     read -p "Are you sure? (type 'yes' to continue): " confirm
     if [ "$confirm" != "yes" ]; then
@@ -856,28 +873,28 @@ if [[ "$1" != "--force" ]]; then
 fi
 
 # Check for required tools
-command -v python3 >/dev/null 2>&1 || { echo "❌ Python3 required but not found. Exiting."; exit 1; }
+command -v python3 >/dev/null 2>&1 || { echo "Python3 required but not found. Exiting."; exit 1; }
 
 cd "$PROJECT_PATH"
 
 # Activate environment
 if [ -d "$VENV_NAME" ]; then
-    echo "✓ Activating virtual environment..."
+    echo "Activating virtual environment..."
     source "$VENV_NAME/bin/activate"
 else
-    echo "❌ Virtual environment '$VENV_NAME' not found. Run setup.sh first."
+    echo "Virtual environment '$VENV_NAME' not found. Run setup.sh first."
     exit 1
 fi
 
 echo ""
-echo "🗑️  Cleaning up old database and migration files..."
+echo "Cleaning up old database and migration files..."
 `;
 
             if (dbType === 'sqlite') {
                 script += `
 # Remove SQLite database
 rm -f db.sqlite3
-echo "   ✓ Removed db.sqlite3"
+echo "   Removed db.sqlite3"
 `;
             } else {
                 script += `
@@ -891,10 +908,10 @@ echo "   Run: psql -U horilla_user -d horilla_dev -c 'DROP SCHEMA public CASCADE
 # Remove pycache and migrations
 find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 find . -type d -name "migrations" -path "*/apps/*" -exec rm -rf {} + 2>/dev/null || true
-echo "   ✓ Cleaned __pycache__ and old migrations"
+echo "   Cleaned __pycache__ and old migrations"
 
 # Generate and apply new migrations
-echo "🔄 Running fresh migrations..."
+echo "Running fresh migrations..."
 python3 manage.py makemigrations # Detect code changes
 python3 manage.py migrate        # Apply to database
 
@@ -904,8 +921,8 @@ python3 manage.py migrate        # Apply to database
                 script += `
 # Load initial demo data
 if [ -f "fixtures/initial_data.json" ] || python3 manage.py loaddata initial_data --help >/dev/null 2>&1; then
-    echo "📊 Loading demo data..."
-    python3 manage.py loaddata initial_data 2>/dev/null || echo "ℹ️  Note: Demo data fixture skipped or unavailable"
+    echo "Loading demo data..."
+    python3 manage.py loaddata initial_data 2>/dev/null || echo "Note: Demo data fixture skipped or unavailable"
 fi
 `;
             }
@@ -913,24 +930,24 @@ fi
             if (createSuper) {
                 script += `
 # Recreate administrative user
-echo "👤 Recreating admin user..."
+echo "Creating admin user..."
 python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password="${adminPass}" 2>/dev/null || \
 python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
-echo "⚠️ Superuser creation skipped or failed."
+echo "Superuser creation skipped or failed."
 `;
             }
 
             script += `
 echo ""
-echo "✅ Fresh database ready!"
+echo "Fresh database ready!"
 echo ""
-echo "💡 Next: Run ./dev-server.sh to start development"
+echo "Next: Run ./dev-server.sh to start development"
 `;
 
             return script;
         }
 
-        function generateServerScript(projectPath, venvName) {
+        function generateServerScript(projectPath, venvName, serverPort) {
             return `#!/bin/bash
 
 # Horilla HRMS - Development Server Launcher
@@ -946,17 +963,17 @@ if [ -z "$VIRTUAL_ENV" ]; then
     source "$VENV_NAME/bin/activate"
 fi
 
-echo "🚀 Starting Horilla development server..."
-echo "📍 Access at: http://localhost:8000"
-echo "🛑 Press Ctrl+C to stop"
+echo "Starting Horilla development server..."
+echo "Access at: http://localhost:${serverPort}"
+echo "Press Ctrl+C to stop"
 echo ""
 
 # Start the Django development server
 if [ -f "manage.py" ]; then
     # 0.0.0.0 allows access from other devices on the network
-    python3 manage.py runserver 0.0.0.0:8000
+    python3 manage.py runserver 0.0.0.0:${serverPort}
 else
-    echo "❌ manage.py not found. Please run this from the project root."
+    echo "manage.py not found. Please run this from the project root."
     exit 1
 fi
 `;
@@ -1015,7 +1032,7 @@ CSRF_COOKIE_SECURE=False
         function copyCode(elementId) {
             const code = document.getElementById(elementId).textContent;
             navigator.clipboard.writeText(code).then(() => {
-                showFeedback("✓ Copied to clipboard");
+                showFeedback("Copied to clipboard");
             });
         }
 
