@@ -513,6 +513,12 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="scriptPath">Script Download Prefix (Local)</label>
+                    <input type="text" id="scriptPath" value="" placeholder="e.g. scripts/">
+                    <p class="help-text">Optional prefix for file names when downloading</p>
+                </div>
+
+                <div class="form-group">
                     <label for="venvName">Virtual Environment Name</label>
                     <input type="text" id="venvName" value="horillavenv" placeholder="horillavenv">
                     <p class="help-text">Name of the directory for Python isolation</p>
@@ -605,7 +611,9 @@
 
                 <div class="button-group">
                     <button class="btn-primary" onclick="generateScripts()">Continue to Scripts</button>
-                    <button class="btn-secondary" onclick="resetForm()">Reset All</button>
+                    <button class="btn-secondary" id="saveFolderBtn" onclick="saveToFolder()"
+                        title="Save all files directly to a folder">Save Workspace Folder</button>
+                    <button class="btn-secondary" onclick="resetForm()">Reset</button>
                 </div>
             </div>
 
@@ -915,16 +923,53 @@
         }
 
         function downloadFile(elementId, filename) {
+            const prefix = document.getElementById('scriptPath').value;
+            const fullFilename = prefix ? (prefix.endsWith('/') ? prefix : prefix + '/') + filename : filename;
+
             const content = document.getElementById(elementId).textContent;
             const blob = new Blob([content], { type: 'text/x-sh' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = filename;
+            a.download = fullFilename;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
+        }
+
+        async function saveToFolder() {
+            if (!('showDirectoryPicker' in window)) {
+                showFeedback("Your browser doesn't support direct folder access. Please download files individually.", false);
+                return;
+            }
+
+            try {
+                const dirHandle = await window.showDirectoryPicker();
+                const files = [
+                    { name: 'setup.sh', id: 'setupCode' },
+                    { name: 'fresh-db.sh', id: 'freshCode' },
+                    { name: 'dev-server.sh', id: 'serverCode' },
+                    { name: document.getElementById('platform-hrms').classList.contains('active') ? '.env.dist' : '.env.example', id: 'envCode' }
+                ];
+
+                for (const file of files) {
+                    const content = document.getElementById(file.id).textContent;
+                    if (!content) continue;
+
+                    const fileHandle = await dirHandle.getFileHandle(file.name, { create: true });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(content);
+                    await writable.close();
+                }
+
+                showFeedback("All files saved to " + dirHandle.name);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error(err);
+                    showFeedback("Error saving to folder");
+                }
+            }
         }
 
         function generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail, adminPass, serverPort) {
@@ -1166,10 +1211,11 @@ echo "Next: Run ./dev-server.sh to start development"
             return `#!/bin/bash
 
 # ${platforms[currentPlatform].name} - Development Server Launcher
-# Quick start for the Django development server
+# Quick start for the Django development server with port fallback
 
 PROJECT_PATH="${projectPath}"
 VENV_NAME="${venvName}"
+START_PORT=${serverPort}
 
 cd "$PROJECT_PATH"
 
@@ -1178,15 +1224,22 @@ if [ -z "$VIRTUAL_ENV" ]; then
     source "$VENV_NAME/bin/activate"
 fi
 
+# Find available port
+echo "Checking port availability..."
+ACTUAL_PORT=$START_PORT
+while ! python3 -c "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.bind(('0.0.0.0', $ACTUAL_PORT)); s.close()" 2>/dev/null; do
+    echo "   Port $ACTUAL_PORT is busy, trying $((ACTUAL_PORT+1))..."
+    ACTUAL_PORT=$((ACTUAL_PORT+1))
+done
+
 echo "Starting Horilla development server..."
-echo "Access at: http://localhost:${serverPort}"
+echo "Access at: http://localhost:$ACTUAL_PORT"
 echo "Press Ctrl+C to stop"
 echo ""
 
 # Start the Django development server
 if [ -f "manage.py" ]; then
-    # 0.0.0.0 allows access from other devices on the network
-    python3 manage.py runserver 0.0.0.0:${serverPort}
+    python3 manage.py runserver 0.0.0.0:$ACTUAL_PORT
 else
     echo "manage.py not found. Please run this from the project root."
     exit 1
