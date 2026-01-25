@@ -597,13 +597,20 @@
                         <pre id="cmdSetup" style="margin: 0; font-size: 12px;">./setup.sh</pre>
                     </div>
 
-                    <p class="help-text" style="margin-bottom: 8px;">3. Deploy changes:</p>
+                    <p class="help-text" style="margin-bottom: 8px;">3. Start server:</p>
+                    <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0 0 16px 0;">
+                        <button class="btn-secondary"
+                            style="position: absolute; right: 8px; top: 8px; font-size: 11px; padding: 4px 8px;"
+                            onclick="copyCode('cmdServer')">Copy</button>
+                        <pre id="cmdServer" style="margin: 0; font-size: 12px;">./dev-server.sh</pre>
+                    </div>
+
+                    <p class="help-text" style="margin-bottom: 8px;">4. Reset database:</p>
                     <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0;">
                         <button class="btn-secondary"
                             style="position: absolute; right: 8px; top: 8px; font-size: 11px; padding: 4px 8px;"
-                            onclick="copyCode('cmdDeploy')">Copy</button>
-                        <pre id="cmdDeploy"
-                            style="margin: 0; font-size: 12px;">git add . && git commit -m "Update" && git push origin main</pre>
+                            onclick="copyCode('cmdReset')">Copy</button>
+                        <pre id="cmdReset" style="margin: 0; font-size: 12px;">./fresh-db.sh</pre>
                     </div>
                 </div>
             </div>
