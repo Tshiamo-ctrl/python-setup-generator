@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horilla Dev Setup Generator | Automate Your HRMS Workspace</title>
+    <meta name="description"
+        content="Generate production-ready setup and maintenance scripts for Horilla HRMS development. Automate database wipes, migrations, and environment configuration.">
+    <style>
+        :root {
+            --color-primary: #2180a0;
+            --color-primary-hover: #1b6a8a;
+            --color-bg: #f5f5f5;
+            --color-surface: #ffffff;
+            --color-text: #1a1a1a;
+            --color-text-muted: #666;
+            --color-border: #ddd;
+            --color-success: #22c55e;
+            --color-warning: #f59e0b;
+            --color-error: #ef4444;
+            --color-code-bg: #2d2d2d;
+            --color-code-text: #f8f8f2;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--color-border);
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            color: var(--color-primary);
+        }
+
+        .header-subtitle {
+            color: var(--color-text-muted);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .panel {
+            background: var(--color-surface);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid var(--color-border);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            font-size: 18px;
+            color: var(--color-primary);
+            border-bottom: 2px solid var(--color-border);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: var(--color-text);
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            background: #fafafa;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            background: var(--color-surface);
+            box-shadow: 0 0 0 3px rgba(33, 128, 160, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            margin-top: 4px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+            box-shadow: 0 4px 12px rgba(33, 128, 160, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: var(--color-text);
+            border: 1px solid var(--color-border);
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+
+        .btn-copy {
+            background: #6b7280;
+            color: white;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .btn-copy:hover {
+            background: #4b5563;
+        }
+
+        .output-section {
+            grid-column: 1 / -1;
+        }
+
+        .code-block {
+            background: var(--color-code-bg);
+            color: var(--color-code-text);
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 10px 0;
+            position: relative;
+            border: 1px solid #444;
+        }
+
+        .code-block pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .code-copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 6px 10px;
+            font-size: 11px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text);
+            margin: 20px 0 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .step-indicator {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: var(--color-primary);
+            color: white;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 13px;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: #cff0f5;
+            border-color: var(--color-primary);
+            color: #0a5a6e;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            border-color: var(--color-warning);
+            color: #78350f;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            border-color: var(--color-success);
+            color: #166534;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0 0 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .tab-btn {
+            padding: 10px 15px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--color-text-muted);
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 15px 0;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+
+        .feature-list li {
+            padding: 6px 0;
+            padding-left: 24px;
+            position: relative;
+        }
+
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--color-success);
+            font-weight: bold;
+        }
+
+        .divider {
+            border-top: 1px solid var(--color-border);
+            margin: 20px 0;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .output-section {
+                grid-column: 1;
+            }
+        }
+
+        .copy-feedback {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--color-success);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+
+        .copy-feedback.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>⚙️ Horilla Dev Setup Generator</h1>
+            <p class="header-subtitle">Generate automated setup & teardown scripts for rapid Horilla HRMS development
+                iterations</p>
+        </header>
+
+        <div class="alert alert-info">
+            <strong>📋 What this does:</strong> Creates reusable shell scripts that automate the entire Horilla setup
+            process—perfect for dropping and recreating your database when making model changes. Based on official
+            Horilla 1.0 documentation.
+        </div>
+
+        <div class="layout">
+            <div class="panel">
+                <h2>Configuration</h2>
+
+                <div class="form-group">
+                    <label for="projectPath">Project Path</label>
+                    <input type="text" id="projectPath" value="~/dev/horilla" placeholder="/home/user/projects/horilla">
+                    <p class="help-text">Where Horilla is cloned or will be cloned</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="venvName">Virtual Env Name</label>
+                    <input type="text" id="venvName" value="horillavenv" placeholder="horillavenv">
+                    <p class="help-text">Name of Python virtual environment directory</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="dbType">Database Type</label>
+                    <select id="dbType" onchange="updateDbFields()">
+                        <option value="sqlite">SQLite (Quick Dev)</option>
+                        <option value="postgresql">PostgreSQL (Recommended)</option>
+                    </select>
+                    <p class="help-text">SQLite is simpler for dev; PostgreSQL for production-like testing</p>
+                </div>
+
+                <div id="postgresFields" style="display: none;">
+                    <div class="form-group">
+                        <label for="dbName">Database Name</label>
+                        <input type="text" id="dbName" value="horilla_dev">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dbUser">Database User</label>
+                        <input type="text" id="dbUser" value="horilla_user">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dbPass">Database Password</label>
+                        <input type="password" id="dbPass" value="dev_password_123">
+                        <p class="help-text">Use a strong password for production</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dbHost">Database Host</label>
+                        <input type="text" id="dbHost" value="localhost">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dbPort">Database Port</label>
+                        <input type="number" id="dbPort" value="5432">
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="form-group">
+                    <label>Features</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="loadDemo" checked>
+                            <label for="loadDemo" style="margin: 0;">Load Demo Data</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="createSuper" checked>
+                            <label for="createSuper" style="margin: 0;">Create Superuser</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="runServer" checked>
+                            <label for="runServer" style="margin: 0;">Auto-run Server</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="adminUser">Admin Username</label>
+                    <input type="text" id="adminUser" value="admin">
+                    <p class="help-text">For superuser creation</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="adminEmail">Admin Email</label>
+                    <input type="text" id="adminEmail" value="admin@horilla.local">
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="generateScripts()">Generate Scripts</button>
+                    <button class="btn-secondary" onclick="resetForm()">Reset</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>About This Tool</h2>
+
+                <h3 style="margin-top: 0; color: var(--color-text); font-size: 14px;">What Problems It Solves</h3>
+                <ul class="feature-list">
+                    <li>Eliminates repetitive manual setup steps</li>
+                    <li>Drops and recreates DB in seconds</li>
+                    <li>Consistent dev environment every time</li>
+                    <li>Works after model changes</li>
+                    <li>Follows official Horilla documentation</li>
+                </ul>
+
+                <h3 style="margin-top: 15px; color: var(--color-text); font-size: 14px;">Included Scripts</h3>
+                <ul class="feature-list">
+                    <li><code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">setup.sh</code> — Full
+                        initial setup</li>
+                    <li><code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">fresh-db.sh</code> —
+                        Drop & recreate DB</li>
+                    <li><code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">dev-server.sh</code> —
+                        Start dev server</li>
+                    <li><code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">.env.example</code> —
+                        Environment template</li>
+                </ul>
+
+                <div class="divider"></div>
+
+                <div class="alert alert-success" style="margin-top: 15px;">
+                    <strong>🚀 Workflow:</strong><br>
+                    1. Run <code>./setup.sh</code> once to initialize<br>
+                    2. Make model changes<br>
+                    3. Run <code>./fresh-db.sh</code> to reset<br>
+                    4. Run <code>./dev-server.sh</code> to start
+                </div>
+
+                <div class="alert alert-warning" style="margin-top: 15px;">
+                    <strong>⚠️ Important:</strong> Review scripts before running. Customize project path and DB
+                    credentials for your environment.
+                </div>
+            </div>
+
+            <div class="panel output-section">
+                <h2>Generated Scripts</h2>
+
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab(event, 'setup')">setup.sh</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'fresh')">fresh-db.sh</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'server')">dev-server.sh</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'env')">
+                    </button>
+                </div>
+
+                <div id="setup" class="tab-content active">
+                    <div class="section-title">
+                        <span class="step-indicator">1</span>
+                        Full Initial Setup
+                    </div>
+                    <p style="font-size: 12px; color: var(--color-text-muted);">Run this once to initialize your
+                        complete Horilla development environment.</p>
+                    <div class="code-block">
+                        <button class="code-copy-btn btn-copy" onclick="copyCode('setupCode')">Copy</button>
+                        <pre id="setupCode"></pre>
+                    </div>
+                </div>
+
+                <div id="fresh" class="tab-content">
+                    <div class="section-title">
+                        <span class="step-indicator">2</span>
+                        Fresh Database (Most Used)
+                    </div>
+                    <p style="font-size: 12px; color: var(--color-text-muted);">Run this when you change models or need
+                        a clean slate. Drops and recreates everything.</p>
+                    <div class="code-block">
+                        <button class="code-copy-btn btn-copy" onclick="copyCode('freshCode')">Copy</button>
+                        <pre id="freshCode"></pre>
+                    </div>
+                </div>
+
+                <div id="server" class="tab-content">
+                    <div class="section-title">
+                        <span class="step-indicator">3</span>
+                        Start Development Server
+                    </div>
+                    <p style="font-size: 12px; color: var(--color-text-muted);">Quick launcher for the dev server after
+                        fresh setup.</p>
+                    <div class="code-block">
+                        <button class="code-copy-btn btn-copy" onclick="copyCode('serverCode')">Copy</button>
+                        <pre id="serverCode"></pre>
+                    </div>
+                </div>
+
+                <div id="env" class="tab-content">
+                    <div class="section-title">
+                        <span class="step-indicator">4</span>
+                        Environment Variables (.env)
+                    </div>
+                    <p style="font-size: 12px; color: var(--color-text-muted);">Place this in your project root as
+                        <code>.env</code>
+                    </p>
+                    <div class="code-block">
+                        <button class="code-copy-btn btn-copy" onclick="copyCode('envCode')">Copy</button>
+                        <pre id="envCode"></pre>
+                    </div>
+                </div>
+
+                <div class="alert alert-info" style="margin-top: 20px;">
+                    <strong>📝 Instructions:</strong>
+                    <ol style="margin: 10px 0; padding-left: 20px;">
+                        <li>Copy each script to your Horilla project root</li>
+                        <li>Make executable: <code>chmod +x *.sh</code></li>
+                        <li>Review the .env file and adjust credentials</li>
+                        <li>Run <code>./setup.sh</code> first time only</li>
+                        <li>Use <code>./fresh-db.sh</code> for subsequent resets</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="copy-feedback" id="copyFeedback">✓ Copied to clipboard</div>
+
+    <script>
+        function updateDbFields() {
+            const dbType = document.getElementById('dbType').value;
+            document.getElementById('postgresFields').style.display = dbType === 'postgresql' ? 'block' : 'none';
+        }
+
+        function switchTab(e, tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            e.target.classList.add('active');
+        }
+
+        function generateScripts() {
+            const projectPath = document.getElementById('projectPath').value || '~/dev/horilla';
+            const venvName = document.getElementById('venvName').value || 'horillavenv';
+            const dbType = document.getElementById('dbType').value;
+            const loadDemo = document.getElementById('loadDemo').checked;
+            const createSuper = document.getElementById('createSuper').checked;
+            const runServer = document.getElementById('runServer').checked;
+            const adminUser = document.getElementById('adminUser').value || 'admin';
+            const adminEmail = document.getElementById('adminEmail').value || 'admin@horilla.local';
+
+            let setupScript = generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail);
+            let freshScript = generateFreshDbScript(projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail);
+            let serverScript = generateServerScript(projectPath, venvName);
+            let envFile = generateEnvFile(dbType);
+
+            document.getElementById('setupCode').textContent = setupScript;
+            document.getElementById('freshCode').textContent = freshScript;
+            document.getElementById('serverCode').textContent = serverScript;
+            document.getElementById('envCode').textContent = envFile;
+        }
+
+        function generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail) {
+            let script = `#!/bin/bash
+
+# Horilla HRMS - Complete Development Setup Script
+# Official documentation: https://github.com/horilla-opensource/horilla
+# Generated: $(date)
+
+set -e  # Exit on error
+
+# Check for required tools
+command -v python3 >/dev/null 2>&1 || { echo "❌ Python3 required but not found. Exiting."; exit 1; }
+command -v git >/dev/null 2>&1 || { echo "❌ Git required but not found. Exiting."; exit 1; }
+
+PROJECT_PATH="${projectPath}"
+VENV_NAME="${venvName}"
+
+echo "🚀 Starting Horilla development setup..."
+echo "📁 Project path: \${PROJECT_PATH}"
+echo ""
+
+# Ensure we are in the right directory
+mkdir -p "\${PROJECT_PATH}"
+cd "\${PROJECT_PATH}"
+
+# Check if repo already cloned
+if [ ! -f "manage.py" ]; then
+    echo "📥 Cloning Horilla repository from official source..."
+    git clone https://github.com/horilla-opensource/horilla.git .
+else
+    echo "✓ Horilla repository already exists"
+fi
+
+# Create virtual environment if needed
+if [ ! -d "$VENV_NAME" ]; then
+    echo "🐍 Creating Python virtual environment..."
+    python3 -m venv "$VENV_NAME"
+else
+    echo "✓ Virtual environment already exists"
+fi
+
+# Activate virtual environment
+echo "✓ Activating virtual environment..."
+source "$VENV_NAME/bin/activate"
+
+# Upgrade pip and install dependencies
+echo "📦 Upgrading pip..."
+python3 -m pip install --upgrade pip
+
+if [ -f "requirements.txt" ]; then
+    echo "📚 Installing dependencies..."
+    python3 -m pip install -r requirements.txt || { echo "❌ Failed to install dependencies. Check your internet connection."; exit 1; }
+fi
+
+# Initialize environment file
+if [ ! -f ".env" ]; then
+    echo "⚙️ Creating .env..."
+    cp .env.example .env 2>/dev/null || echo "DEBUG=True" > .env
+fi
+
+# Database setup
+if [ -f "manage.py" ]; then
+    echo "🔄 Running migrations..."
+    python3 manage.py makemigrations # Generate migration files
+    python3 manage.py migrate        # Apply migrations to DB
+else
+    echo "❌ manage.py not found. Are you in the correct directory?"
+    exit 1
+fi
+
+`;
+
+            if (dbType === 'postgresql') {
+                script += `
+# PostgreSQL specific setup
+echo "🐘 PostgreSQL database configured in .env"
+echo "   Make sure PostgreSQL is running locally or update .env with correct credentials"
+`;
+            }
+
+            if (loadDemo) {
+                script += `
+# Load initial demo data
+if [ -f "fixtures/initial_data.json" ] || python3 manage.py loaddata initial_data --help >/dev/null 2>&1; then
+    echo "📊 Loading demo data..."
+    python3 manage.py loaddata initial_data 2>/dev/null || echo "ℹ️  Note: Demo data fixture not found or already loaded"
+fi
+`;
+            }
+
+            if (createSuper) {
+                script += `
+# Create administrator account
+echo "👤 Creating admin user..."
+# Try Horilla-specific creation command, fallback to standard createsuperuser
+python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password='admin123' 2>/dev/null || \
+python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
+echo "⚠️ Could not create superuser automatically. You may need to run it manually."
+echo "   Target credentials: ${adminUser} / admin123"
+`;
+            }
+
+            script += `
+echo ""
+echo "✅ Setup complete!"
+echo ""
+echo "🎯 Next steps:"
+`;
+
+            if (runServer) {
+                script += `echo "   1. Run: ./dev-server.sh"`;
+            } else {
+                script += `echo "   1. Run: python manage.py runserver"`;
+            }
+
+            script += `
+echo "   2. Open: http://localhost:8000"
+echo "   3. Navigate to /admin for admin panel"
+echo ""
+echo "💡 Development tip: Use './fresh-db.sh' after model changes to reset database"
+`;
+
+            return script;
+        }
+
+        function generateFreshDbScript(projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail) {
+            let script = `#!/bin/bash
+
+# Horilla HRMS - Fresh Database Reset Script
+# Use this when you modify models and need to start fresh
+# Official commands follow Horilla 1.0 documentation
+
+set -e  # Exit on error
+
+PROJECT_PATH="${projectPath}"
+VENV_NAME="${venvName}"
+
+echo "⚠️  This will DROP your database and recreate it fresh"
+if [[ "$1" != "--force" ]]; then
+    read -p "Are you sure? (type 'yes' to continue): " confirm
+    if [ "$confirm" != "yes" ]; then
+        echo "Cancelled."
+        exit 0
+    fi
+fi
+
+# Check for required tools
+command -v python3 >/dev/null 2>&1 || { echo "❌ Python3 required but not found. Exiting."; exit 1; }
+
+cd "$PROJECT_PATH"
+
+# Activate environment
+if [ -d "$VENV_NAME" ]; then
+    echo "✓ Activating virtual environment..."
+    source "$VENV_NAME/bin/activate"
+else
+    echo "❌ Virtual environment '$VENV_NAME' not found. Run setup.sh first."
+    exit 1
+fi
+
+echo ""
+echo "🗑️  Cleaning up old database and migration files..."
+`;
+
+            if (dbType === 'sqlite') {
+                script += `
+# Remove SQLite database
+rm -f db.sqlite3
+echo "   ✓ Removed db.sqlite3"
+`;
+            } else {
+                script += `
+# Drop PostgreSQL database (requires .env or manual setup)
+echo "   Note: PostgreSQL database will need manual drop or Django will skip"
+echo "   Run: psql -U horilla_user -d horilla_dev -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'"
+`;
+            }
+
+            script += `
+# Remove pycache and migrations
+find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+find . -type d -name "migrations" -path "*/apps/*" -exec rm -rf {} + 2>/dev/null || true
+echo "   ✓ Cleaned __pycache__ and old migrations"
+
+# Generate and apply new migrations
+echo "🔄 Running fresh migrations..."
+python3 manage.py makemigrations # Detect model changes
+python3 manage.py migrate        # Apply to database
+
+`;
+
+            if (loadDemo) {
+                script += `
+# Load initial demo data
+if [ -f "fixtures/initial_data.json" ] || python3 manage.py loaddata initial_data --help >/dev/null 2>&1; then
+    echo "📊 Loading demo data..."
+    python3 manage.py loaddata initial_data 2>/dev/null || echo "ℹ️  Note: Demo data fixture skipped or unavailable"
+fi
+`;
+            }
+
+            if (createSuper) {
+                script += `
+# Recreate administrative user
+echo "👤 Recreating admin user..."
+python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password='admin123' 2>/dev/null || \
+python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
+echo "⚠️ Superuser creation skipped or failed."
+`;
+            }
+
+            script += `
+echo ""
+echo "✅ Fresh database ready!"
+echo ""
+echo "💡 Next: Run ./dev-server.sh to start development"
+`;
+
+            return script;
+        }
+
+        function generateServerScript(projectPath, venvName) {
+            return `#!/bin/bash
+
+# Horilla HRMS - Development Server Launcher
+# Quick start for the Django development server
+
+PROJECT_PATH="${projectPath}"
+VENV_NAME="${venvName}"
+
+cd "$PROJECT_PATH"
+
+# Activate virtual environment if not already active
+if [ -z "$VIRTUAL_ENV" ]; then
+    source "$VENV_NAME/bin/activate"
+fi
+
+echo "🚀 Starting Horilla development server..."
+echo "📍 Access at: http://localhost:8000"
+echo "🛑 Press Ctrl+C to stop"
+echo ""
+
+# Start the Django development server
+if [ -f "manage.py" ]; then
+    # 0.0.0.0 allows access from other devices on the network
+    python3 manage.py runserver 0.0.0.0:8000
+else
+    echo "❌ manage.py not found. Please run this from the project root."
+    exit 1
+fi
+`;
+        }
+
+        function generateEnvFile(dbType) {
+            if (dbType === 'postgresql') {
+                return `# Horilla HRMS Development Environment Variables
+# Configure database and application settings
+
+# Database Configuration (PostgreSQL)
+DATABASE_ENGINE=django.db.backends.postgresql
+DATABASE_NAME=horilla_dev
+DATABASE_USER=horilla_user
+DATABASE_PASSWORD=dev_password_123
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+
+# Django Settings
+DEBUG=True
+SECRET_KEY=your-insecure-secret-key-for-development-only
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Email Configuration (optional)
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+
+# Additional Settings
+SECURE_SSL_REDIRECT=False
+SESSION_COOKIE_SECURE=False
+CSRF_COOKIE_SECURE=False
+`;
+            } else {
+                return `# Horilla HRMS Development Environment Variables
+# Configure database and application settings
+
+# Database Configuration (SQLite - default)
+# SQLite is configured automatically in Django settings
+# No additional database configuration needed
+
+# Django Settings
+DEBUG=True
+SECRET_KEY=your-insecure-secret-key-for-development-only
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Email Configuration (optional)
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+
+# Additional Settings
+SECURE_SSL_REDIRECT=False
+SESSION_COOKIE_SECURE=False
+CSRF_COOKIE_SECURE=False
+`;
+            }
+        }
+
+        function copyCode(elementId) {
+            const code = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const feedback = document.getElementById('copyFeedback');
+                feedback.classList.add('show');
+                setTimeout(() => feedback.classList.remove('show'), 2000);
+            });
+        }
+
+        function resetForm() {
+            document.querySelectorAll('input[type="text"], input[type="password"], input[type="number"], select').forEach(el => {
+                el.value = el.defaultValue;
+            });
+            document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+                el.checked = el.defaultChecked;
+            });
+            updateDbFields();
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            generateScripts();
+        });
+    </script>
+</body>
+
+</html>
