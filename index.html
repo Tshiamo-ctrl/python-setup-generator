@@ -260,6 +260,7 @@
 
         .btn-secondary:hover {
             background-color: var(--secondary);
+            border-color: var(--primary);
         }
 
         .output-section {
@@ -301,11 +302,23 @@
         .tab-btn.active::after {
             content: '';
             position: absolute;
-            bottom: -13px;
+            bottom: -1px;
             left: 0;
             right: 0;
             height: 2px;
             background: var(--primary);
+            z-index: 1;
+        }
+
+        .tab-content {
+            display: none;
+            opacity: 0;
+        }
+
+        .tab-content.active {
+            display: block;
+            opacity: 1;
+            animation: fadeIn 0.4s ease forwards;
         }
 
         .code-block {
@@ -328,10 +341,26 @@
 
         .code-actions {
             position: absolute;
-            top: 16px;
-            right: 16px;
+            top: 12px;
+            right: 12px;
             display: flex;
-            gap: 12px;
+            gap: 8px;
+            z-index: 20;
+        }
+
+        .code-actions button {
+            padding: 6px 12px;
+            font-size: 11px;
+            height: 28px;
+            background: var(--secondary);
+            border: 1px solid var(--border);
+            color: var(--foreground);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .code-actions button:hover {
+            background: var(--secondary);
+            border-color: var(--primary);
         }
 
         .feature-list li {
@@ -797,17 +826,21 @@
         }
 
         function switchTab(e, tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            const container = e.target.closest('.output-section');
+            if (!container) return;
+
+            // Hide all tabs in this container
+            container.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            container.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
 
             // Show selected tab
-            document.getElementById(tabName).classList.add('active');
+            const targetContent = container.querySelector('#' + tabName);
+            if (targetContent) targetContent.classList.add('active');
             e.target.classList.add('active');
         }
 
         function generateScripts() {
-            const projectPath = document.getElementById('projectPath').value || '~/dev/horilla';
+            const projectPath = document.getElementById('projectPath').value || platforms[currentPlatform].defaultPath;
             const venvName = document.getElementById('venvName').value || 'horillavenv';
             const dbType = document.getElementById('dbType').value;
             const loadDemo = document.getElementById('loadDemo').checked;
