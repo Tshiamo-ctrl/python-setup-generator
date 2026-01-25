@@ -1025,17 +1025,23 @@ if [ -f "requirements.txt" ]; then
     python3 -m pip install -r requirements.txt || { echo "Failed to install dependencies. Check your internet connection."; exit 1; }
 fi
 
-# Initialize environment file
-ENV_DIST="${platforms[currentPlatform].envDist}"
-if [ ! -f ".env" ]; then
-    echo "Creating .env from $ENV_DIST..."
-    if [ -f "$ENV_DIST" ]; then
-        cp "$ENV_DIST" .env
-    else
-        echo "Note: $ENV_DIST not found, creating basic .env"
-        echo "DEBUG=True" > .env
+if [ "${dbType}" == "postgresql" ]; then
+    echo "Installing PostgreSQL drivers..."
+    python3 -m pip install psycopg2-binary || echo "Note: Failed to install psycopg2-binary, you may need to install it manually."
+    
+    echo "Verifying database connectivity..."
+    if ! python3 -c "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.settimeout(2); s.connect(('${document.getElementById('dbHost').value}', ${document.getElementById('dbPort').value})); s.close()" 2>/dev/null; then
+        echo "Error: Cannot connect to PostgreSQL at ${document.getElementById('dbHost').value}:${document.getElementById('dbPort').value}"
+        echo "Please ensure your database server is running and accessible."
+        exit 1
     fi
 fi
+
+# Initialize environment file
+echo "Configuring environment variables (.env)..."
+cat > .env << 'EOF'
+${generateEnvFile(dbType, dbInitPass, serverPort)}
+EOF
 
 # Compile translations
 if python3 manage.py compilemessages --help >/dev/null 2>&1; then
@@ -1289,9 +1295,9 @@ CSRF_COOKIE_SECURE=False
                 return `# ${platforms[currentPlatform].name} Development Environment Variables
 # Configure database and application settings
 
-# Database Configuration (SQLite - default)
-# SQLite is configured automatically in Django settings
-# No additional database configuration needed
+# Database Configuration (SQLite - Forced)
+DB_ENGINE=django.db.backends.sqlite3
+DB_NAME=db.sqlite3
 
 # Django Settings
 DEBUG=True
