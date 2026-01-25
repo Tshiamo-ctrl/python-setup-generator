@@ -480,6 +480,11 @@
                     <input type="text" id="adminEmail" value="admin@horilla.local">
                 </div>
 
+                <div class="form-group">
+                    <label for="adminPass">Admin Password</label>
+                    <input type="password" id="adminPass" value="admin123">
+                </div>
+
                 <div class="button-group">
                     <button class="btn-primary" onclick="generateScripts()">Generate Scripts</button>
                     <button class="btn-secondary" onclick="resetForm()">Reset</button>
@@ -668,9 +673,10 @@
             const runServer = document.getElementById('runServer').checked;
             const adminUser = document.getElementById('adminUser').value || 'admin';
             const adminEmail = document.getElementById('adminEmail').value || 'admin@horilla.local';
+            const adminPass = document.getElementById('adminPass').value || 'admin123';
 
-            let setupScript = generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail);
-            let freshScript = generateFreshDbScript(projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail);
+            let setupScript = generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail, adminPass);
+            let freshScript = generateFreshDbScript(projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail, adminPass);
             let serverScript = generateServerScript(projectPath, venvName);
             let envFile = generateEnvFile(dbType);
 
@@ -704,7 +710,7 @@
             document.body.removeChild(a);
         }
 
-        function generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail) {
+        function generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail, adminPass) {
             let script = `#!/bin/bash
 
 # Horilla HRMS - Complete Development Setup Script
@@ -798,10 +804,10 @@ fi
 # Create administrator account
 echo "👤 Creating admin user..."
 # Try Horilla-specific creation command, fallback to standard createsuperuser
-python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password='admin123' 2>/dev/null || \
+python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password="${adminPass}" 2>/dev/null || \
 python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
 echo "⚠️ Could not create superuser automatically. You may need to run it manually."
-echo "   Target credentials: ${adminUser} / admin123"
+echo "   Target credentials: ${adminUser} / ${adminPass}"
 `;
             }
 
@@ -828,7 +834,7 @@ echo "💡 Development tip: Use './fresh-db.sh' after model changes to reset dat
             return script;
         }
 
-        function generateFreshDbScript(projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail) {
+        function generateFreshDbScript(projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail, adminPass) {
             let script = `#!/bin/bash
 
 # Horilla HRMS - Fresh Database Reset Script
@@ -908,7 +914,7 @@ fi
                 script += `
 # Recreate administrative user
 echo "👤 Recreating admin user..."
-python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password='admin123' 2>/dev/null || \
+python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password="${adminPass}" 2>/dev/null || \
 python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
 echo "⚠️ Superuser creation skipped or failed."
 `;
