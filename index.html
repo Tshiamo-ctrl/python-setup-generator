@@ -392,7 +392,7 @@
 
         <div class="alert alert-info">
             <strong> What this does:</strong> Creates reusable shell scripts that automate the entire Horilla setup
-            process—perfect for dropping and recreating your database when making model changes. Based on official
+            process—perfect for dropping and recreating your database when making code changes. Based on official
             Horilla 1.0 documentation.
         </div>
 
@@ -499,7 +499,7 @@
                     <li>Eliminates repetitive manual setup steps</li>
                     <li>Drops and recreates DB in seconds</li>
                     <li>Consistent dev environment every time</li>
-                    <li>Works after model changes</li>
+                    <li>Works after code changes</li>
                     <li>Follows official Horilla documentation</li>
                 </ul>
 
@@ -520,7 +520,7 @@
                 <div class="alert alert-success" style="margin-top: 15px;">
                     <strong> Workflow:</strong><br>
                     1. Run <code>./setup.sh</code> once to initialize<br>
-                    2. Make model changes<br>
+                    2. Make code changes<br>
                     3. Run <code>./fresh-db.sh</code> to reset<br>
                     4. Run <code>./dev-server.sh</code> to start
                 </div>
@@ -828,7 +828,7 @@ echo "🎯 Next steps:"
 echo "   2. Open: http://localhost:8000"
 echo "   3. Navigate to /admin for admin panel"
 echo ""
-echo "💡 Development tip: Use './fresh-db.sh' after model changes to reset database"
+echo "💡 Development tip: Use './fresh-db.sh' after code changes to reset database"
 `;
 
             return script;
@@ -895,7 +895,7 @@ echo "   ✓ Cleaned __pycache__ and old migrations"
 
 # Generate and apply new migrations
 echo "🔄 Running fresh migrations..."
-python3 manage.py makemigrations # Detect model changes
+python3 manage.py makemigrations # Detect code changes
 python3 manage.py migrate        # Apply to database
 
 `;
