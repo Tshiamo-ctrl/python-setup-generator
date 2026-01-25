@@ -222,6 +222,23 @@
             right: 10px;
             padding: 6px 10px;
             font-size: 11px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-download {
+            background: var(--color-primary);
+            color: white;
+            padding: 6px 10px;
+            font-size: 11px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-download:hover {
+            background: var(--color-primary-hover);
         }
 
         .section-title {
@@ -357,6 +374,10 @@
 
         .copy-feedback.show {
             opacity: 1;
+        }
+
+        .gen-feedback {
+            background: var(--color-primary) !important;
         }
     </style>
 </head>
@@ -505,7 +526,7 @@
                 </div>
             </div>
 
-            <div class="panel output-section">
+            <div class="panel output-section" id="outputSection" style="display: none;">
                 <h2>Generated Scripts</h2>
 
                 <div class="tabs">
@@ -524,7 +545,11 @@
                     <p style="font-size: 12px; color: var(--color-text-muted);">Run this once to initialize your
                         complete Horilla development environment.</p>
                     <div class="code-block">
-                        <button class="code-copy-btn btn-copy" onclick="copyCode('setupCode')">Copy</button>
+                        <div class="code-copy-btn">
+                            <button class="btn-copy" onclick="copyCode('setupCode')">Copy</button>
+                            <button class="btn-download"
+                                onclick="downloadFile('setupCode', 'setup.sh')">Download</button>
+                        </div>
                         <pre id="setupCode"></pre>
                     </div>
                 </div>
@@ -537,7 +562,11 @@
                     <p style="font-size: 12px; color: var(--color-text-muted);">Run this when you change models or need
                         a clean slate. Drops and recreates everything.</p>
                     <div class="code-block">
-                        <button class="code-copy-btn btn-copy" onclick="copyCode('freshCode')">Copy</button>
+                        <div class="code-copy-btn">
+                            <button class="btn-copy" onclick="copyCode('freshCode')">Copy</button>
+                            <button class="btn-download"
+                                onclick="downloadFile('freshCode', 'fresh-db.sh')">Download</button>
+                        </div>
                         <pre id="freshCode"></pre>
                     </div>
                 </div>
@@ -550,7 +579,11 @@
                     <p style="font-size: 12px; color: var(--color-text-muted);">Quick launcher for the dev server after
                         fresh setup.</p>
                     <div class="code-block">
-                        <button class="code-copy-btn btn-copy" onclick="copyCode('serverCode')">Copy</button>
+                        <div class="code-copy-btn">
+                            <button class="btn-copy" onclick="copyCode('serverCode')">Copy</button>
+                            <button class="btn-download"
+                                onclick="downloadFile('serverCode', 'dev-server.sh')">Download</button>
+                        </div>
                         <pre id="serverCode"></pre>
                     </div>
                 </div>
@@ -564,20 +597,45 @@
                         <code>.env</code>
                     </p>
                     <div class="code-block">
-                        <button class="code-copy-btn btn-copy" onclick="copyCode('envCode')">Copy</button>
+                        <div class="code-copy-btn">
+                            <button class="btn-copy" onclick="copyCode('envCode')">Copy</button>
+                            <button class="btn-download"
+                                onclick="downloadFile('envCode', '.env.example')">Download</button>
+                        </div>
                         <pre id="envCode"></pre>
                     </div>
                 </div>
 
                 <div class="alert alert-info" style="margin-top: 20px;">
-                    <strong> Instructions:</strong>
-                    <ol style="margin: 10px 0; padding-left: 20px;">
-                        <li>Copy each script to your Horilla project root</li>
-                        <li>Make executable: <code>chmod +x *.sh</code></li>
-                        <li>Review the .env file and adjust credentials</li>
-                        <li>Run <code>./setup.sh</code> first time only</li>
-                        <li>Use <code>./fresh-db.sh</code> for subsequent resets</li>
-                    </ol>
+                    <strong>🚀 Quick Execution:</strong>
+
+                    <p class="help-text" style="margin-top: 10px; color: #0a5a6e;">1. Make all scripts executable:</p>
+                    <div class="code-block"
+                        style="background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: #1a1a1a;">
+                        <button class="btn-copy"
+                            style="position: absolute; right: 5px; top: 5px; font-size: 10px; padding: 3px 8px;"
+                            onclick="copyCode('cmdChmod')">Copy</button>
+                        <pre id="cmdChmod"
+                            style="margin: 0; font-size: 12px;">chmod +x setup.sh fresh-db.sh dev-server.sh</pre>
+                    </div>
+
+                    <p class="help-text" style="color: #0a5a6e;">2. Run initial setup:</p>
+                    <div class="code-block"
+                        style="background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: #1a1a1a;">
+                        <button class="btn-copy"
+                            style="position: absolute; right: 5px; top: 5px; font-size: 10px; padding: 3px 8px;"
+                            onclick="copyCode('cmdSetup')">Copy</button>
+                        <pre id="cmdSetup" style="margin: 0; font-size: 12px;">./setup.sh</pre>
+                    </div>
+
+                    <p class="help-text" style="color: #0a5a6e;">3. Reset database (when needed):</p>
+                    <div class="code-block"
+                        style="background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: #1a1a1a;">
+                        <button class="btn-copy"
+                            style="position: absolute; right: 5px; top: 5px; font-size: 10px; padding: 3px 8px;"
+                            onclick="copyCode('cmdFresh')">Copy</button>
+                        <pre id="cmdFresh" style="margin: 0; font-size: 12px;">./fresh-db.sh</pre>
+                    </div>
                 </div>
             </div>
         </div>
@@ -618,8 +676,32 @@
 
             document.getElementById('setupCode').textContent = setupScript;
             document.getElementById('freshCode').textContent = freshScript;
-            document.getElementById('serverCode').textContent = serverScript;
             document.getElementById('envCode').textContent = envFile;
+
+            // Show output section
+            document.getElementById('outputSection').style.display = 'block';
+
+            showFeedback("✨ Scripts generated successfully!", true);
+        }
+
+        function showFeedback(message, isGen = false) {
+            const feedback = document.getElementById('copyFeedback');
+            feedback.textContent = message;
+            feedback.className = 'copy-feedback show' + (isGen ? ' gen-feedback' : '');
+            setTimeout(() => feedback.classList.remove('show'), 3000);
+        }
+
+        function downloadFile(elementId, filename) {
+            const content = document.getElementById(elementId).textContent;
+            const blob = new Blob([content], { type: 'text/x-sh' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
         }
 
         function generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail) {
@@ -927,9 +1009,7 @@ CSRF_COOKIE_SECURE=False
         function copyCode(elementId) {
             const code = document.getElementById(elementId).textContent;
             navigator.clipboard.writeText(code).then(() => {
-                const feedback = document.getElementById('copyFeedback');
-                feedback.classList.add('show');
-                setTimeout(() => feedback.classList.remove('show'), 2000);
+                showFeedback("✓ Copied to clipboard");
             });
         }
 
@@ -945,7 +1025,7 @@ CSRF_COOKIE_SECURE=False
 
         // Initialize on page load
         window.addEventListener('load', () => {
-            generateScripts();
+            updateDbFields();
         });
     </script>
 </body>
