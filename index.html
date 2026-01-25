@@ -386,7 +386,13 @@
             font-size: 14px;
             margin-bottom: 32px;
             display: flex;
+            flex-direction: column;
             gap: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .alert-row {
+            flex-direction: row;
             align-items: center;
         }
 
@@ -474,7 +480,7 @@
             </button>
         </header>
 
-        <div class="alert alert-info">
+        <div class="alert alert-info alert-row">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -721,40 +727,65 @@
                     </div>
                 </div>
 
-                <div class="alert alert-info" style="margin-top: 32px;">
-                    <h3 style="font-size: 16px; margin-bottom: 12px; color: inherit;">Quick Execution</h3>
+                <div class="alert alert-info" style="margin-top: 48px; background: rgba(var(--primary-rgb), 0.02);">
+                    <h3
+                        style="font-size: 18px; margin-bottom: 24px; color: var(--foreground); display: flex; align-items: center; gap: 10px;">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                        </svg>
+                        Quick Execution
+                    </h3>
 
-                    <p class="help-text" style="margin-bottom: 8px;">1. Make scripts executable:</p>
-                    <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0 0 16px 0;">
-                        <button class="btn-secondary"
-                            style="position: absolute; right: 8px; top: 8px; font-size: 11px; padding: 4px 8px;"
-                            onclick="copyCode('cmdChmod')">Copy</button>
-                        <pre id="cmdChmod"
-                            style="margin: 0; font-size: 12px;">chmod +x setup.sh fresh-db.sh dev-server.sh</pre>
-                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px;">
+                        <div>
+                            <p class="help-text"
+                                style="font-weight: 600; margin-bottom: 8px; color: var(--foreground);">1. Make scripts
+                                executable</p>
+                            <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0;">
+                                <button class="btn-secondary"
+                                    style="position: absolute; right: 8px; top: 8px; font-size: 10px; padding: 4px 8px; height: auto;"
+                                    onclick="copyCode('cmdChmod')">Copy</button>
+                                <pre id="cmdChmod"
+                                    style="margin: 0; font-size: 12px; white-space: pre-wrap;">chmod +x setup.sh fresh-db.sh dev-server.sh</pre>
+                            </div>
+                        </div>
 
-                    <p class="help-text" style="margin-bottom: 8px;">2. Run initial setup:</p>
-                    <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0 0 16px 0;">
-                        <button class="btn-secondary"
-                            style="position: absolute; right: 8px; top: 8px; font-size: 11px; padding: 4px 8px;"
-                            onclick="copyCode('cmdSetup')">Copy</button>
-                        <pre id="cmdSetup" style="margin: 0; font-size: 12px;">./setup.sh</pre>
-                    </div>
+                        <div>
+                            <p class="help-text"
+                                style="font-weight: 600; margin-bottom: 8px; color: var(--foreground);">2. Run initial
+                                setup</p>
+                            <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0;">
+                                <button class="btn-secondary"
+                                    style="position: absolute; right: 8px; top: 8px; font-size: 10px; padding: 4px 8px; height: auto;"
+                                    onclick="copyCode('cmdSetup')">Copy</button>
+                                <pre id="cmdSetup" style="margin: 0; font-size: 12px;">./setup.sh</pre>
+                            </div>
+                        </div>
 
-                    <p class="help-text" style="margin-bottom: 8px;">3. Start server:</p>
-                    <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0 0 16px 0;">
-                        <button class="btn-secondary"
-                            style="position: absolute; right: 8px; top: 8px; font-size: 11px; padding: 4px 8px;"
-                            onclick="copyCode('cmdServer')">Copy</button>
-                        <pre id="cmdServer" style="margin: 0; font-size: 12px;">./dev-server.sh</pre>
-                    </div>
+                        <div>
+                            <p class="help-text"
+                                style="font-weight: 600; margin-bottom: 8px; color: var(--foreground);">3. Start server
+                            </p>
+                            <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0;">
+                                <button class="btn-secondary"
+                                    style="position: absolute; right: 8px; top: 8px; font-size: 10px; padding: 4px 8px; height: auto;"
+                                    onclick="copyCode('cmdServer')">Copy</button>
+                                <pre id="cmdServer" style="margin: 0; font-size: 12px;">./dev-server.sh</pre>
+                            </div>
+                        </div>
 
-                    <p class="help-text" style="margin-bottom: 8px;">4. Reset database:</p>
-                    <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0;">
-                        <button class="btn-secondary"
-                            style="position: absolute; right: 8px; top: 8px; font-size: 11px; padding: 4px 8px;"
-                            onclick="copyCode('cmdReset')">Copy</button>
-                        <pre id="cmdReset" style="margin: 0; font-size: 12px;">./fresh-db.sh</pre>
+                        <div>
+                            <p class="help-text"
+                                style="font-weight: 600; margin-bottom: 8px; color: var(--foreground);">4. Reset
+                                database</p>
+                            <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0;">
+                                <button class="btn-secondary"
+                                    style="position: absolute; right: 8px; top: 8px; font-size: 10px; padding: 4px 8px; height: auto;"
+                                    onclick="copyCode('cmdReset')">Copy</button>
+                                <pre id="cmdReset" style="margin: 0; font-size: 12px;">./fresh-db.sh</pre>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
