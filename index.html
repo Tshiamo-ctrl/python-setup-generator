@@ -981,12 +981,13 @@ if [ -f "requirements.txt" ]; then
 fi
 
 # Initialize environment file
-ENV_DIST="\${platforms[currentPlatform].envDist}"
+ENV_DIST="${platforms[currentPlatform].envDist}"
 if [ ! -f ".env" ]; then
-    echo "Creating .env from \$ENV_DIST..."
-    if [ -f "\$ENV_DIST" ]; then
-        cp "\$ENV_DIST" .env
+    echo "Creating .env from $ENV_DIST..."
+    if [ -f "$ENV_DIST" ]; then
+        cp "$ENV_DIST" .env
     else
+        echo "Note: $ENV_DIST not found, creating basic .env"
         echo "DEBUG=True" > .env
     fi
 fi
@@ -999,9 +1000,10 @@ fi
 
 # Database setup
 if [ -f "manage.py" ]; then
-    echo "Running migrations..."
-    python3 manage.py makemigrations # Generate migration files
-    python3 manage.py migrate        # Apply migrations to DB
+    echo "Generating and applying migrations..."
+    # Ensure migrations are created for all apps
+    python3 manage.py makemigrations --noinput
+    python3 manage.py migrate --noinput
 else
     echo "manage.py not found. Are you in the correct directory?"
     exit 1
