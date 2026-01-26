@@ -689,7 +689,7 @@
         }
 
         // Configuration Summary
-        function displayConfigSummary(repoName, framework, projectPath, dbType, initDb, loadDemo, createSuper, adminUser, adminPass) {
+        function displayConfigSummary(repoName, framework, projectPath, dbType, initDb, loadDemo, createSuper, adminUser, adminPass, knownIssues = null) {
             document.getElementById('summaryRepo').textContent = repoName;
             document.getElementById('summaryFramework').textContent = framework.toUpperCase();
             document.getElementById('summaryPath').textContent = projectPath;
@@ -710,6 +710,15 @@
                         <strong>Credentials:</strong> ${adminUser} / ${adminPass}
                     </div>`;
                 }
+
+                if (knownIssues) {
+                    html += `
+                    <div class="summary-card" style="border-left: 3px solid #ff6b6b; background: rgba(255, 107, 107, 0.1);">
+                        <strong>⚠️ Known Issue:</strong><br>
+                        ${knownIssues}
+                    </div>`;
+                }
+
                 extraContainer.innerHTML = html;
             }
 
@@ -1356,6 +1365,7 @@ echo "Done."
             let demoDataCmd = "";
             let dependencies = null;
             let repo = null;
+            let knownIssues = null;
             REPO_LIST.forEach(cat => {
                 const found = cat.repos.find(r => r.url === repoUrl);
                 if (found) repo = found;
@@ -1373,6 +1383,9 @@ echo "Done."
                 }
                 if (repo.dependencies) {
                     dependencies = repo.dependencies;
+                }
+                if (repo.knownIssues) {
+                    knownIssues = repo.knownIssues;
                 }
             }
 
@@ -1407,7 +1420,7 @@ echo "Done."
             document.getElementById('clearEnvCode').textContent = generateClearScript(projectPath, venvName, dbType, 'env');
 
             // Show configuration summary and carousel sections
-            displayConfigSummary(repoName, framework, projectPath, dbType, initDb, loadDemo, createSuper, adminUser, adminPass);
+            displayConfigSummary(repoName, framework, projectPath, dbType, initDb, loadDemo, createSuper, adminUser, adminPass, knownIssues);
 
             // Scroll to results section (grid container)
             setTimeout(() => {

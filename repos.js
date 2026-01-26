@@ -34,7 +34,8 @@ const REPO_LIST = [
                 features: {
                     hasDb: true,
                     hasDemo: true
-                }
+                },
+                knownIssues: "⚠️ Requires libpq-dev: Run 'sudo apt-get install libpq-dev' before setup, or edit requirements.txt to use psycopg[binary] instead of psycopg[c]"
             },
             {
                 name: "Horilla CRM",
@@ -73,8 +74,9 @@ const REPO_LIST = [
                 },
                 dependencies: {
                     mode: 'poetry',
-                    command: 'pip install poetry && poetry install'
-                }
+                    command: 'pip install poetry && poetry install --no-dev || poetry install'
+                },
+                knownIssues: "⚠️ Dependency conflict: vcrpy requires urllib3<2, but Saleor needs urllib3>=2.4. Use 'poetry install --no-dev' to skip test dependencies."
             },
             {
                 name: "Wagtail CMS",
