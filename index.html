@@ -952,7 +952,7 @@
                 optgroup.label = category.category;
                 category.repos.forEach((repo, index) => {
                     const option = document.createElement('option');
-                    option.value = JSON.stringify(repo); // Store object for easy access
+                    option.value = repo.url; // Use URL as the value
                     option.textContent = repo.name + (repo.stars ? ` (${repo.stars})` : "");
                     optgroup.appendChild(option);
                 });
@@ -963,33 +963,7 @@
             handleRepoChange();
         }
 
-        function handleRepoChange() {
-            const select = document.getElementById('repoSelect');
-            const customField = document.getElementById('customRepoField');
 
-            if (select.value === 'custom') {
-                customField.style.display = 'block';
-                selectedRepo = null;
-                // Allow user to manually select framework
-            } else {
-                customField.style.display = 'none';
-                try {
-                    selectedRepo = JSON.parse(select.value);
-                    // Auto-fill configuration based on preset
-                    if (selectedRepo.framework) {
-                        document.getElementById('frameworkSelect').value = selectedRepo.framework;
-                    }
-                    if (selectedRepo.adminCommand) {
-                        document.getElementById('cmdAdmin').value = selectedRepo.adminCommand;
-                    }
-                    // If repo has specific setup instructions/needs, we could show a tip or pre-fill post code
-                    // For now, clear custom fields to defaults if switching presets
-                    updateFrameworkDefaults(true); // Helper to reset defaults if needed
-                } catch (e) {
-                    console.error("Error parsing repo data", e);
-                }
-            }
-        }
 
         function updateFrameworkDefaults(preserveIfCustom = false) {
             const framework = document.getElementById('frameworkSelect').value;
@@ -1110,7 +1084,45 @@
             setTimeout(() => feedback.classList.remove('show'), 3000);
         }
 
-        function generateSetupScript(repoUrl, repoName, framework, projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall) {
+        function generateScripts() {
+            const projectPath = document.getElementById('projectPath').value;
+            const framework = document.getElementById('frameworkSelect').value;
+            const venvName = document.getElementById('venvName').value;
+            const dbType = document.getElementById('dbType').value;
+            const loadDemo = document.getElementById('loadDemo').checked;
+            const createSuper = document.getElementById('createSuper').checked;
+            const runServer = document.getElementById('runServer').checked;
+            const adminUser = document.getElementById('adminUser').value;
+            const adminEmail = document.getElementById('adminEmail').value;
+            const adminPass = document.getElementById('adminPass').value;
+            const serverPort = 8000;
+            const cmdAdmin = document.getElementById('cmdAdmin').value;
+            const cmdPostInstall = document.getElementById('cmdPostInstall').value;
+            const repoUrl = document.getElementById('repoSelect').value === 'custom' ?
+                document.getElementById('customRepoUrl').value :
+                document.getElementById('repoSelect').value;
+
+            if (!repoUrl) {
+                showFeedback("Please select or enter a repository URL");
+                return;
+            }
+
+            const repoName = repoUrl.split('/').pop().replace('.git', '') || 'my-project';
+
+            document.getElementById('setupCode').textContent = generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, runServer);
+            document.getElementById('freshCode').textContent = generateFreshDbScript(repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin);
+            document.getElementById('serverCode').textContent = generateServerScript(repoName, projectPath, venvName, framework, serverPort);
+            document.getElementById('envCode').textContent = generateEnvFile(repoName, dbType, adminPass, serverPort);
+
+            const output = document.getElementById('outputSection');
+            output.style.display = 'block';
+            setTimeout(() => {
+                output.classList.add('visible');
+                output.scrollIntoView({ behavior: 'smooth' });
+            }, 10);
+        }
+
+        function generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, runServer) {
             return `#!/bin/bash
 # ${repoName} - Development Setup Script
 # Generated: $(date)
@@ -1201,7 +1213,7 @@ ${runServer ? `./dev-server.sh` : `echo "Run ./dev-server.sh to start."`}
 `;
         }
 
-        function generateFreshDbScript(framework, projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin) {
+        function generateFreshDbScript(repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin) {
             if (framework !== 'django') {
                 return `#!/bin/bash
 echo "Fresh DB script is currently optimized for Django.";
@@ -1210,7 +1222,7 @@ echo "For generic Python projects, manual cleanup is recommended.";
             }
 
             return `#!/bin/bash
-# Fresh Database Reset (Django)
+# Fresh Database Reset (${repoName})
 set -e
 PROJECT_PATH="${projectPath}"
 VENV_NAME="${venvName}"
@@ -1243,8 +1255,9 @@ echo "Database reset complete."
 `;
         }
 
-        function generateServerScript(framework, projectPath, venvName, serverPort) {
+        function generateServerScript(repoName, projectPath, venvName, framework, serverPort) {
             return `#!/bin/bash
+# Development Server (${repoName})
 PROJECT_PATH="${projectPath}"
 VENV_NAME="${venvName}"
 PORT=${serverPort}
@@ -1475,12 +1488,17 @@ DB_NAME=db.sqlite3
             const repoName = repoUrl.split('/').pop().replace('.git', '') || 'my-project';
 
             document.getElementById('setupCode').textContent = generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, runServer);
-            document.getElementById('freshCode').textContent = generateFreshDbScript(framework, projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin);
-            document.getElementById('serverCode').textContent = generateServerScript(framework, projectPath, venvName, serverPort);
-            document.getElementById('envCode').textContent = generateEnvFile(repoName, dbType, adminPass, serverPort); // Removed dbInitPass
+            document.getElementById('freshCode').textContent = generateFreshDbScript(repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin);
+            document.getElementById('serverCode').textContent = generateServerScript(repoName, projectPath, venvName, framework, serverPort);
+            document.getElementById('envCode').textContent = generateEnvFile(repoName, dbType, adminPass, serverPort);
 
-            // Switch to scripts tab
-            document.querySelectorAll('.tab-btn')[1].click();
+            // Show output section and scroll
+            const output = document.getElementById('outputSection');
+            output.style.display = 'block';
+            setTimeout(() => {
+                output.classList.add('visible');
+                output.scrollIntoView({ behavior: 'smooth' });
+            }, 10);
         }
 
         function updateFrameworkDefaults() {
