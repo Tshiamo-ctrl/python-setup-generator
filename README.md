@@ -55,7 +55,6 @@ Setting up local development environments often involves repetitive terminal wor
   - `setup.sh` - Complete environment initialization
   - `fresh-db.sh` - Database reset and cleanup
   - `dev-server.sh` - Development server launcher
-  - `dev-server.sh` - Development server launcher
   - `clear_env.sh` - Virtual environment and config cleanup (Source safe)
   - `.env.example` - Environment variables template
 
@@ -163,7 +162,6 @@ This script acts as a regression test to ensure that dependency commands and set
 2. Enter your project's Git URL
 3. Choose framework type manually
 4. Configure all settings as needed
-5. Generate scripts tailored to your project
 5. Generate scripts tailored to your project
 
 ### Example 4: Resetting Environment
