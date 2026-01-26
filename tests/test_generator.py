@@ -577,20 +577,24 @@ def test_horilla_specific_setup(page_on_index: Page):
     
     # Select Horilla HRM
     page_on_index.select_option("#repoSelect", label="Horilla HRM (1.2k+)")
-    
-    # Check auto-filled admin command
     page_on_index.check("#enableCustomConfig")
-    admin_cmd = page_on_index.locator("#cmdAdmin").input_value()
-    assert "createhorillauser" in admin_cmd
+    
+    # Change password to custom one
+    page_on_index.fill("#adminPass", "secret_horilla_pass")
     
     # Generate scripts
     page_on_index.click("button:has-text('Continue to Scripts')")
     page_on_index.wait_for_timeout(500)
     
-    # Verify setup.sh has demo data command
+    # Verify setup.sh has demo data command and REPLACED password
     setup_code = page_on_index.locator("#setupCode").inner_text()
     assert "loaddata demo_data.json" in setup_code
     assert "createhorillauser" in setup_code
+    assert "secret_horilla_pass" in setup_code
+    
+    # Verify summary has the credentials
+    summary_info = page_on_index.locator("#summaryExtraInfo").inner_text()
+    assert "admin / secret_horilla_pass" in summary_info
     
     # Verify .env has DB_IN_PASSWORD
     indicators = page_on_index.locator(".indicator")
@@ -599,13 +603,13 @@ def test_horilla_specific_setup(page_on_index: Page):
     env_code = page_on_index.locator("#envCode").inner_text()
     assert "DB_IN_PASSWORD=horilla" in env_code
 
-    # Select Horilla CRM
+    # Test "Skip Initialization"
     page_on_index.reload()
     page_on_index.wait_for_selector("#repoSelect option:nth-child(2)", state="attached")
-    page_on_index.select_option("#repoSelect", label="Horilla CRM (500+)")
+    page_on_index.select_option("#repoSelect", label="Horilla HRM (1.2k+)")
+    page_on_index.uncheck("#initDb")
     page_on_index.click("button:has-text('Continue to Scripts')")
     page_on_index.wait_for_timeout(500)
     
-    # Verify setup.sh has demo data command for CRM too
     setup_code = page_on_index.locator("#setupCode").inner_text()
-    assert "loaddata demo_data.json" in setup_code
+    assert "Skipping database initialization" in setup_code

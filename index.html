@@ -173,6 +173,10 @@
                 <div class="form-group">
                     <label>Features & Automation</label>
                     <div class="checkbox-group">
+                        <div class="checkbox-item" onclick="document.getElementById('initDb').click()">
+                            <input type="checkbox" id="initDb" checked onclick="event.stopPropagation()">
+                            <span>Initialize Database</span>
+                        </div>
                         <div class="checkbox-item" onclick="document.getElementById('loadDemo').click()">
                             <input type="checkbox" id="loadDemo" checked onclick="event.stopPropagation()">
                             <span>Load Demo Data</span>
@@ -312,6 +316,9 @@
                             <div id="summaryDb">SQLite</div>
                         </div>
                     </div>
+
+                    <!-- Dynamic extra info (credentials, init status) -->
+                    <div id="summaryExtraInfo" class="summary-extra-row"></div>
 
                     <div class="summary-tip">
                         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
@@ -649,14 +656,31 @@
         }
 
         // Configuration Summary
-        function displayConfigSummary(repoName, framework, projectPath, dbType) {
+        function displayConfigSummary(repoName, framework, projectPath, dbType, initDb, loadDemo, createSuper, adminUser, adminPass) {
             document.getElementById('summaryRepo').textContent = repoName;
             document.getElementById('summaryFramework').textContent = framework.toUpperCase();
             document.getElementById('summaryPath').textContent = projectPath;
             document.getElementById('summaryDb').textContent =
                 dbType === 'postgresql' ? 'PostgreSQL' : 'SQLite';
 
-            document.getElementById('resultsSection').style.display = 'grid'; // Enable Grid Layout
+            // Add new info cards for better visibility
+            const extraContainer = document.getElementById('summaryExtraInfo');
+            if (extraContainer) {
+                let html = `
+                <div class="summary-card">
+                    <strong>DB Action:</strong> ${initDb ? 'Initialize' : 'Skip'} + ${loadDemo ? 'Load Demo' : 'No Demo'}
+                </div>`;
+
+                if (createSuper) {
+                    html += `
+                    <div class="summary-card" style="border-left: 2px solid var(--primary);">
+                        <strong>Credentials:</strong> ${adminUser} / ${adminPass}
+                    </div>`;
+                }
+                extraContainer.innerHTML = html;
+            }
+
+            document.getElementById('resultsSection').style.display = 'grid';
             document.getElementById('configSummary').style.display = 'block';
             document.getElementById('quickActions').style.display = 'block';
             document.getElementById('scriptsCarousel').style.display = 'block';
@@ -763,7 +787,7 @@
 
 
 
-        function generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, preInstall, customReqPath, runServer, demoDataCmd) {
+        function generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, preInstall, customReqPath, runServer, demoDataCmd, initDb) {
             return `#!/bin/bash
 # ${repoName} - Development Setup Script
 # Generated: $(date)
@@ -786,7 +810,7 @@ command -v git >/dev/null 2>&1 || { echo "Git required."; exit 1; }
 # --- Clone ---
 if [ ! -d "$PROJECT_PATH" ]; then
     echo "Cloning repository..."
-    git clone "$REPO_URL" "$PROJECT_PATH"
+    git clone "$REPO_URL" "$PROJECT_PATH" || { echo "Clone failed. Check your internet connection or URL."; exit 1; }
 fi
 cd "$PROJECT_PATH"
 
@@ -865,6 +889,11 @@ cat > .env << 'EOF'
 ${generateEnvFile(repoName, dbType, adminPass, serverPort)}
 EOF
 
+# Export vars to ensure they are available for immediate use
+set -a
+source .env
+set +a
+
 # --- Post-Install Custom Commands ---
 ${cmdPostInstall ? `
 echo "Running post-install commands..."
@@ -875,8 +904,17 @@ ${cmdPostInstall}
 ${framework === 'django' ? `
 echo "Running Django specific setup..."
 if [ -f "manage.py" ]; then
+    ${initDb ? `
+    echo "Initializing database..."
+    ${dbType === 'postgresql' ? `
+    # Pre-flight Postgres Check
+    if command -v pg_isready >/dev/null 2>&1; then
+        pg_isready -h "$DB_HOST" -p "$DB_PORT" || echo "⚠️  Postgres does not seem to be running on $DB_HOST:$DB_PORT"
+    fi
+    ` : ''}
     python3 manage.py migrate --noinput
     python3 manage.py compilemessages 2>/dev/null || true
+    ` : 'echo "Skipping database initialization as requested."'}
     
     ${createSuper ? `
     echo "Creating Admin User..."
@@ -885,9 +923,9 @@ if [ -f "manage.py" ]; then
     ` : ''}
     
     ${loadDemo ? `
-    # Demo Data Loading
+    echo "Loading Demo Data..."
     ${demoDataCmd ? demoDataCmd : 'python3 manage.py loaddata initial_data 2>/dev/null || echo "No \'initial_data\' fixture found."'}
-    ` : ''}
+    ` : 'echo "Skipping demo data loading as requested."'}
 else
     echo "Warning: manage.py not found!"
 fi
@@ -939,6 +977,11 @@ python3 manage.py migrate
 ${createSuper ? `
 export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
 ${cmdAdmin} || true
+` : ''}
+
+${loadDemo ? `
+echo "Loading Demo Data..."
+python3 manage.py loaddata demo_data.json 2>/dev/null || echo "Demo data loading failed or not applicable."
 ` : ''}
 
 echo "Database reset complete."
@@ -1142,6 +1185,18 @@ echo "Done."
                 } else {
                     document.getElementById('cmdPostInstall').value = "";
                 }
+
+                // Horilla Specials: Default to admin/admin for demo data compatibility
+                if (repo.name.includes("Horilla")) {
+                    document.getElementById('adminUser').value = "admin";
+                    document.getElementById('adminPass').value = "admin";
+                } else {
+                    // Reset to generic defaults if switching OUT of Horilla
+                    if (document.getElementById('adminUser').value === "admin" && document.getElementById('adminPass').value === "admin") {
+                        document.getElementById('adminUser').value = "admin";
+                        document.getElementById('adminPass').value = "admin123";
+                    }
+                }
             }
 
             updateDbFields();
@@ -1153,6 +1208,7 @@ echo "Done."
             const framework = document.getElementById('frameworkSelect').value;
             const venvName = document.getElementById('venvName').value;
             const dbType = document.getElementById('dbType').value;
+            const initDb = document.getElementById('initDb').checked;
             const loadDemo = document.getElementById('loadDemo').checked;
             const createSuper = document.getElementById('createSuper').checked;
             const runServer = document.getElementById('runServer').checked;
@@ -1160,7 +1216,7 @@ echo "Done."
             const adminEmail = document.getElementById('adminEmail').value;
             const adminPass = document.getElementById('adminPass').value;
             const serverPort = 8000;
-            const cmdAdmin = document.getElementById('cmdAdmin').value;
+            let cmdAdmin = document.getElementById('cmdAdmin').value;
             const cmdPostInstall = document.getElementById('cmdPostInstall').value;
             const customReqPath = document.getElementById('customReqPath').value;
 
@@ -1179,6 +1235,12 @@ echo "Done."
             if (repo && repo.setupCommands) {
                 if (repo.setupCommands.preInstall) preInstall = repo.setupCommands.preInstall;
                 if (repo.setupCommands.demoData) demoDataCmd = repo.setupCommands.demoData;
+                if (repo.setupCommands.adminCreate) {
+                    cmdAdmin = repo.setupCommands.adminCreate
+                        .replace(/__USER__/g, adminUser)
+                        .replace(/__PASS__/g, adminPass)
+                        .replace(/__EMAIL__/g, adminEmail);
+                }
             }
 
             if (!repoUrl) {
@@ -1189,13 +1251,13 @@ echo "Done."
             // Extract repo name from URL
             const repoName = repoUrl.split('/').pop().replace('.git', '') || 'my-project';
 
-            document.getElementById('setupCode').textContent = generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, preInstall, customReqPath, runServer, demoDataCmd);
+            document.getElementById('setupCode').textContent = generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, preInstall, customReqPath, runServer, demoDataCmd, initDb);
             document.getElementById('freshCode').textContent = generateFreshDbScript(repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin);
             document.getElementById('serverCode').textContent = generateServerScript(repoName, projectPath, venvName, framework, serverPort);
             document.getElementById('envCode').textContent = generateEnvFile(repoName, dbType, adminPass, serverPort);
 
             // Show configuration summary and carousel sections
-            displayConfigSummary(repoName, framework, projectPath, dbType);
+            displayConfigSummary(repoName, framework, projectPath, dbType, initDb, loadDemo, createSuper, adminUser, adminPass);
 
             // Scroll to results section (grid container)
             setTimeout(() => {
@@ -1231,8 +1293,9 @@ DB_PORT=${dbPort}
 DB_ENGINE=django.db.backends.sqlite3
 DB_NAME=db.sqlite3
 `}
+${repoName.toLowerCase().includes('horilla') ? `
 # Horilla Specific
-DB_IN_PASSWORD=horilla
+DB_IN_PASSWORD=horilla` : ''}
 `;
         }
 

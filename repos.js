@@ -22,9 +22,9 @@ const REPO_LIST = [
                 complexity: "Advanced",
                 stars: "1.2k+",
                 setupCommands: {
-                    preInstall: "cp .env.dist .env",
+                    preInstall: "cp .env.dist .env 2>/dev/null || cp .env.example .env 2>/dev/null || true",
                     postInstall: "python3 manage.py migrate",
-                    adminCreate: "python3 manage.py createhorillauser --first_name Admin --last_name Admin --username admin --password admin123 --email admin@example.com --phone 1234567890",
+                    adminCreate: "python3 manage.py createhorillauser --first_name Admin --last_name Admin --username __USER__ --password __PASS__ --email __EMAIL__ --phone 1234567890",
                     demoData: "python3 manage.py loaddata demo_data.json"
                 }
             },
@@ -36,9 +36,9 @@ const REPO_LIST = [
                 complexity: "Advanced",
                 stars: "500+",
                 setupCommands: {
-                    preInstall: "cp .env.dist .env",
+                    preInstall: "cp .env.dist .env 2>/dev/null || cp .env.example .env 2>/dev/null || true",
                     postInstall: "python3 manage.py migrate",
-                    adminCreate: "python3 manage.py createsuperuser --noinput --username admin --email admin@example.com",
+                    adminCreate: "export DJANGO_SUPERUSER_PASSWORD=__PASS__ && python3 manage.py createsuperuser --noinput --username __USER__ --email __EMAIL__",
                     demoData: "python3 manage.py loaddata demo_data.json"
                 }
             }
