@@ -1618,6 +1618,8 @@ export FLASK_APP=app  # Change as needed
 flask run --host=0.0.0.0 --port=$PORT
 ` : framework === 'fastapi' ? `
 uvicorn main:app --host 0.0.0.0 --port $PORT --reload
+` : framework === 'frappe' ? `
+bench start
 ` : `
 echo "Please edit the server script to run your specific entry point (e.g. python main.py)."
 `}

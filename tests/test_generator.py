@@ -412,13 +412,13 @@ def test_copy_button_functionality(page_on_index: Page):
 def test_script_generation_for_all_frameworks(page_on_index: Page):
     """Test that scripts generate correctly for Django, Flask, FastAPI, Frappe"""
     frameworks = [
-        ("django", "python3 manage.py migrate"),
-        ("flask", "flask run"),
-        ("fastapi", "uvicorn"),
-        ("frappe", "bench")
+        ("django", "python3 manage.py migrate", "setup"),  # Django commands in setup.sh
+        ("flask", "flask run", "server"),  # Flask server command in dev-server.sh
+        ("fastapi", "uvicorn", "server"),  # FastAPI server command in dev-server.sh
+        ("frappe", "bench", "server")  # Frappe bench command in dev-server.sh
     ]
     
-    for framework, expected_text in frameworks:
+    for framework, expected_text, script_type in frameworks:
         # Reset page
         page_on_index.reload()
         page_on_index.wait_for_timeout(300)
@@ -431,9 +431,20 @@ def test_script_generation_for_all_frameworks(page_on_index: Page):
         
         page_on_index.wait_for_timeout(500)
         
-        # Check setup script contains framework-specific content
-        setup_code = page_on_index.locator("#setupCode").inner_text()
-        assert expected_text in setup_code.lower(), f"Expected '{expected_text}' in {framework} setup script"
+        # Check appropriate script based on framework
+        if script_type == "setup":
+            # Django commands are in setup script
+            script_code = page_on_index.locator("#setupCode").inner_text()
+        else:
+            # Flask/FastAPI/Frappe server commands are in dev-server script
+            # Navigate to server script (setup -> fresh -> server)
+            page_on_index.click(".carousel-nav.next")
+            page_on_index.wait_for_timeout(300)
+            page_on_index.click(".carousel-nav.next")
+            page_on_index.wait_for_timeout(300)
+            script_code = page_on_index.locator("#serverCode").inner_text()
+        
+        assert expected_text in script_code.lower(), f"Expected '{expected_text}' in {framework} {script_type} script"
 
 def test_auto_configuration_from_repo(page_on_index: Page):
     """Test that selecting a repo auto-configures project path and venv name"""
