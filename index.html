@@ -4,474 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Horilla Dev Setup Generator | Automate Your HRMS Workspace</title>
+    <title>Local Setup Generator | Automate Your Python Workspace</title>
     <meta name="description"
-        content="Generate production-ready setup and maintenance scripts for Horilla HRMS development. Automate database wipes, migrations, and environment configuration.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --background: #fdfdfd;
-            --foreground: #0a0a0b;
-            --card: #ffffff;
-            --card-foreground: #0a0a0b;
-            --primary: #000000;
-            --primary-foreground: #ffffff;
-            --secondary: #f4f4f5;
-            --secondary-foreground: #18181b;
-            --muted: #f4f4f5;
-            --muted-foreground: #64748b;
-            --border: #e2e8f0;
-            --input: #ffffff;
-            --ring: #000000;
-            --radius: 0.75rem;
-            --accent: #000000;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        }
-
-        .dark {
-            --background: #09090b;
-            --foreground: #f8fafc;
-            --card: #111114;
-            --card-foreground: #f8fafc;
-            --primary: #ffffff;
-            --primary-foreground: #09090b;
-            --secondary: #1e1e24;
-            --secondary-foreground: #f8fafc;
-            --muted: #1e1e24;
-            --muted-foreground: #94a3b8;
-            --border: #27272a;
-            --input: #111114;
-            --ring: #ffffff;
-            --shadow: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.15s ease;
-        }
-
-        body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background-color: var(--background);
-            color: var(--foreground);
-            line-height: 1.6;
-            padding: 60px 20px;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        header {
-            margin-bottom: 64px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        h1 {
-            font-size: 42px;
-            font-weight: 800;
-            letter-spacing: -0.04em;
-            margin-bottom: 8px;
-        }
-
-        .header-subtitle {
-            color: var(--muted-foreground);
-            font-size: 18px;
-            font-weight: 400;
-        }
-
-        .layout {
-            display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
-            gap: 40px;
-            margin-top: 32px;
-        }
-
-        .panel {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 32px;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .panel-glass {
-            backdrop-filter: blur(8px);
-            background: rgba(var(--card), 0.8);
-        }
-
-        .panel h2 {
-            margin-bottom: 24px;
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .panel h2::before {
-            content: '';
-            display: block;
-            width: 4px;
-            height: 20px;
-            background: var(--primary);
-            border-radius: 2px;
-        }
-
-        .form-group {
-            margin-bottom: 24px;
-        }
-
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 10px;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--muted-foreground);
-        }
-
-        input[type="text"],
-        input[type="password"],
-        input[type="number"],
-        select {
-            width: 100%;
-            padding: 12px 16px;
-            background-color: var(--input);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--foreground);
-            font-family: inherit;
-            font-size: 14px;
-            outline: none;
-        }
-
-        input:focus,
-        select:focus {
-            border-color: var(--primary);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
-        }
-
-        .dark input:focus,
-        .dark select:focus {
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
-        }
-
-        .platform-toggle {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            background: var(--secondary);
-            padding: 4px;
-            border-radius: 10px;
-            margin-bottom: 24px;
-        }
-
-        .platform-btn {
-            padding: 10px;
-            border: none;
-            background: transparent;
-            color: var(--muted-foreground);
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            border-radius: 8px;
-        }
-
-        .platform-btn.active {
-            background: var(--card);
-            color: var(--foreground);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .checkbox-group {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 16px;
-            margin-top: 12px;
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-        }
-
-        input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--primary);
-            cursor: pointer;
-            border-radius: 4px;
-        }
-
-        .help-text {
-            font-size: 12px;
-            color: var(--muted-foreground);
-            margin-top: 8px;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 16px;
-            margin-top: 40px;
-        }
-
-        button {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            padding: 12px 24px;
-            cursor: pointer;
-            border: 1px solid transparent;
-        }
-
-        .btn-primary {
-            background-color: var(--primary);
-            color: var(--primary-foreground);
-            flex: 1;
-        }
-
-        .btn-primary:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background-color: transparent;
-            color: var(--foreground);
-            border: 1px solid var(--border);
-        }
-
-        .btn-secondary:hover {
-            background-color: var(--secondary);
-            border-color: var(--primary);
-        }
-
-        .output-section {
-            grid-column: 1 / -1;
-            margin-top: 48px;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.5s ease;
-        }
-
-        .output-section.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 24px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 12px;
-        }
-
-        .tab-btn {
-            padding: 8px 16px;
-            background: transparent;
-            border: none;
-            color: var(--muted-foreground);
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .tab-btn.active {
-            color: var(--foreground);
-        }
-
-        .tab-btn.active::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--primary);
-            z-index: 1;
-        }
-
-        .tab-content {
-            display: none;
-            opacity: 0;
-        }
-
-        .tab-content.active {
-            display: block;
-            opacity: 1;
-            animation: fadeIn 0.4s ease forwards;
-        }
-
-        .code-block {
-            background-color: #0d0d0f;
-            border-radius: 12px;
-            padding: 24px;
-            position: relative;
-            margin: 20px 0;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .code-block pre {
-            font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
-            font-size: 13.5px;
-            line-height: 1.7;
-            color: #e2e8f0;
-            overflow-x: auto;
-            white-space: pre;
-        }
-
-        .code-actions {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            display: flex;
-            gap: 8px;
-            z-index: 20;
-        }
-
-        .code-actions button {
-            padding: 6px 12px;
-            font-size: 11px;
-            height: 28px;
-            background: var(--secondary);
-            border: 1px solid var(--border);
-            color: var(--foreground);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .code-actions button:hover {
-            background: var(--secondary);
-            border-color: var(--primary);
-        }
-
-        .feature-list li {
-            font-size: 14px;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            color: var(--foreground);
-        }
-
-        .feature-list li svg {
-            width: 18px;
-            height: 18px;
-            flex-shrink: 0;
-            color: var(--muted-foreground);
-            margin-top: 2px;
-        }
-
-        .alert {
-            padding: 24px;
-            border-radius: var(--radius);
-            font-size: 14px;
-            margin-bottom: 32px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            border: 1px solid var(--border);
-        }
-
-        .alert-row {
-            flex-direction: row;
-            align-items: center;
-        }
-
-        .alert-info {
-            background: var(--secondary);
-            border: 1px solid var(--border);
-        }
-
-        .divider {
-            height: 1px;
-            background-color: var(--border);
-            margin: 40px 0;
-        }
-
-        .theme-toggle {
-            width: 40px;
-            height: 40px;
-            padding: 0;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .copy-feedback {
-            position: fixed;
-            bottom: 32px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: var(--primary);
-            color: var(--primary-foreground);
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-size: 14px;
-            font-weight: 700;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 1000;
-        }
-
-        .copy-feedback.show {
-            transform: translateX(-50%) translateY(0);
-        }
-
-        @media (max-width: 900px) {
-            .layout {
-                grid-template-columns: 1fr;
-            }
-
-            h1 {
-                font-size: 32px;
-            }
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .panel {
-            animation: fadeIn 0.6s ease forwards;
-        }
-    </style>
+        content="Generate production-ready setup and maintenance scripts for Python/Django projects. Automate database wipes, migrations, and environment configuration locally.">
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
     <div class="container">
+        <!-- =========================================
+             1. Header Section
+             ========================================= -->
         <header>
             <div>
-                <h1 id="mainTitle">Horilla Setup</h1>
-                <p class="header-subtitle" id="mainSubtitle">Automated workspace scripts for Horilla HRMS</p>
+                <h1 id="mainTitle">Local Setup Generator</h1>
+                <p class="header-subtitle" id="mainSubtitle">Generate automated setup scripts for any Python web project
+                </p>
+                <div
+                    style="margin-top: 12px; font-size: 13px; color: var(--muted-foreground); background: var(--secondary); display: inline-block; padding: 4px 12px; border-radius: 20px;">
+                    Supports Django, Flask, FastAPI & Generic Python
+                </div>
             </div>
             <button class="btn-secondary theme-toggle" onclick="toggleTheme()" id="themeToggle" title="Toggle Theme">
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -480,91 +32,148 @@
             </button>
         </header>
 
-        <div class="alert alert-info alert-row">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <div class="alert alert-info">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                style="margin-top: 4px;">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="16" x2="12" y2="12"></line>
                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
             <div>
-                <strong>Platform Agnostic:</strong> Now supporting both Horilla HRMS and Horilla CRM. Select your
-                platform to generate correct setup and maintenance scripts.
+                <strong>Local Generator Only</strong>
+                <p style="margin-top: 4px; color: hsl(var(--muted-foreground));">This tool runs entirely in your
+                    browser. Ensure you provide correct commands for custom projects.</p>
             </div>
         </div>
 
         <div class="layout">
+            <!-- =========================================
+                 2. Configuration Panel
+                 ========================================= -->
             <div class="panel">
                 <h2>Configuration</h2>
 
                 <div class="form-group">
-                    <label>Target Platform</label>
-                    <div class="platform-toggle">
-                        <button class="platform-btn active" id="platform-hrms" onclick="setPlatform('hrms')">Horilla
-                            HRMS</button>
-                        <button class="platform-btn" id="platform-crm" onclick="setPlatform('crm')">Horilla CRM</button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="projectPath">Project Path</label>
-                    <input type="text" id="projectPath" value="~/dev/horilla-hrms"
-                        placeholder="/home/user/projects/horilla">
-                    <p class="help-text">Local path where Horilla will be cloned</p>
-                </div>
-
-                <div class="form-group">
-                    <label for="scriptPath">Script Download Prefix (Local)</label>
-                    <input type="text" id="scriptPath" value="" placeholder="e.g. scripts/">
-                    <p class="help-text">Optional prefix for file names when downloading</p>
-                </div>
-
-                <div class="form-group">
-                    <label for="venvName">Virtual Environment Name</label>
-                    <input type="text" id="venvName" value="horillavenv" placeholder="horillavenv">
-                    <p class="help-text">Name of the directory for Python isolation</p>
-                </div>
-
-                <div class="form-group">
-                    <label for="dbType">Database Type</label>
-                    <select id="dbType" onchange="updateDbFields()">
-                        <option value="sqlite">SQLite (Development)</option>
-                        <option value="postgresql">PostgreSQL (Production-ready)</option>
+                    <label>Source Repository</label>
+                    <select id="repoSelect" onchange="handleRepoChange()">
+                        <option value="custom">Custom Repository URL...</option>
+                        <!-- Populated by JS -->
                     </select>
                 </div>
 
-                <div id="postgresFields" style="display: none;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <div class="form-group">
-                            <label for="dbName">DB Name</label>
-                            <input type="text" id="dbName" value="horilla_dev">
-                        </div>
-                        <div class="form-group">
-                            <label for="dbUser">DB User</label>
-                            <input type="text" id="dbUser" value="horilla_user">
-                        </div>
+                <div class="form-group" id="customRepoField">
+                    <label for="customRepoUrl">Git Repository URL</label>
+                    <input type="text" id="customRepoUrl" placeholder="https://github.com/username/project.git">
+                </div>
+
+                <div class="form-group" id="customConfigCheckbox" style="display: none;">
+                    <div class="checkbox-item" onclick="document.getElementById('enableCustomConfig').click()">
+                        <input type="checkbox" id="enableCustomConfig" onchange="toggleCustomConfig()"
+                            onclick="event.stopPropagation()">
+                        <span>Enable Custom Configuration</span>
+                    </div>
+                    <p class="help-text">Override defaults and configure advanced settings manually</p>
+                </div>
+
+                <div id="advancedConfig" style="display: none;">
+                    <div class="form-group">
+                        <label for="frameworkSelect">Project Framework</label>
+                        <select id="frameworkSelect" onchange="updateFrameworkDefaults()">
+                            <option value="django">Django (Standard)</option>
+                            <option value="flask">Flask</option>
+                            <option value="fastapi">FastAPI</option>
+                            <option value="frappe">Frappe Framework</option>
+                            <option value="generic">Generic Python</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
-                        <label for="dbPass">Database Password</label>
-                        <input type="password" id="dbPass" value="dev_password_123">
+                        <label for="projectPath">Project Path</label>
+                        <input type="text" id="projectPath" value="~/dev/my-project"
+                            placeholder="/home/user/projects/my-project">
+                        <p class="help-text">Local path where the project will be cloned</p>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label for="scriptPath">Script Download Prefix (Local)</label>
+                        <input type="text" id="scriptPath" value="" placeholder="e.g. scripts/">
+                        <p class="help-text">Optional prefix for file names when downloading</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="venvName">Virtual Environment Name</label>
+                        <input type="text" id="venvName" value="venv" placeholder="venv">
+                        <p class="help-text">Name of the directory for Python isolation</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customReqPath">Custom Requirements Path (Optional)</label>
+                        <input type="text" id="customReqPath" value="" placeholder="e.g. requirements/dev.txt">
+                        <p class="help-text">Specific path to dependencies file (prioritized over auto-discovery)</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customInstallCmd">Custom Install Command (Advanced)</label>
+                        <input type="text" id="customInstallCmd" value="" placeholder="e.g. poetry install">
+                        <p class="help-text">Completely override dependency installation logic</p>
+                    </div>
+
+                    <div id="dbOptionContainer">
                         <div class="form-group">
-                            <label for="dbHost">Host</label>
-                            <input type="text" id="dbHost" value="localhost">
-                        </div>
-                        <div class="form-group">
-                            <label for="dbPort">Port</label>
-                            <input type="number" id="dbPort" value="5432">
+                            <label for="dbType">Database Type</label>
+                            <select id="dbType" onchange="updateDbFields()">
+                                <option value="sqlite">SQLite (Development)</option>
+                                <option value="postgresql">PostgreSQL (Production-ready)</option>
+                            </select>
                         </div>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label for="dbInitPass">DB Init Password</label>
-                    <input type="password" id="dbInitPass" value="d3f6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d">
-                    <p class="help-text">Password for initial login and database initialization</p>
+                    <div id="postgresFields" style="display: none;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label for="dbName">DB Name</label>
+                                <input type="text" id="dbName" value="app_db">
+                            </div>
+                            <div class="form-group">
+                                <label for="dbUser">DB User</label>
+                                <input type="text" id="dbUser" value="db_user">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dbPass">Database Password</label>
+                            <input type="password" id="dbPass" value="dev_password_123">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label for="dbHost">Host</label>
+                                <input type="text" id="dbHost" value="localhost">
+                            </div>
+                            <div class="form-group">
+                                <label for="dbPort">Port</label>
+                                <input type="number" id="dbPort" value="5432">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="form-group">
+                        <label>Custom Commands (Optional)</label>
+                        <div style="background: var(--secondary); padding: 16px; border-radius: 8px;">
+                            <div class="form-group">
+                                <label for="cmdAdmin" style="font-size: 11px;">Admin Creation Command</label>
+                                <input type="text" id="cmdAdmin" value="python3 manage.py createsuperuser"
+                                    placeholder="Command to create admin user">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="cmdPostInstall" style="font-size: 11px;">Post-Install Command</label>
+                                <input type="text" id="cmdPostInstall" value=""
+                                    placeholder="e.g. npm install, python scripts/setup.py">
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="divider"></div>
@@ -572,42 +181,48 @@
                 <div class="form-group">
                     <label>Features & Automation</label>
                     <div class="checkbox-group">
-                        <div class="checkbox-item" onclick="document.getElementById('loadDemo').click()">
+                        <div class="checkbox-item" id="initDbContainer"
+                            onclick="document.getElementById('initDb').click()">
+                            <input type="checkbox" id="initDb" checked onclick="event.stopPropagation()">
+                            <span>Initialize Database</span>
+                        </div>
+                        <div class="checkbox-item" id="demoOptionContainer"
+                            onclick="document.getElementById('loadDemo').click()">
                             <input type="checkbox" id="loadDemo" checked onclick="event.stopPropagation()">
                             <span>Load Demo Data</span>
                         </div>
-                        <div class="checkbox-item" onclick="document.getElementById('createSuper').click()">
+                        <div class="checkbox-item" id="createSuperContainer"
+                            onclick="document.getElementById('createSuper').click()">
                             <input type="checkbox" id="createSuper" checked onclick="event.stopPropagation()">
                             <span>Create Admin User</span>
                         </div>
                         <div class="checkbox-item" onclick="document.getElementById('runServer').click()">
                             <input type="checkbox" id="runServer" checked onclick="event.stopPropagation()">
-                            <span>Auto-run Server</span>
+                            <span>Launch Server after setup</span>
                         </div>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px;">
-                    <div class="form-group">
-                        <label for="adminUser">Admin Username</label>
-                        <input type="text" id="adminUser" value="admin">
-                    </div>
-                    <div class="form-group">
-                        <label for="serverPort">Server Port</label>
-                        <input type="number" id="serverPort" value="8000" onchange="generateScripts()">
+                <div id="adminOptionContainer">
+                    <div id="adminFields">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label for="adminUser">Admin Username</label>
+                                <input type="text" id="adminUser" value="admin">
+                            </div>
+                            <div class="form-group">
+                                <label for="adminEmail">Admin Email</label>
+                                <input type="text" id="adminEmail" value="admin@example.com">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="adminPass">Admin Password</label>
+                            <input type="password" id="adminPass" value="admin123">
+                        </div>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <div class="form-group">
-                        <label for="adminEmail">Admin Email</label>
-                        <input type="text" id="adminEmail" value="admin@horilla.local">
-                    </div>
-                    <div class="form-group">
-                        <label for="adminPass">Admin Password</label>
-                        <input type="password" id="adminPass" value="admin123">
-                    </div>
-                </div>
+                <!-- Removed dbInitPass field as it was Horilla-specific -->
 
                 <div class="button-group">
                     <button class="btn-primary" onclick="generateScripts()">Continue to Scripts</button>
@@ -616,49 +231,39 @@
                     <button class="btn-secondary" onclick="resetForm()">Reset</button>
                 </div>
 
-                <div style="margin-top: 48px; padding-top: 24px;">
-                    <h3
-                        style="font-size: 13px; margin-bottom: 16px; font-weight: 700; color: var(--muted-foreground); text-transform: uppercase; display: flex; align-items: center; gap: 8px;">
-                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
-                            viewBox="0 0 24 24">
-                            <path
-                                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
-                            </path>
-                            <line x1="12" y1="9" x2="12" y2="13"></line>
-                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                        </svg>
-                        Danger Zone
-                    </h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <button class="btn-secondary" onclick="handleDeletionAction('workspace')"
-                            style="border-color: #000; color: #000; opacity: 0.8; justify-content: flex-start; height: auto; padding: 16px;">
-                            <div style="text-align: left;">
-                                <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">Clear Workspace
-                                </div>
-                                <div style="font-size: 11px; font-weight: 400; opacity: 0.7;">Delete project, venv & db
-                                    config</div>
+                <div class="danger-zone">
+                    <h3>Danger Zone</h3>
+                    <div class="danger-grid">
+                        <button class="btn-danger" onclick="handleDeletionAction('workspace')">
+                            <div>
+                                <strong>Clear Workspace</strong>
+                                <p>Delete project, venv & db config</p>
                             </div>
                         </button>
-                        <button class="btn-secondary" onclick="handleDeletionAction('repo')"
-                            style="border-color: #000; color: #000; opacity: 0.8; justify-content: flex-start; height: auto; padding: 16px;">
-                            <div style="text-align: left;">
-                                <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">Clear Repo Only
-                                </div>
-                                <div style="font-size: 11px; font-weight: 400; opacity: 0.7;">Keep venv, delete source
-                                    code</div>
+                        <button class="btn-danger repo-only" onclick="handleDeletionAction('repo')">
+                            <div>
+                                <strong>Clear Repo Only</strong>
+                                <p>Keep venv, delete source code</p>
+                            </div>
+                        </button>
+                        <button class="btn-danger env-only" onclick="handleDeletionAction('env')">
+                            <div>
+                                <strong>Clear Env Only</strong>
+                                <p>Keep repo, delete venv & config</p>
                             </div>
                         </button>
                     </div>
                 </div>
             </div>
 
+            <!-- =========================================
+                 3. Productivity Panel
+                 ========================================= -->
             <div class="panel">
                 <h2>Productivity</h2>
 
-                <h3
-                    style="font-size: 13px; margin-bottom: 20px; font-weight: 700; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.1em;">
-                    Core Benefits</h3>
-                <ul class="feature-list" style="list-style: none;">
+                <h3 class="section-label">Core Benefits</h3>
+                <ul class="feature-list">
                     <li><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path d="M5 13l4 4L19 7"></path>
                         </svg> Eliminates repetitive manual install steps</li>
@@ -675,38 +280,186 @@
 
                 <div class="divider"></div>
 
-                <h3
-                    style="font-size: 13px; margin-bottom: 20px; font-weight: 700; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.1em;">
-                    Standard Flow</h3>
-                <div style="font-size: 14px; display: flex; flex-direction: column; gap: 12px;">
-                    <div style="display: flex; gap: 12px; align-items: flex-start;">
-                        <span
-                            style="background: var(--primary); color: var(--primary-foreground); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; margin-top: 2px;">1</span>
+                <h3 class="section-label">Standard Flow</h3>
+                <div class="flow-list">
+                    <div class="flow-item">
+                        <span class="step-badge">1</span>
                         <span>Select platform and configure backend settings</span>
                     </div>
-                    <div style="display: flex; gap: 12px; align-items: flex-start;">
-                        <span
-                            style="background: var(--primary); color: var(--primary-foreground); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; margin-top: 2px;">2</span>
+                    <div class="flow-item">
+                        <span class="step-badge">2</span>
                         <span>Generate and download the utility scripts</span>
                     </div>
-                    <div style="display: flex; gap: 12px; align-items: flex-start;">
-                        <span
-                            style="background: var(--primary); color: var(--primary-foreground); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; margin-top: 2px;">3</span>
+                    <div class="flow-item">
+                        <span class="step-badge">3</span>
                         <span>Run <code>./setup.sh</code> to bootstrap the environment</span>
                     </div>
-                    <div style="display: flex; gap: 12px; align-items: flex-start;">
-                        <span
-                            style="background: var(--primary); color: var(--primary-foreground); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; margin-top: 2px;">4</span>
+                    <div class="flow-item">
+                        <span class="step-badge">4</span>
                         <span>Reset at any time with <code>./fresh-db.sh</code></span>
                     </div>
                 </div>
 
                 <div class="divider"></div>
 
-                <div
-                    style="background: rgba(0,0,0,0.02); padding: 16px; border-radius: 8px; font-size: 13px; color: var(--muted-foreground);">
+                <div class="tip-box">
                     <strong>Tip:</strong> You can edit the <code>.env</code> template directly after generation to add
                     custom variables.
+                </div>
+            </div>
+
+
+            <!-- =========================================
+                 4. Results & Carousel Section
+                 ========================================= -->
+            <div class="results-container" id="resultsSection" style="display: none;">
+                <!-- Context & Config Summary -->
+                <div id="configSummary" class="config-summary-panel">
+                    <h3 class="config-label">Configuration</h3>
+
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <label>Repository</label>
+                            <div id="summaryRepo">My Project</div>
+                        </div>
+                        <div class="summary-item">
+                            <label>Framework</label>
+                            <div id="summaryFramework">Django</div>
+                        </div>
+                        <div class="summary-item">
+                            <label>Install Path</label>
+                            <div id="summaryPath">~/project</div>
+                        </div>
+                        <div class="summary-item">
+                            <label>Database</label>
+                            <div id="summaryDb">SQLite</div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic extra info (credentials, init status) -->
+                    <div id="summaryExtraInfo" class="summary-extra-row"></div>
+
+                    <div class="summary-tip">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Files will be saved locally. Run commands from project root.
+                    </div>
+                </div>
+
+                <!-- Optimized Quick Actions -->
+                <div id="quickActions" class="quick-actions-panel">
+                    <h3 style="margin:0 0 15px 0; font-size:16px;">Quick Actions</h3>
+                    <div class="quick-actions-grid">
+                        <!-- Save Workspace -->
+                        <div class="action-card" onclick="saveToFolder()">
+                            <h4>Save All</h4>
+                            <p>Download folder</p>
+                        </div>
+
+                        <!-- Make Executable -->
+                        <div class="action-card" onclick="copyCode('chmod +x *.sh')">
+                            <h4>Chmod +x</h4>
+                            <p>Make executable</p>
+                        </div>
+
+                        <!-- Run Setup -->
+                        <div class="action-card" onclick="copyCode('./setup.sh')">
+                            <h4>Run Setup</h4>
+                            <p>./setup.sh</p>
+                        </div>
+
+                        <!-- Start Server -->
+                        <div class="action-card" onclick="copyCode('./dev-server.sh')">
+                            <h4>Start Server</h4>
+                            <p>./dev-server.sh</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scripts Carousel (Full Width Row) -->
+                <div id="scriptsCarousel">
+                    <div class="carousel-heading">
+                        <h3 style="font-size: 18px; margin-bottom: 4px;">Generated Scripts</h3>
+                        <p style="font-size: 12px; color: var(--muted-foreground);">Navigate to preview or copy
+                            individual files</p>
+                    </div>
+
+                    <div class="carousel-container">
+                        <button class="carousel-nav prev" onclick="carouselPrev()"
+                            aria-label="Previous script">‹</button>
+                        <button class="carousel-nav next" onclick="carouselNext()" aria-label="Next script">›</button>
+
+                        <div class="carousel-track">
+                            <div class="carousel-slide active" data-script="setup">
+                                <div class="script-header">
+                                    <h3>setup.sh</h3>
+                                    <p>Complete environment initialization</p>
+                                </div>
+                                <div class="code-block">
+                                    <div class="code-actions">
+                                        <button class="btn-secondary" onclick="copyCode('setupCode')">Copy</button>
+                                        <button class="btn-primary"
+                                            onclick="downloadFile('setupCode', 'setup.sh')">Download</button>
+                                    </div>
+                                    <pre id="setupCode"></pre>
+                                </div>
+                            </div>
+
+                            <div class="carousel-slide" data-script="fresh">
+                                <div class="script-header">
+                                    <h3>fresh-db.sh</h3>
+                                    <p>Database reset and cleanup</p>
+                                </div>
+                                <div class="code-block">
+                                    <div class="code-actions">
+                                        <button class="btn-secondary" onclick="copyCode('freshCode')">Copy</button>
+                                        <button class="btn-primary"
+                                            onclick="downloadFile('freshCode', 'fresh-db.sh')">Download</button>
+                                    </div>
+                                    <pre id="freshCode"></pre>
+                                </div>
+                            </div>
+
+                            <div class="carousel-slide" data-script="server">
+                                <div class="script-header">
+                                    <h3>dev-server.sh</h3>
+                                    <p>Development server launcher</p>
+                                </div>
+                                <div class="code-block">
+                                    <div class="code-actions">
+                                        <button class="btn-secondary" onclick="copyCode('serverCode')">Copy</button>
+                                        <button class="btn-primary"
+                                            onclick="downloadFile('serverCode', 'dev-server.sh')">Download</button>
+                                    </div>
+                                    <pre id="serverCode"></pre>
+                                </div>
+                            </div>
+
+                            <div class="carousel-slide" data-script="env">
+                                <div class="script-header">
+                                    <h3>.env.example</h3>
+                                    <p>Environment variables template</p>
+                                </div>
+                                <div class="code-block">
+                                    <div class="code-actions">
+                                        <button class="btn-secondary" onclick="copyCode('envCode')">Copy</button>
+                                        <button class="btn-primary"
+                                            onclick="downloadFile('envCode', '.env.example')">Download</button>
+                                    </div>
+                                    <pre id="envCode"></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="carousel-indicators">
+                            <span class="indicator active" onclick="goToSlide(0)" title="setup.sh"></span>
+                            <span class="indicator" onclick="goToSlide(1)" title="fresh-db.sh"></span>
+                            <span class="indicator" onclick="goToSlide(2)" title="dev-server.sh"></span>
+                            <span class="indicator" onclick="goToSlide(3)" title=".env.example"></span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -727,7 +480,7 @@
                             <button class="btn-primary"
                                 onclick="downloadFile('setupCode', 'setup.sh')">Download</button>
                         </div>
-                        <pre id="setupCode"></pre>
+                        <pre id="setupCodeTab"></pre>
                     </div>
                 </div>
 
@@ -740,7 +493,7 @@
                             <button class="btn-primary"
                                 onclick="downloadFile('freshCode', 'fresh-db.sh')">Download</button>
                         </div>
-                        <pre id="freshCode"></pre>
+                        <pre id="freshCodeTab"></pre>
                     </div>
                 </div>
 
@@ -753,7 +506,7 @@
                             <button class="btn-primary"
                                 onclick="downloadFile('serverCode', 'dev-server.sh')">Download</button>
                         </div>
-                        <pre id="serverCode"></pre>
+                        <pre id="serverCodeTab"></pre>
                     </div>
                 </div>
 
@@ -785,6 +538,20 @@
                     </div>
                 </div>
 
+                <div id="clearEnv" class="tab-content">
+                    <p style="font-size: 14px; color: var(--muted-foreground); margin-bottom: 20px;">Removes
+                        <strong>only</strong> the virtual environment and local config. Retains source code.
+                    </p>
+                    <div class="code-block">
+                        <div class="code-actions">
+                            <button class="btn-secondary" onclick="copyCode('clearEnvCode')">Copy</button>
+                            <button class="btn-primary"
+                                onclick="downloadFile('clearEnvCode', 'clear_env.sh')">Download</button>
+                        </div>
+                        <pre id="clearEnvCode"></pre>
+                    </div>
+                </div>
+
                 <div id="env" class="tab-content">
                     <p style="font-size: 14px; color: var(--muted-foreground); margin-bottom: 20px;">Environment
                         variable template for your project root.</p>
@@ -794,7 +561,7 @@
                             <button class="btn-primary"
                                 onclick="downloadFile('envCode', '.env.example')">Download</button>
                         </div>
-                        <pre id="envCode"></pre>
+                        <pre id="envCodeTab"></pre>
                     </div>
                 </div>
 
@@ -813,7 +580,7 @@
                             <p class="help-text"
                                 style="font-weight: 600; margin-bottom: 8px; color: var(--foreground);">1. Make scripts
                                 executable</p>
-                            <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0;">
+                            <div class="code-block" style="margin: 0;">
                                 <button class="btn-secondary"
                                     style="position: absolute; right: 8px; top: 8px; font-size: 10px; padding: 4px 8px; height: auto;"
                                     onclick="copyCode('cmdChmod')">Copy</button>
@@ -826,7 +593,7 @@
                             <p class="help-text"
                                 style="font-weight: 600; margin-bottom: 8px; color: var(--foreground);">2. Run initial
                                 setup</p>
-                            <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0;">
+                            <div class="code-block" style="margin: 0;">
                                 <button class="btn-secondary"
                                     style="position: absolute; right: 8px; top: 8px; font-size: 10px; padding: 4px 8px; height: auto;"
                                     onclick="copyCode('cmdSetup')">Copy</button>
@@ -838,7 +605,7 @@
                             <p class="help-text"
                                 style="font-weight: 600; margin-bottom: 8px; color: var(--foreground);">3. Start server
                             </p>
-                            <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0;">
+                            <div class="code-block" style="margin: 0;">
                                 <button class="btn-secondary"
                                     style="position: absolute; right: 8px; top: 8px; font-size: 10px; padding: 4px 8px; height: auto;"
                                     onclick="copyCode('cmdServer')">Copy</button>
@@ -850,7 +617,7 @@
                             <p class="help-text"
                                 style="font-weight: 600; margin-bottom: 8px; color: var(--foreground);">4. Reset
                                 database</p>
-                            <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0;">
+                            <div class="code-block" style="margin: 0;">
                                 <button class="btn-secondary"
                                     style="position: absolute; right: 8px; top: 8px; font-size: 10px; padding: 4px 8px; height: auto;"
                                     onclick="copyCode('cmdReset')">Copy</button>
@@ -865,46 +632,152 @@
 
     <div class="copy-feedback" id="copyFeedback">✓ Copied to clipboard</div>
 
+    <script src="repos.js"></script>
+
     <script>
-        let currentPlatform = 'hrms';
-        const platforms = {
-            hrms: {
-                name: "Horilla HRMS",
-                repo: "https://github.com/horilla-opensource/horilla.git",
-                envDist: ".env.dist",
-                defaultPath: "~/dev/horilla-hrms"
-            },
-            crm: {
-                name: "Horilla CRM",
-                repo: "https://github.com/horilla-opensource/horilla-crm.git",
-                envDist: ".env.example",
-                defaultPath: "~/dev/horilla-crm"
+        // Defaults and Globals
+        let selectedRepo = null;
+        let currentSlide = 0;
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
             }
-        };
+            populateRepoDropdown();
+            updateDbFields();
+            updateFrameworkDefaults(); // Set initial defaults
+        });
 
-        function setPlatform(platform) {
-            currentPlatform = platform;
-            document.getElementById('platform-hrms').classList.toggle('active', platform === 'hrms');
-            document.getElementById('platform-crm').classList.toggle('active', platform === 'crm');
+        // Carousel Management
+        function carouselNext() {
+            const slides = document.querySelectorAll('.carousel-slide');
+            currentSlide = (currentSlide + 1) % slides.length;
+            updateCarousel();
+        }
 
-            document.getElementById('mainTitle').textContent = platforms[platform].name + " Setup";
-            document.getElementById('mainSubtitle').textContent = "Automated workspace scripts for " + platforms[platform].name;
+        function carouselPrev() {
+            const slides = document.querySelectorAll('.carousel-slide');
+            currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+            updateCarousel();
+        }
 
-            // Suggest path if it's still default
-            const pathInput = document.getElementById('projectPath');
-            if (pathInput.value === platforms[platform === 'hrms' ? 'crm' : 'hrms'].defaultPath) {
-                pathInput.value = platforms[platform].defaultPath;
+        function goToSlide(index) {
+            currentSlide = index;
+            updateCarousel();
+        }
+
+        function updateCarousel() {
+            const track = document.querySelector('.carousel-track');
+            const slides = document.querySelectorAll('.carousel-slide');
+            const indicators = document.querySelectorAll('.indicator');
+
+            if (!track || !slides.length) return;
+
+            // Move carousel
+            track.style.transform = `translateX(-${currentSlide * 100}%)`;
+
+            // Update active states
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === currentSlide);
+            });
+
+            indicators.forEach((indicator, i) => {
+                indicator.classList.toggle('active', i === currentSlide);
+            });
+        }
+
+        // Configuration Summary
+        function displayConfigSummary(repoName, framework, projectPath, dbType, initDb, loadDemo, createSuper, adminUser, adminPass) {
+            document.getElementById('summaryRepo').textContent = repoName;
+            document.getElementById('summaryFramework').textContent = framework.toUpperCase();
+            document.getElementById('summaryPath').textContent = projectPath;
+            document.getElementById('summaryDb').textContent =
+                dbType === 'postgresql' ? 'PostgreSQL' : 'SQLite';
+
+            // Add new info cards for better visibility
+            const extraContainer = document.getElementById('summaryExtraInfo');
+            if (extraContainer) {
+                let html = `
+                <div class="summary-card">
+                    <strong>DB Action:</strong> ${initDb ? 'Initialize' : 'Skip'} + ${loadDemo ? 'Load Demo' : 'No Demo'}
+                </div>`;
+
+                if (createSuper) {
+                    html += `
+                    <div class="summary-card" style="border-left: 2px solid var(--primary);">
+                        <strong>Credentials:</strong> ${adminUser} / ${adminPass}
+                    </div>`;
+                }
+                extraContainer.innerHTML = html;
             }
 
-            // Update DB defaults for CRM if switched
-            if (platform === 'crm') {
-                document.getElementById('dbName').value = 'horilla_main';
-                document.getElementById('dbUser').value = 'horilla';
-                document.getElementById('dbPass').value = 'horilla';
-            } else {
-                document.getElementById('dbName').value = 'horilla_dev';
-                document.getElementById('dbUser').value = 'horilla_user';
-                document.getElementById('dbPass').value = 'dev_password_123';
+            document.getElementById('resultsSection').style.display = 'grid';
+            document.getElementById('configSummary').style.display = 'block';
+            document.getElementById('quickActions').style.display = 'block';
+            document.getElementById('scriptsCarousel').style.display = 'block';
+        }
+
+        // Custom Configuration Toggle
+        function toggleCustomConfig() {
+            const enabled = document.getElementById('enableCustomConfig').checked;
+            const advConfig = document.getElementById('advancedConfig');
+            const isCustomUrl = document.getElementById('repoSelect').value === 'custom';
+
+            // Show advanced config if custom URL OR checkbox is checked
+            advConfig.style.display = (isCustomUrl || enabled) ? 'block' : 'none';
+        }
+
+        function populateRepoDropdown() {
+            const select = document.getElementById('repoSelect');
+            if (typeof REPO_LIST === 'undefined') {
+                console.error("REPO_LIST not found. Is repos.js loaded?");
+                return;
+            }
+
+            REPO_LIST.forEach(category => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = category.category;
+                category.repos.forEach((repo, index) => {
+                    const option = document.createElement('option');
+                    option.value = repo.url; // Use URL as the value
+                    option.textContent = repo.name + (repo.stars ? ` (${repo.stars})` : "");
+                    optgroup.appendChild(option);
+                });
+                select.appendChild(optgroup);
+            });
+
+            // Trigger change handler for initial state
+            handleRepoChange();
+        }
+
+
+
+        function updateFrameworkDefaults(preserveIfCustom = false) {
+            const framework = document.getElementById('frameworkSelect').value;
+            const cmdAdmin = document.getElementById('cmdAdmin');
+
+            // If we are switching generic presets, update the admin command suggestion
+            // Logic: Only overwrite if it matches a known default or if forced
+            const defaults = {
+                django: "python3 manage.py createsuperuser",
+                flask: "flask create-user # (Hypothetical, customize as needed)",
+                fastapi: "python3 scripts/create_user.py # (Customize)",
+                frappe: "bench --site mysite.local set-admin-password admin",
+                generic: "python3 setup.py admin",
+            };
+
+            // Using this logic: If the current value is one of the defaults, we update it to the new default.
+            // If user typed something custom, we leave it alone unless it's a fresh preset load.
+            const isDefaultValue = Object.values(defaults).some(v => v === cmdAdmin.value);
+
+            if (isDefaultValue || preserveIfCustom) {
+                if (selectedRepo && selectedRepo.adminCommand) {
+                    cmdAdmin.value = selectedRepo.adminCommand;
+                } else if (defaults[framework]) {
+                    cmdAdmin.value = defaults[framework];
+                }
             }
         }
 
@@ -913,7 +786,6 @@
             const isDark = document.documentElement.classList.contains('dark');
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
 
-            // Update icon
             const btn = document.getElementById('themeToggle');
             if (isDark) {
                 btn.innerHTML = `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
@@ -930,546 +802,306 @@
         function switchTab(e, tabName) {
             const container = e.target.closest('.output-section');
             if (!container) return;
-
-            // Hide all tabs in this container
             container.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             container.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-
-            // Show selected tab
             const targetContent = container.querySelector('#' + tabName);
             if (targetContent) targetContent.classList.add('active');
             e.target.classList.add('active');
         }
 
-        function generateScripts() {
-            const projectPath = document.getElementById('projectPath').value || platforms[currentPlatform].defaultPath;
-            const venvName = document.getElementById('venvName').value || 'horillavenv';
-            const dbType = document.getElementById('dbType').value;
-            const loadDemo = document.getElementById('loadDemo').checked;
-            const createSuper = document.getElementById('createSuper').checked;
-            const runServer = document.getElementById('runServer').checked;
-            const adminUser = document.getElementById('adminUser').value || 'admin';
-            const adminEmail = document.getElementById('adminEmail').value || 'admin@horilla.local';
-            const adminPass = document.getElementById('adminPass').value || 'admin123';
-            const serverPort = document.getElementById('serverPort').value || '8000';
-            const dbInitPass = document.getElementById('dbInitPass').value || 'd3f6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d';
 
-            let setupScript = generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail, adminPass, serverPort);
-            let freshScript = generateFreshDbScript(projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort);
-            let serverScript = generateServerScript(projectPath, venvName, serverPort);
-            let envFile = generateEnvFile(dbType, dbInitPass, serverPort);
 
-            document.getElementById('setupCode').textContent = setupScript;
-            document.getElementById('freshCode').textContent = freshScript;
-            document.getElementById('serverCode').textContent = serverScript;
-            document.getElementById('envCode').textContent = envFile;
-
-            // Show output section with animation
-            const output = document.getElementById('outputSection');
-            output.style.display = 'block';
-            setTimeout(() => output.classList.add('visible'), 50);
-
-            showFeedback("Success! New scripts generated.", true);
-
-            // Scroll to output
-            output.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
-        function showFeedback(message, isGen = false) {
+        function showFeedback(message) {
             const feedback = document.getElementById('copyFeedback');
-            feedback.innerHTML = `<span style="display:flex;align-items:center;gap:8px;">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"></path></svg>
-                ${message}
-            </span>`;
+            feedback.innerHTML = `<span style="display:flex;align-items:center;gap:8px;"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"></path></svg>${message}</span>`;
             feedback.className = 'copy-feedback show';
             setTimeout(() => feedback.classList.remove('show'), 3000);
         }
 
-        function downloadFile(elementId, filename) {
-            const prefix = document.getElementById('scriptPath').value;
-            const fullFilename = prefix ? (prefix.endsWith('/') ? prefix : prefix + '/') + filename : filename;
 
-            const content = document.getElementById(elementId).textContent;
-            const blob = new Blob([content], { type: 'text/x-sh' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fullFilename;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        }
 
-        async function handleDeletionAction(mode) {
-            if (!('showDirectoryPicker' in window)) {
-                // Fallback immediately if API not supported
-                downloadClearScript(mode);
-                return;
-            }
-
-            // Reducing friction: We don't ask for mode confirmation anymore.
-            // We just prompt to pick the folder, with a clear hint.
-
-            // Try to use a "well known" starting point if possible (e.g., 'documents')
-            // but we can't force the exact path.
-
-            const projectPath = document.getElementById('projectPath').value;
-
-            // We use alert because showDirectoryPicker needs a user gesture, but an alert might break it?
-            // Actually, showDirectoryPicker MUST be the direct result of a click.
-            // So we can't do confirm() -> showDirectoryPicker() in some strict browsers?
-            // Chrome is usually fine.
-            // Let's rely on the native picker's text if possible, but we can't control it much.
-            // We will just do a final safety check AFTER selection.
-
-            try {
-                // Tip for the user (using a non-blocking toast or just trust the user knows what they clicked)
-                // User clicked "Clear Workspace" -> they expect to pick the workspace folder.
-
-                const dirHandle = await window.showDirectoryPicker();
-
-                // Safety check: is this the right folder?
-                // We can check if it matches the folder name in projectPath?
-                // e.g. projectPath = ~/dev/horilla-hrms -> check if dirHandle.name == horilla-hrms
-
-                // Extract expected folder name
-                const parts = projectPath.split('/');
-                const expectedName = parts[parts.length - 1] || parts[parts.length - 2]; // handle trailing slash
-
-                let warningMsg = `Are you sure you want to PERMANENTLY DELETE all contents of '${dirHandle.name}'?`;
-                if (expectedName && dirHandle.name !== expectedName && !projectPath.includes(dirHandle.name)) {
-                    warningMsg = `⚠️ WARNING: Folder name '${dirHandle.name}' does not match your Project Path settings ('...${expectedName}').\n\nAre you sure you want to delete this folder's contents?`;
-                }
-
-                if (!confirm(warningMsg)) {
-                    return;
-                }
-
-                showFeedback("Deleting contents...", true);
-
-                let deletedCount = 0;
-                // Iterate and delete
-                for await (const entry of dirHandle.values()) {
-                    // Logic:
-                    // If mode == 'repo', we want to SKIP 'horillavenv' or whatever the venv name is.
-
-                    const venvName = document.getElementById('venvName').value || 'horillavenv';
-
-                    if (mode === 'repo' && entry.name === venvName) {
-                        console.log("Skipping venv:", entry.name);
-                        continue;
-                    }
-
-                    await dirHandle.removeEntry(entry.name, { recursive: true });
-                    deletedCount++;
-                }
-
-                showFeedback(`Deleted ${deletedCount} items. Workspace cleared.`);
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    console.error(err);
-                    // If permissions fail, offer script
-                    if (confirm("Browser deletion failed or permission denied. Download shell script instead?")) {
-                        downloadClearScript(mode);
-                    }
-                }
-            }
-        }
-
-        function downloadClearScript(mode) {
-            const projectPath = document.getElementById('projectPath').value || platforms[currentPlatform].defaultPath;
-            const venvName = document.getElementById('venvName').value || 'horillavenv';
-            const dbType = document.getElementById('dbType').value;
-
-            const content = generateClearScript(projectPath, venvName, dbType, mode);
-            const filename = mode === 'repo' ? 'clear_repo.sh' : 'clear_workspace.sh';
-
-            // Create temp blob for download
-            const blob = new Blob([content], { type: 'text/x-sh' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        }
-
-        async function saveToFolder() {
-            if (!('showDirectoryPicker' in window)) {
-                showFeedback("Your browser doesn't support direct folder access. Please download files individually.", false);
-                return;
-            }
-
-            try {
-                const dirHandle = await window.showDirectoryPicker();
-                const files = [
-                    { name: 'setup.sh', id: 'setupCode' },
-                    { name: 'fresh-db.sh', id: 'freshCode' },
-                    { name: 'dev-server.sh', id: 'serverCode' },
-                    { name: 'clear_workspace.sh', id: 'clearCode' },
-                    { name: 'clear_repo.sh', id: 'clearRepoCode' },
-                    { name: document.getElementById('platform-hrms').classList.contains('active') ? '.env.dist' : '.env.example', id: 'envCode' }
-                ];
-
-                for (const file of files) {
-                    const content = document.getElementById(file.id).textContent;
-                    if (!content) continue;
-
-                    const fileHandle = await dirHandle.getFileHandle(file.name, { create: true });
-                    const writable = await fileHandle.createWritable();
-                    await writable.write(content);
-                    await writable.close();
-                }
-
-                showFeedback("All files saved to " + dirHandle.name);
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    console.error(err);
-                    showFeedback("Error saving to folder");
-                }
-            }
-        }
-
-        function generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail, adminPass, serverPort) {
-            let script = `#!/bin/bash
-
-# ${platforms[currentPlatform].name} - Complete Development Setup Script
-# Official documentation: https://github.com/horilla-opensource
+        function generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, preInstall, customReqPath, runServer, demoDataCmd, initDb, dependencies, customInstallCmd) {
+            return `#!/bin/bash
+# ${repoName} - Development Setup Script
 # Generated: $(date)
 
-set -e  # Exit on error
+set -e
+trap 'echo "Error encountered at line $LINENO"; exit 1' ERR
 
-# Check for required tools
-command -v python3 >/dev/null 2>&1 || { echo "Python3 required but not found. Exiting."; exit 1; }
-command -v git >/dev/null 2>&1 || { echo "Git required but not found. Exiting."; exit 1; }
-
+# --- Configuration ---
+REPO_URL="${repoUrl}"
 PROJECT_PATH="${projectPath}"
 VENV_NAME="${venvName}"
+CUSTOM_REQ_PATH="${customReqPath}"
+CUSTOM_INSTALL_CMD="${customInstallCmd}"
+SCRIPT_DIR="$(cd "$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
 
-echo "Starting ${platforms[currentPlatform].name} development setup..."
-echo "Project path: \${PROJECT_PATH}"
-echo ""
+echo "Starting setup for ${repoName}..."
 
-# Ensure we are in the right directory
-mkdir -p "\${PROJECT_PATH}"
-cd "\${PROJECT_PATH}"
-
-# Check if repo already cloned
-if [ ! -f "manage.py" ]; then
-    echo "Cloning ${platforms[currentPlatform].name} repository..."
-    git clone ${platforms[currentPlatform].repo} .
-else
-    echo "${platforms[currentPlatform].name} repository already exists"
+# --- Checks ---
+command -v python3 >/dev/null 2>&1 || { echo "Python3 required."; exit 1; }
+command -v git >/dev/null 2>&1 || { echo "Git required."; exit 1; }
+if [ -f "package.json" ]; then
+    command -v npm >/dev/null 2>&1 || echo "⚠️  Node.js/NPM not found but package.json detected. UI builds may fail."
 fi
 
-# Create virtual environment if needed
+# --- Clone ---
+if [ -d "$PROJECT_PATH" ]; then
+    if [ "$(ls -A "$PROJECT_PATH")" ]; then
+        if [ -d "$PROJECT_PATH/.git" ]; then
+             echo "Repository already exists at $PROJECT_PATH"
+        else
+             echo "ERROR: Target directory $PROJECT_PATH exists and is not empty."
+             echo "Please clear the directory or choose a different path."
+             exit 1
+        fi
+    else
+        echo "Directory exists but is empty. Proceeding..."
+        git clone "$REPO_URL" "$PROJECT_PATH" || { echo "Clone failed."; exit 1; }
+    fi
+else
+    echo "Cloning repository..."
+    mkdir -p "$(dirname "$PROJECT_PATH")"
+    git clone "$REPO_URL" "$PROJECT_PATH" || { echo "Clone failed. Check your internet connection or URL."; exit 1; }
+fi
+cd "$PROJECT_PATH"
+
+# --- Pre-Install Commands ---
+${preInstall ? `
+echo "Running pre-install commands..."
+${preInstall}
+` : ''}
+
+# --- Virtual Environment ---
 if [ ! -d "$VENV_NAME" ]; then
-    echo "Creating Python virtual environment..."
-    python3 -m venv "$VENV_NAME"
-else
-    echo "Virtual environment already exists"
+    echo "Creating virtual env..."
+    # Check if python3-venv is installed (debian/ubuntu issue often)
+    python3 -m venv "$VENV_NAME" || { echo "Failed to create venv. Try: sudo apt install python3-venv"; exit 1; }
 fi
-
-# Activate virtual environment
-echo "Activating virtual environment..."
 source "$VENV_NAME/bin/activate"
 
-# Upgrade pip and install dependencies
-echo "Upgrading pip..."
-python3 -m pip install --upgrade pip
+# --- Dependencies ---
+echo "Installing dependencies..."
+python3 -m pip install --upgrade pip setuptools wheel
 
-if [ -f "requirements.txt" ]; then
-    echo "Installing dependencies..."
-    python3 -m pip install -r requirements.txt || { echo "Failed to install dependencies. Check your internet connection."; exit 1; }
+INSTALLED_DEPS=false
+
+# 1. Custom Path
+if [ -n "$CUSTOM_REQ_PATH" ] && [ -f "$CUSTOM_REQ_PATH" ]; then
+    echo "Installing from custom path: $CUSTOM_REQ_PATH"
+    pip install -r "$CUSTOM_REQ_PATH"
+    INSTALLED_DEPS=true
 fi
 
-if [ "${dbType}" == "postgresql" ]; then
-    echo "Installing PostgreSQL drivers..."
-    python3 -m pip install psycopg2-binary || echo "Note: Failed to install psycopg2-binary, you may need to install it manually."
-    
-    echo "Verifying database connectivity..."
-    if ! python3 -c "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.settimeout(2); s.connect(('${document.getElementById('dbHost').value}', ${document.getElementById('dbPort').value})); s.close()" 2>/dev/null; then
-        echo "Error: Cannot connect to PostgreSQL at ${document.getElementById('dbHost').value}:${document.getElementById('dbPort').value}"
-        echo "Please ensure your database server is running and accessible."
-        exit 1
+# 1.5 Custom Install Command
+if [ -n "$CUSTOM_INSTALL_CMD" ]; then
+    echo "Running custom install command..."
+    $CUSTOM_INSTALL_CMD
+    INSTALLED_DEPS=true
+fi
+
+# 2. Configured Dependencies (from repos.js)
+${dependencies ? `
+    echo "Using configured dependencies..."
+    ${dependencies.command ? dependencies.command :
+                        dependencies.files ? dependencies.files.map(f => `pip install -r "${f}"`).join('\n    ') :
+                            'echo "No specific dependency files configured."'}
+    INSTALLED_DEPS=true
+` : `
+    # 3. Fallback: Open edX / Specific Logic (Legacy/Backup)
+    if [[ "$REPO_URL" == *"edx-platform"* ]]; then
+        echo "Detected Open edX platform..."
+        if [ -f "requirements/pip.txt" ]; then pip install -r requirements/pip.txt; fi
+        if [ -f "requirements/edx/base.txt" ]; then 
+            pip install -r requirements/edx/base.txt
+            INSTALLED_DEPS=true
+        fi
     fi
+
+    # 4. Fallback: Auto-Discovery
+    if [ "$INSTALLED_DEPS" = false ]; then
+        DEP_FILES=("requirements.txt" "requirements/dev.txt" "requirements/development.txt" "requirements/base.txt" "requirements-dev.txt")
+        for main_file in "\${DEP_FILES[@]}"; do
+            if [ -f "$main_file" ]; then
+                echo "Found $main_file, installing..."
+                pip install -r "$main_file"
+                INSTALLED_DEPS=true
+                break 
+            fi
+        done
+    fi
+
+    # 5. Fallback: Build Systems
+    if [ "$INSTALLED_DEPS" = false ] && ([ -f "pyproject.toml" ] || [ -f "setup.py" ]); then
+        echo "Detected buildable project..."
+        pip install -e . || pip install .
+        INSTALLED_DEPS=true
+    fi
+`}
+
+if [ "$INSTALLED_DEPS" = false ]; then
+    echo "WARNING: No standard dependency files found (requirements.txt, pyproject.toml, etc)."
+    echo "You may need to manually install dependencies."
 fi
 
-# Initialize environment file
-echo "Configuring environment variables (.env)..."
+${dbType === 'postgresql' ? `
+# --- Database Drivers (Postgres) ---
+pip install psycopg2-binary || echo "Warning: psycopg2-binary install failed."
+` : ''}
+
+# --- Environment ---
+echo "Creating .env file..."
 cat > .env << 'EOF'
-${generateEnvFile(dbType, dbInitPass, serverPort)}
+${generateEnvFile(repoName, dbType, adminPass, serverPort)}
 EOF
 
-# Compile translations
-if command -v msgfmt >/dev/null 2>&1; then
-    echo "Compiling translations..."
-    python3 manage.py compilemessages || echo "Note: Translation compilation failed"
-else
-    echo "Note: gettext (msgfmt) not found. Attempting to install..."
-    if command -v apt-get >/dev/null 2>&1; then
-        sudo apt-get update -y && sudo apt-get install -y gettext || echo "Could not install gettext automatically"
-    fi
-    if command -v msgfmt >/dev/null 2>&1; then
-        python3 manage.py compilemessages
-    else
-        echo "Skipping translation compilation (gettext missing)"
-    fi
-fi
+# Export vars to ensure they are available for immediate use
+set -a
+source .env
+set +a
 
-# Database setup
+# --- Post-Install Custom Commands ---
+${cmdPostInstall ? `
+echo "Running post-install commands..."
+${cmdPostInstall}
+` : ''}
+
+# --- Framework Specifics ---
+${framework === 'django' ? `
+echo "Running Django specific setup..."
 if [ -f "manage.py" ]; then
-    echo "Generating and applying migrations..."
-    python3 manage.py makemigrations --noinput
+    ${initDb ? `
+    echo "Initializing database..."
+    ${dbType === 'postgresql' ? `
+    # Pre-flight Postgres Check
+    if command -v pg_isready >/dev/null 2>&1; then
+        echo "Waiting for Postgres to be ready at $DB_HOST:$DB_PORT..."
+        until pg_isready -h "$DB_HOST" -p "$DB_PORT"; do
+            sleep 2
+            echo "Waiting for DB..."
+        done
+        echo "Postgres is online."
+    fi
+    ` : ''}
     python3 manage.py migrate --noinput
-else
-    echo "manage.py not found. Are you in the correct directory?"
-    exit 1
-fi
-
-`;
-
-            if (dbType === 'postgresql') {
-                script += `
-# PostgreSQL specific setup
-echo "PostgreSQL database configured in .env"
-`;
-            }
-
-            if (loadDemo) {
-                script += `
-# Load initial demo data/fixtures
-echo "Initializing database data..."
-# Horilla HRMS often needs specific fixtures or initialization commands
-if [ -f "fixtures/initial_data.json" ]; then
-    python3 manage.py loaddata initial_data
-fi
-
-# Try common Horilla init commands if they exist
-python3 manage.py load_fixtures 2>/dev/null || true
-`;
-            }
-
-            if (createSuper) {
-                if (loadDemo) {
-                    script += `
-# Create administrator account
-if python3 manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); exit(0 if User.objects.filter(username='${adminUser}').exists() else 1)"; then
-    echo "Admin user '${adminUser}' already exists. Skipping creation."
-else
-    echo "Creating admin user..."
+    python3 manage.py compilemessages 2>/dev/null || true
+    ` : 'echo "Skipping database initialization as requested."'}
+    
+    ${createSuper ? `
+    echo "Creating Admin User..."
     export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
-    python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password="${adminPass}" 2>/dev/null || \
-    python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
-    echo "Could not create superuser automatically."
+    ${cmdAdmin} || echo "Admin creation failed or user exists."
+    ` : ''}
+    
+    ${loadDemo ? `
+    echo "Loading Demo Data..."
+    ${demoDataCmd ? demoDataCmd : 'python3 manage.py loaddata initial_data 2>/dev/null || echo "No \'initial_data\' fixture found."'}
+    ` : 'echo "Skipping demo data loading as requested."'}
+else
+    echo "Warning: manage.py not found!"
 fi
-`;
-                } else {
-                    script += `
-# Create administrator account
-echo "Creating admin user..."
-export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
-python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password="${adminPass}" 2>/dev/null || \
-python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
-echo "Could not create superuser automatically."
-`;
-                }
-            }
+` : `
+echo "Non-Django framework selected. Skipping manage.py commands."
+`}
 
-            script += `
 echo ""
-echo "Setup complete!"
-echo ""
-echo "Next steps:"
+echo "Setup Complete!"
+${runServer ? `
+echo "Launching Server..."
+"$SCRIPT_DIR/dev-server.sh"` : `echo "Run ./dev-server.sh to start."`}
 `;
-
-            if (runServer) {
-                script += `echo "   1. Run: ./dev-server.sh"`;
-            } else {
-                script += `echo "   1. Run: python manage.py runserver 0.0.0.0:${serverPort}"`;
-            }
-
-            script += `
-echo "   2. Open: http://localhost:${serverPort}"
-echo "   3. Navigate to /admin for admin panel"
-echo ""
-echo "Development tip: Use './fresh-db.sh' after code changes to reset database"
-`;
-
-            return script;
         }
 
-        function generateFreshDbScript(projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort) {
-            let script = `#!/bin/bash
-
-# ${platforms[currentPlatform].name} - Fresh Database Reset Script
-# Use this when you modify models and need to start fresh
-# Official commands follow Horilla documentation
-
-set -e  # Exit on error
-
-PROJECT_PATH="${projectPath}"
-VENV_NAME="${venvName}"
-
-echo "This will DROP your database and recreate it fresh"
-if [[ "$1" != "--force" ]]; then
-    read -p "Are you sure? (type 'yes' to continue): " confirm
-    if [ "$confirm" != "yes" ]; then
-        echo "Cancelled."
-        exit 0
-    fi
-fi
-
-# Check for required tools
-command -v python3 >/dev/null 2>&1 || { echo "Python3 required but not found. Exiting."; exit 1; }
-
-cd "$PROJECT_PATH"
-
-# Activate environment
-if [ -d "$VENV_NAME" ]; then
-    echo "Activating virtual environment..."
-    source "$VENV_NAME/bin/activate"
-else
-    echo "Virtual environment '$VENV_NAME' not found. Run setup.sh first."
-    exit 1
-fi
-
-echo ""
-echo "Cleaning up old database and migration files..."
-`;
-
-            if (dbType === 'sqlite') {
-                script += `
-# Remove SQLite database
-rm -f db.sqlite3
-echo "   Removed db.sqlite3"
-`;
-            } else {
-                script += `
-# Drop PostgreSQL database (requires .env or manual setup)
-echo "   Note: PostgreSQL database will need manual drop or Django will skip"
-echo "   Run: psql -U horilla_user -d horilla_dev -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'"
+        function generateFreshDbScript(repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin) {
+            if (framework !== 'django') {
+                return `#!/bin/bash
+echo "Fresh DB script is currently optimized for Django.";
+echo "For generic Python projects, manual cleanup is recommended.";
 `;
             }
 
-            script += `
-# Remove pycache and migrations
-find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-find . -type d -name "migrations" -path "*/apps/*" -exec rm -rf {} + 2>/dev/null || true
-echo "   Cleaned __pycache__ and old migrations"
-
-# Generate and apply new migrations
-echo "Running fresh migrations..."
-python3 manage.py makemigrations # Detect code changes
-python3 manage.py migrate        # Apply to database
-
-`;
-
-            if (loadDemo) {
-                script += `
-# Load initial demo data
-if [ -f "fixtures/initial_data.json" ] || python3 manage.py loaddata initial_data --help >/dev/null 2>&1; then
-    echo "Loading demo data..."
-    python3 manage.py loaddata initial_data 2>/dev/null || echo "Note: Demo data fixture skipped or unavailable"
-fi
-`;
-            }
-
-            if (createSuper) {
-                if (loadDemo) {
-                    script += `
-# Recreate administrative user
-if python3 manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); exit(0 if User.objects.filter(username='${adminUser}').exists() else 1)"; then
-    echo "Admin user '${adminUser}' already exists. Skipping creation."
-else
-    echo "Creating admin user..."
-    export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
-    python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password="${adminPass}" 2>/dev/null || \
-    python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
-    echo "Superuser creation skipped or failed."
-fi
-`;
-                } else {
-                    script += `
-# Recreate administrative user
-echo "Creating admin user..."
-export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
-python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password="${adminPass}" 2>/dev/null || \
-python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
-echo "Superuser creation skipped or failed."
-`;
-                }
-            }
-
-            script += `
-echo ""
-echo "Fresh database ready!"
-echo ""
-echo "Next: Run ./dev-server.sh to start development"
-`;
-
-            return script;
-        }
-
-        function generateServerScript(projectPath, venvName, serverPort) {
             return `#!/bin/bash
-
-# ${platforms[currentPlatform].name} - Development Server Launcher
-# Quick start for the Django development server with port fallback
-
+# Fresh Database Reset (${repoName})
+set -e
 PROJECT_PATH="${projectPath}"
 VENV_NAME="${venvName}"
-START_PORT=${serverPort}
+
+echo "⚠️  This will DELETE your database (db.sqlite3) and migrations!"
+if [[ "$1" != "--force" ]]; then
+    read -p "Confirm? (y/n): " confirm
+    if [[ "$confirm" != "y" ]]; then exit 0; fi
+fi
 
 cd "$PROJECT_PATH"
+source "$VENV_NAME/bin/activate"
 
-# Activate virtual environment if not already active
-if [ -z "$VIRTUAL_ENV" ]; then
-    source "$VENV_NAME/bin/activate"
-fi
+# Cleanup
+rm -f db.sqlite3
+find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
+find . -path "*/migrations/*.pyc"  -delete
+find . -name "__pycache__" -type d -exec rm -rf {} +
 
-# Find available port
-echo "Checking port availability..."
-ACTUAL_PORT=$START_PORT
-while ! python3 -c "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.bind(('0.0.0.0', $ACTUAL_PORT)); s.close()" 2>/dev/null; do
-    echo "   Port $ACTUAL_PORT is busy, trying $((ACTUAL_PORT+1))..."
-    ACTUAL_PORT=$((ACTUAL_PORT+1))
-done
+# Re-init
+python3 manage.py makemigrations
+python3 manage.py migrate
 
-echo "Starting Horilla development server..."
-echo "Access at: http://localhost:$ACTUAL_PORT"
-echo "Press Ctrl+C to stop"
-echo ""
+${createSuper ? `
+export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
+${cmdAdmin} || true
+` : ''}
 
-# Start the Django development server
-if [ -f "manage.py" ]; then
-    python3 manage.py runserver 0.0.0.0:$ACTUAL_PORT
-else
-    echo "manage.py not found. Please run this from the project root."
-    exit 1
-fi
+${loadDemo ? `
+echo "Loading Demo Data..."
+python3 manage.py loaddata demo_data.json 2>/dev/null || echo "Demo data loading failed or not applicable."
+` : ''}
+
+echo "Database reset complete."
+`;
+        }
+
+        function generateServerScript(repoName, projectPath, venvName, framework, serverPort) {
+            return `#!/bin/bash
+# Development Server (${repoName})
+PROJECT_PATH="${projectPath}"
+VENV_NAME="${venvName}"
+PORT=${serverPort}
+
+cd "$PROJECT_PATH"
+source "$VENV_NAME/bin/activate"
+
+echo "Starting Server on port $PORT..."
+
+${framework === 'django' ? `
+python3 manage.py runserver 0.0.0.0:$PORT
+` : framework === 'flask' ? `
+export FLASK_APP=app  # Change as needed
+flask run --host=0.0.0.0 --port=$PORT
+` : framework === 'fastapi' ? `
+uvicorn main:app --host 0.0.0.0 --port $PORT --reload
+` : framework === 'frappe' ? `
+bench start
+` : `
+echo "Please edit the server script to run your specific entry point (e.g. python main.py)."
+`}
 `;
         }
 
         function generateClearScript(projectPath, venvName, dbType, mode = 'workspace') {
             let script = `#!/bin/bash
 
-# ${platforms[currentPlatform].name} - ${mode === 'repo' ? 'Clear Repository Only' : 'Clean Workspace Script'}
-# WARNING: This will DELETE ${mode === 'repo' ? 'your project repository folder' : 'your project, virtual environment, and database'}.
+# Local Setup Generator - ${mode === 'repo' ? 'Clear Repository Only' : mode === 'env' ? 'Clear Environment Only' : 'Clean Workspace Script'}
+# WARNING: This will DELETE ${mode === 'repo' ? 'your project repository folder' : mode === 'env' ? 'your virtual environment and database' : 'your project, virtual environment, and database'}.
 
 PROJECT_PATH="${projectPath}"
 VENV_NAME="${venvName}"
 
-echo "⚠️  WARNING: You are about to DESTROY ${mode === 'repo' ? 'the project repository' : 'your entire development environment'}."
-echo "    - Project folder: $PROJECT_PATH"
+echo "⚠️  WARNING: You are about to DESTROY ${mode === 'repo' ? 'the project repository' : mode === 'env' ? 'your virtual environment' : 'your entire development environment'}."
+${mode !== 'env' ? `echo "    - Project folder: $PROJECT_PATH"` : ''}
 `;
             if (mode !== 'repo') {
                 script += `echo "    - Virtual env: $VENV_NAME"
 if [ "${dbType}" == "sqlite" ]; then
-    echo "    - Database: SQLite (inside project)"
+    ${mode === 'env' ? `echo "    - Database: SQLite (inside project)"` : `echo "    - Database: SQLite (inside project)"`}
 else
     echo "    - Database: PostgreSQL (requires manual drop, or use provided command)"
 fi
@@ -1494,16 +1126,37 @@ fi
 `;
             }
 
-            script += `
+            if (mode !== 'env') {
+                script += `
 echo "Removing project folder..."
 rm -rf "$PROJECT_PATH"
 `;
+            } else {
+                // Clear Env Only: Keep Project Path, Delete Venv + DB + node_modules
+                script += `
+echo "Leaving project folder intact: $PROJECT_PATH"
+`;
+            }
+
 
             if (mode !== 'repo') {
+
                 script += `
 echo "Removing virtual environment..."
 rm -rf "$VENV_NAME"
 `;
+                if (mode === 'env') {
+                    script += `
+# Cleanup inside project
+if [ -d "$PROJECT_PATH" ]; then
+    echo "Cleaning up inside project..."
+    find "$PROJECT_PATH" -name "__pycache__" -type d -exec rm -rf {} +
+    find "$PROJECT_PATH" -name "*.pyc" -delete
+    rm -rf "$PROJECT_PATH/node_modules"
+    rm -f "$PROJECT_PATH/db.sqlite3"
+fi
+`;
+                }
             }
 
             if (mode !== 'repo' && dbType === 'postgresql') {
@@ -1522,71 +1175,340 @@ echo "Done."
             return script;
         }
 
-        function generateEnvFile(dbType, dbInitPass, serverPort) {
+        function downloadClearScript(mode) {
+            const projectPath = document.getElementById('projectPath').value;
+            const venvName = document.getElementById('venvName').value;
+            const dbType = document.getElementById('dbType').value;
+
+            const content = generateClearScript(projectPath, venvName, dbType, mode);
+            const filename = mode === 'repo' ? 'clear_repo.sh' : mode === 'env' ? 'clear_env.sh' : 'clear_workspace.sh';
+
+            const blob = new Blob([content], { type: 'text/x-sh' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+
+
+        // ... (Download/Save helpers same as before) ...
+        function downloadFile(elementId, filename) {
+            const prefix = document.getElementById('scriptPath').value;
+            const fullFilename = prefix ? (prefix.endsWith('/') ? prefix : prefix + '/') + filename : filename;
+            const content = document.getElementById(elementId).textContent;
+            const blob = new Blob([content], { type: 'text/x-sh' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fullFilename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+
+        function handleRepoChange() {
+            const select = document.getElementById('repoSelect');
+            const customField = document.getElementById('customRepoField');
+            const customConfigCheckbox = document.getElementById('customConfigCheckbox');
+            const enableCustomConfig = document.getElementById('enableCustomConfig');
+            const advField = document.getElementById('advancedConfig');
+            const val = select.value;
+
+            if (val === 'custom') {
+                customField.style.display = 'block';
+                customConfigCheckbox.style.display = 'none';
+                advField.style.display = 'block';
+                enableCustomConfig.checked = true;
+                enableCustomConfig.disabled = true;
+                selectedRepo = null;
+                // Show all options for custom
+                document.getElementById('dbOptionContainer').style.display = 'block';
+                document.getElementById('demoOptionContainer').style.display = 'block';
+                document.getElementById('adminOptionContainer').style.display = 'block';
+                return;
+            }
+
+            // Pre-configured repo selected
+            customField.style.display = 'none';
+            customConfigCheckbox.style.display = 'block';
+            enableCustomConfig.disabled = false;
+            enableCustomConfig.checked = false;
+
+            // Find repo data
+            let repo = null;
+            REPO_LIST.forEach(cat => {
+                const found = cat.repos.find(r => r.url === val);
+                if (found) repo = found;
+            });
+
+            if (repo) {
+                selectedRepo = repo;
+
+                // Auto-configure Framework
+                if (repo.framework) {
+                    document.getElementById('frameworkSelect').value = repo.framework;
+                }
+
+                // Auto-configure defaults based on Repo Name
+                const cleanName = repo.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+                // Project Path: ~/clean-name
+                document.getElementById('projectPath').value = `~/${cleanName}`;
+
+                // Venv Name: clean-nameVENV
+                document.getElementById('venvName').value = `${cleanName}VENV`;
+
+                // DB Name default: clean_name_db
+                document.getElementById('dbName').value = cleanName.replace(/-/g, '_') + "_db";
+
+                // Admin Command - check setupCommands or use framework default
+                if (repo.setupCommands && repo.setupCommands.adminCreate) {
+                    document.getElementById('cmdAdmin').value = repo.setupCommands.adminCreate;
+                } else {
+                    updateFrameworkDefaults(); // Fallback to framework default
+                }
+
+                // Post Install Command
+                if (repo.setupCommands && repo.setupCommands.postInstall) {
+                    document.getElementById('cmdPostInstall').value = repo.setupCommands.postInstall;
+                } else {
+                    document.getElementById('cmdPostInstall').value = "";
+                }
+
+                // Horilla Specials: Default to admin/admin for demo data compatibility
+                if (repo.name.includes("Horilla")) {
+                    document.getElementById('adminUser').value = "admin";
+                    document.getElementById('adminPass').value = "admin";
+                } else {
+                    // Reset to generic defaults if switching OUT of Horilla
+                    if (document.getElementById('adminUser').value === "admin" && document.getElementById('adminPass').value === "admin") {
+                        document.getElementById('adminUser').value = "admin";
+                        document.getElementById('adminPass').value = "admin123";
+                    }
+                }
+
+                // Feature Flags Control
+                const hasDb = repo.features ? (repo.features.hasDb !== false) : true;
+                const hasDemo = repo.features ? (repo.features.hasDemo !== false) : true;
+
+                // Show/Hide Containers
+                // dbOptionContainer is a block (div wrapping form-group)
+                document.getElementById('dbOptionContainer').style.display = hasDb ? 'block' : 'none';
+                // adminOptionContainer is a block
+                document.getElementById('adminOptionContainer').style.display = hasDb ? 'block' : 'none';
+
+                // Checkbox Containers (checkbox-item is flex)
+                if (document.getElementById('initDbContainer')) {
+                    document.getElementById('initDbContainer').style.display = hasDb ? 'flex' : 'none';
+                }
+                if (document.getElementById('createSuperContainer')) {
+                    document.getElementById('createSuperContainer').style.display = hasDb ? 'flex' : 'none';
+                }
+                if (document.getElementById('demoOptionContainer')) {
+                    document.getElementById('demoOptionContainer').style.display = hasDemo ? 'flex' : 'none';
+                }
+
+                // Uncheck if hidden
+                if (!hasDb) {
+                    document.getElementById('initDb').checked = false;
+                    document.getElementById('createSuper').checked = false;
+                }
+                if (!hasDemo) {
+                    document.getElementById('loadDemo').checked = false;
+                }
+            }
+
+            updateDbFields();
+            toggleCustomConfig();
+        }
+
+        function generateScripts() {
+            const projectPath = document.getElementById('projectPath').value;
+            const framework = document.getElementById('frameworkSelect').value;
+            const venvName = document.getElementById('venvName').value;
+            const dbType = document.getElementById('dbType').value;
+            const initDb = document.getElementById('initDb').checked;
+            const loadDemo = document.getElementById('loadDemo').checked;
+            const createSuper = document.getElementById('createSuper').checked;
+            const runServer = document.getElementById('runServer').checked;
+            const adminUser = document.getElementById('adminUser').value;
+            const adminEmail = document.getElementById('adminEmail').value;
+            const adminPass = document.getElementById('adminPass').value;
+            const serverPort = 8000;
+            let cmdAdmin = document.getElementById('cmdAdmin').value;
+            const cmdPostInstall = document.getElementById('cmdPostInstall').value;
+            const customReqPath = document.getElementById('customReqPath').value;
+            const customInstallCmd = document.getElementById('customInstallCmd').value;
+
+            const repoUrl = document.getElementById('repoSelect').value === 'custom' ?
+                document.getElementById('customRepoUrl').value :
+                document.getElementById('repoSelect').value;
+
+            // Get preInstall command and Dependencies if available from repo list
+            let preInstall = "";
+            let demoDataCmd = "";
+            let dependencies = null;
+            let repo = null;
+            REPO_LIST.forEach(cat => {
+                const found = cat.repos.find(r => r.url === repoUrl);
+                if (found) repo = found;
+            });
+            if (repo) {
+                if (repo.setupCommands) {
+                    if (repo.setupCommands.preInstall) preInstall = repo.setupCommands.preInstall;
+                    if (repo.setupCommands.demoData) demoDataCmd = repo.setupCommands.demoData;
+                    if (repo.setupCommands.adminCreate) {
+                        cmdAdmin = repo.setupCommands.adminCreate
+                            .replace(/__USER__/g, adminUser)
+                            .replace(/__PASS__/g, adminPass)
+                            .replace(/__EMAIL__/g, adminEmail);
+                    }
+                }
+                if (repo.dependencies) {
+                    dependencies = repo.dependencies;
+                }
+            }
+
+            if (!repoUrl) {
+                showFeedback("Please select or enter a repository URL");
+                return;
+            }
+
+            // Extract repo name from URL
+            const repoName = repoUrl.split('/').pop().replace('.git', '') || 'my-project';
+
+            const setupContent = generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, preInstall, customReqPath, runServer, demoDataCmd, initDb, dependencies, customInstallCmd);
+            const freshContent = generateFreshDbScript(repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin);
+            const serverContent = generateServerScript(repoName, projectPath, venvName, framework, serverPort);
+            const envContent = generateEnvFile(repoName, dbType, adminPass, serverPort);
+
+            // Populate Carousel
+            document.getElementById('setupCode').textContent = setupContent;
+            document.getElementById('freshCode').textContent = freshContent;
+            document.getElementById('serverCode').textContent = serverContent;
+            document.getElementById('envCode').textContent = envContent;
+
+            // Populate Tabs
+            document.getElementById('setupCodeTab').textContent = setupContent;
+            document.getElementById('freshCodeTab').textContent = freshContent;
+            document.getElementById('serverCodeTab').textContent = serverContent;
+            document.getElementById('envCodeTab').textContent = envContent;
+
+            // Populate Clear Scripts (Tabs)
+            document.getElementById('clearCode').textContent = generateClearScript(projectPath, venvName, dbType, 'workspace');
+            document.getElementById('clearRepoCode').textContent = generateClearScript(projectPath, venvName, dbType, 'repo');
+            document.getElementById('clearEnvCode').textContent = generateClearScript(projectPath, venvName, dbType, 'env');
+
+            // Show configuration summary and carousel sections
+            displayConfigSummary(repoName, framework, projectPath, dbType, initDb, loadDemo, createSuper, adminUser, adminPass);
+
+            // Scroll to results section (grid container)
+            setTimeout(() => {
+                document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+                currentSlide = 0;
+                updateCarousel();
+            }, 50);
+        }
+
+
+
+        function generateEnvFile(repoName, dbType, adminPass, serverPort) {
             const dbName = document.getElementById('dbName').value;
             const dbUser = document.getElementById('dbUser').value;
             const dbPass = document.getElementById('dbPass').value;
             const dbHost = document.getElementById('dbHost').value;
             const dbPort = document.getElementById('dbPort').value;
 
-            let extraEnv = "";
-            if (currentPlatform === 'crm') {
-                extraEnv = `CSRF_TRUSTED_ORIGINS=http://localhost:${serverPort},http://127.0.0.1:${serverPort}\n`;
-            }
+            return `# ${repoName} Environment Variables
+DEBUG=True
+SECRET_KEY=dev-secret-key-CHANGE-IN-PROD
+ALLOWED_HOSTS=*
 
-            if (dbType === 'postgresql') {
-                return `# ${platforms[currentPlatform].name} Development Environment Variables
-# Configure database and application settings
-
-# Database Configuration (PostgreSQL)
+# Database
+${dbType === 'postgresql' ? `
 DB_ENGINE=django.db.backends.postgresql
 DB_NAME=${dbName}
 DB_USER=${dbUser}
 DB_PASSWORD=${dbPass}
 DB_HOST=${dbHost}
 DB_PORT=${dbPort}
-
-# Django Settings
-DEBUG=True
-SECRET_KEY=django-insecure-j8op9)1q8$1&@^s&p*_0%d#pr@w9qj@lo=3#@d=a(^@9@zd@%j
-ALLOWED_HOSTS=localhost,127.0.0.1,*
-DB_INIT_PASSWORD=${dbInitPass}
-${extraEnv}
-# Localization
-TIME_ZONE=UTC
-
-# Additional Settings
-SECURE_SSL_REDIRECT=False
-SESSION_COOKIE_SECURE=False
-CSRF_COOKIE_SECURE=False
-`;
-            } else {
-                return `# ${platforms[currentPlatform].name} Development Environment Variables
-# Configure database and application settings
-
-# Database Configuration (SQLite - Forced)
+DATABASE_URL=postgres://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}
+` : `
 DB_ENGINE=django.db.backends.sqlite3
 DB_NAME=db.sqlite3
-
-# Django Settings
-DEBUG=True
-SECRET_KEY=django-insecure-j8op9)1q8$1&@^s&p*_0%d#pr@w9qj@lo=3#@d=a(^@9@zd@%j
-ALLOWED_HOSTS=localhost,127.0.0.1,*
-DB_INIT_PASSWORD=${dbInitPass}
-${extraEnv}
-# Additional Settings
-SECURE_SSL_REDIRECT=False
-SESSION_COOKIE_SECURE=False
-CSRF_COOKIE_SECURE=False
+DATABASE_URL=sqlite:///db.sqlite3
+`}
+${repoName.toLowerCase().includes('horilla') ? `
+# Horilla Specific
+DB_IN_PASSWORD=horilla` : ''}
 `;
+        }
+
+        async function saveToFolder() {
+            if (!('showDirectoryPicker' in window)) { showFeedback("Browser not supported."); return; }
+            try {
+                const dirHandle = await window.showDirectoryPicker();
+                const files = [
+                    { name: 'setup.sh', id: 'setupCode' },
+                    { name: 'fresh-db.sh', id: 'freshCode' },
+                    { name: 'dev-server.sh', id: 'serverCode' },
+                    { name: '.env.example', id: 'envCode' }
+                ];
+                for (const file of files) {
+                    const content = document.getElementById(file.id).textContent;
+                    if (!content) continue;
+                    const fileHandle = await dirHandle.getFileHandle(file.name, { create: true });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(content);
+                    await writable.close();
+                }
+                showFeedback("Saved to " + dirHandle.name);
+            } catch (e) {
+                console.error(e);
+                showFeedback("Error saving to folder");
             }
         }
 
-        function copyCode(elementId) {
-            const code = document.getElementById(elementId).textContent;
-            navigator.clipboard.writeText(code).then(() => {
-                showFeedback("Copied to clipboard");
-            });
+        async function handleDeletionAction(mode) {
+            // Basic implementation reusing user's clear logic
+            if (!('showDirectoryPicker' in window)) { alert("Browser not supported for deletion"); return; }
+            try {
+                const dirHandle = await window.showDirectoryPicker();
+                if (!confirm("Are you sure you want to delete contents of " + dirHandle.name + "?")) return;
+                let count = 0;
+                for await (const entry of dirHandle.values()) {
+                    if (mode === 'repo' && entry.name === document.getElementById('venvName').value) continue;
+                    if (mode === 'env') {
+                        const venvName = document.getElementById('venvName').value;
+                        const targets = [venvName, 'node_modules', 'db.sqlite3', '__pycache__'];
+                        if (!targets.includes(entry.name) && !entry.name.endsWith('.pyc')) continue;
+                    }
+                    await dirHandle.removeEntry(entry.name, { recursive: true });
+                    count++;
+                }
+                showFeedback(`Deleted ${count} items.`);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function copyCode(elementIdOrText) {
+            try {
+                const element = document.getElementById(elementIdOrText);
+                const text = element ? element.textContent : elementIdOrText;
+                await navigator.clipboard.writeText(text);
+                showFeedback("Copied to clipboard!");
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                showFeedback("Failed to copy code.");
+            }
         }
 
         function resetForm() {
@@ -1597,16 +1519,9 @@ CSRF_COOKIE_SECURE=False
                 el.checked = el.defaultChecked;
             });
             updateDbFields();
+            handleRepoChange(); // Re-apply repo defaults
+            updateFrameworkDefaults(); // Re-apply framework defaults
         }
-
-        // Initialize on page load
-        window.addEventListener('load', () => {
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            if (savedTheme === 'dark') {
-                document.documentElement.classList.add('dark');
-            }
-            updateDbFields();
-        });
     </script>
 </body>
 

@@ -17,8 +17,9 @@ This is a lightweight tool consisting primarily of a single HTML file with embed
 - **Testing**: We use Python Playwright for end-to-end testing.
 
 ### Running Tests
+(Strict Policy: **No Test Failures Accepted**)
 
-Before submitting a PR, please ensure all tests pass.
+Before submitting a PR, you **MUST** ensure all tests pass. We do not accept PRs with failing tests.
 
 1.  Set up the test environment:
     ```bash
@@ -39,7 +40,16 @@ Before submitting a PR, please ensure all tests pass.
 - Use clear variable names in the JavaScript.
 - Avoid external dependencies (CDN links are fine for fonts, but logic should be self-contained).
 
-## specific Guidelines
+## AI Usage Policy
+
+Contributors are welcome to use AI assistants (e.g., GitHub Copilot, ChatGPT, Gemini) to aid in development, such as for autocomplete, identifying bugs, or generating boilerplate.
+
+**However, you must adhere to the following:**
+- **Human Review**: All AI-generated code must be reviewed and understood by the contributor. You are responsible for the code you submit.
+- **Code Quality**: The code must look and feel human-written. It should follow the project's style guidelines and not be a raw dump of AI output.
+- **No Hallucinations**: Verify that any commands, libraries, or methods suggested by AI actually exist and work as expected.
+
+## Specific Guidelines
 
 - **Redundancy**: When adding new features (like new script options), ensure you consider the impact on "Fresh DB" vs "Initial Setup" scenarios.
 - **Safety**: Cleanup actions are destructive. Always ensure they include strict user confirmation (e.g., `read -p` in shell scripts or `confirm()` in JavaScript/Browser API) before executing deletions like `rm -rf` or `removeEntry`.
