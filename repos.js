@@ -8,7 +8,10 @@ const REPO_LIST = [
                 description: "Headless E-commerce platform - GraphQL API",
                 framework: "django",
                 complexity: "Advanced",
-                stars: "20k+"
+                stars: "20k+",
+                setupCommands: {
+                    postInstall: "cp .env.example .env && python manage.py migrate && python manage.py create_demo_data"
+                }
             },
             {
                 name: "Wagtail CMS",
@@ -18,7 +21,7 @@ const REPO_LIST = [
                 complexity: "Advanced",
                 stars: "18k+",
                 setupCommands: {
-                    postInstall: "wagtail start myproject && cd myproject && pip install -r requirements.txt"
+                    postInstall: "pip install -e . && pip install -r requirements/development.txt && wagtail start myproject && cd myproject && pip install -r requirements.txt"
                 }
             },
             {
@@ -27,7 +30,12 @@ const REPO_LIST = [
                 description: "LMS and Enterprise Learning Platform",
                 framework: "django",
                 complexity: "Expert",
-                stars: "7k+"
+                stars: "7k+",
+                setupCommands: {
+                    preInstall: "sudo apt-get install -y build-essential python3-dev libmysqlclient-dev default-libmysqlclient-dev libssl-dev libffi-dev",
+                    postInstall: "pip install -r requirements/pip.txt && pip install -r requirements/edx/base.txt && pip install -r requirements/edx/development.txt",
+                    runServer: "python manage.py runserver 0.0.0.0:8000 --settings=lms.envs.devstack"
+                }
             },
             {
                 name: "Zulip",
@@ -37,6 +45,7 @@ const REPO_LIST = [
                 complexity: "Expert",
                 stars: "21k+",
                 setupCommands: {
+                    preInstall: "./tools/setup/install || (pip install -r requirements/dev.txt && python manage.py initialize_database)",
                     runServer: "./tools/run-dev.py"
                 }
             },
@@ -46,7 +55,10 @@ const REPO_LIST = [
                 description: "Document management system",
                 framework: "django",
                 complexity: "Advanced",
-                stars: "2k+"
+                stars: "2k+",
+                setupCommands: {
+                    postInstall: "pip install -r requirements.txt && python manage.py shell -c \"from mayan.apps.documents.models import DocumentType; DocumentType.objects.get_or_create(label='Default')\""
+                }
             },
             {
                 name: "PostHog",
@@ -54,7 +66,12 @@ const REPO_LIST = [
                 description: "Product analytics platform",
                 framework: "django",
                 complexity: "Expert",
-                stars: "20k+"
+                stars: "20k+",
+                setupCommands: {
+                    preInstall: "sudo apt-get install -y build-essential libssl-dev libffi-dev python3-dev",
+                    postInstall: "cp .env.example .env && npm install && npm run build",
+                    adminCreate: "python manage.py createsuperuser"
+                }
             },
             {
                 name: "DefectDojo",
@@ -62,7 +79,11 @@ const REPO_LIST = [
                 description: "DevSecOps vulnerability management",
                 framework: "django",
                 complexity: "Advanced",
-                stars: "3.6k+"
+                stars: "3.6k+",
+                setupCommands: {
+                    preInstall: "sudo apt-get install -y build-essential python3-dev libmysqlclient-dev libssl-dev",
+                    postInstall: "echo \"DEBUG=True\nSECRET_KEY=$(python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())')\nDATABASE_URL=sqlite:///db.sqlite3\" > .env"
+                }
             },
             {
                 name: "NetBox",
@@ -70,7 +91,10 @@ const REPO_LIST = [
                 description: "Network source of truth / IPAM",
                 framework: "django",
                 complexity: "Advanced",
-                stars: "16k+"
+                stars: "16k+",
+                setupCommands: {
+                    postInstall: "mkdir -p netbox/netbox/configuration && echo \"ALLOWED_HOSTS = ['*']\nDATABASE = {'ENGINE': 'django.db.backends.sqlite3', 'NAME': 'netbox'}\nSECRET_KEY = 'temp-key'\" > netbox/netbox/configuration/configuration.py"
+                }
             },
             {
                 name: "Taiga",
@@ -78,7 +102,10 @@ const REPO_LIST = [
                 description: "Agile project management platform",
                 framework: "django",
                 complexity: "Advanced",
-                stars: "7k+"
+                stars: "7k+",
+                setupCommands: {
+                    postInstall: "cp settings/local.py.example settings/local.py"
+                }
             },
             {
                 name: "Flagsmith",
@@ -86,7 +113,10 @@ const REPO_LIST = [
                 description: "Feature flag management",
                 framework: "django",
                 complexity: "Intermediate",
-                stars: "4k+"
+                stars: "4k+",
+                setupCommands: {
+                    postInstall: "echo \"DEBUG=True\nSECRET_KEY=temp\nDATABASE_URL=sqlite:///db.sqlite3\" > .env"
+                }
             },
             {
                 name: "Sentry",
@@ -96,8 +126,10 @@ const REPO_LIST = [
                 complexity: "Expert",
                 stars: "38k+",
                 setupCommands: {
-                    preInstall: "sentry init --dev",
-                    adminCreate: "sentry createuser"
+                    preInstall: "sentry init --dev || echo 'Sentry init failed or already initialized'",
+                    postInstall: "pip install -e . && pip install -r requirements-dev.txt",
+                    adminCreate: "sentry createuser",
+                    runServer: "sentry devserver"
                 }
             },
             {
@@ -146,7 +178,11 @@ const REPO_LIST = [
                 description: "Official full-stack template by Sebastián Ramírez",
                 framework: "fastapi",
                 complexity: "Intermediate",
-                stars: "26k+"
+                stars: "26k+",
+                setupCommands: {
+                    postInstall: "pip install -r ./backend/requirements.txt && echo \"SECRET_KEY=temp\nSQLALCHEMY_DATABASE_URL=sqlite:///./test.db\" > .env && cd backend && alembic upgrade head",
+                    runServer: "fastapi dev backend/app/main.py"
+                }
             },
             {
                 name: "FastAPI itself",
@@ -154,7 +190,10 @@ const REPO_LIST = [
                 description: "Modern, fast web framework for building APIs",
                 framework: "fastapi",
                 complexity: "Intermediate",
-                stars: "76k+"
+                stars: "76k+",
+                setupCommands: {
+                    postInstall: "pip install -e . && pip install -r requirements-dev.txt"
+                }
             },
             {
                 name: "Polar",
@@ -162,7 +201,10 @@ const REPO_LIST = [
                 description: "Open source monetization platform",
                 framework: "fastapi",
                 complexity: "Advanced",
-                stars: "3k+"
+                stars: "3k+",
+                setupCommands: {
+                    postInstall: "pip install -r requirements.txt && echo \"DATABASE_URL=sqlite:///./test.db\" > .env && alembic upgrade head"
+                }
             },
             {
                 name: "SQLModel",
@@ -170,7 +212,10 @@ const REPO_LIST = [
                 description: "SQL databases with Python type annotations",
                 framework: "fastapi",
                 complexity: "Intermediate",
-                stars: "14k+"
+                stars: "14k+",
+                setupCommands: {
+                    postInstall: "pip install -e . && pip install -r requirements-dev.txt"
+                }
             },
             {
                 name: "Litestar",
@@ -178,7 +223,10 @@ const REPO_LIST = [
                 description: "Production-ready, light ASGI framework",
                 framework: "fastapi",
                 complexity: "Intermediate",
-                stars: "5k+"
+                stars: "5k+",
+                setupCommands: {
+                    postInstall: "pip install -e . && pip install -r requirements-dev.txt"
+                }
             },
             {
                 name: "Strawberry GraphQL",
@@ -186,7 +234,10 @@ const REPO_LIST = [
                 description: "Python GraphQL library based on dataclasses",
                 framework: "fastapi",
                 complexity: "Intermediate",
-                stars: "4k+"
+                stars: "4k+",
+                setupCommands: {
+                    postInstall: "pip install -e . && pip install -r requirements-dev.txt"
+                }
             },
             {
                 name: "Authlib",
@@ -194,7 +245,10 @@ const REPO_LIST = [
                 description: "Ultimate Python library for OAuth and OpenID",
                 framework: "generic",
                 complexity: "Advanced",
-                stars: "4.5k+"
+                stars: "4.5k+",
+                setupCommands: {
+                    postInstall: "pip install -e . && pip install -r requirements-dev.txt"
+                }
             },
             {
                 name: "FastHTML",
@@ -202,7 +256,10 @@ const REPO_LIST = [
                 description: "Modern HTML-first framework",
                 framework: "fastapi",
                 complexity: "Beginner",
-                stars: "5k+"
+                stars: "5k+",
+                setupCommands: {
+                    postInstall: "pip install -e ."
+                }
             },
             {
                 name: "Robyn",
@@ -210,7 +267,10 @@ const REPO_LIST = [
                 description: "Fast async Python web framework with Rust runtime",
                 framework: "fastapi",
                 complexity: "Intermediate",
-                stars: "4k+"
+                stars: "4k+",
+                setupCommands: {
+                    postInstall: "pip install robyn"
+                }
             },
             {
                 name: "Typer",
@@ -218,7 +278,10 @@ const REPO_LIST = [
                 description: "Build great CLIs fast",
                 framework: "generic",
                 complexity: "Beginner",
-                stars: "15k+"
+                stars: "15k+",
+                setupCommands: {
+                    postInstall: "pip install -e . && pip install -r requirements-dev.txt"
+                }
             },
             {
                 name: "FastAPI-Users",
@@ -226,7 +289,10 @@ const REPO_LIST = [
                 description: "Ready-to-use authentication and user management",
                 framework: "fastapi",
                 complexity: "Intermediate",
-                stars: "4k+"
+                stars: "4k+",
+                setupCommands: {
+                    postInstall: "pip install -e . && pip install -r requirements-dev.txt"
+                }
             },
             {
                 name: "HTTPX",
@@ -274,7 +340,10 @@ const REPO_LIST = [
                 description: "The Flask web framework source code",
                 framework: "flask",
                 complexity: "Intermediate",
-                stars: "67k+"
+                stars: "67k+",
+                setupCommands: {
+                    postInstall: "pip install -e . && pip install -r requirements/dev.txt"
+                }
             },
             {
                 name: "Flask-SQLAlchemy",
@@ -282,7 +351,10 @@ const REPO_LIST = [
                 description: "Adds SQLAlchemy support to Flask",
                 framework: "flask",
                 complexity: "Intermediate",
-                stars: "4k+"
+                stars: "4k+",
+                setupCommands: {
+                    postInstall: "pip install -e ."
+                }
             },
             {
                 name: "Flask-RESTful",
@@ -290,7 +362,10 @@ const REPO_LIST = [
                 description: "Simple framework for creating REST APIs",
                 framework: "flask",
                 complexity: "Intermediate",
-                stars: "6.8k+"
+                stars: "6.8k+",
+                setupCommands: {
+                    postInstall: "pip install -e ."
+                }
             },
             {
                 name: "Flask-Login",
@@ -298,7 +373,10 @@ const REPO_LIST = [
                 description: "User session management for Flask",
                 framework: "flask",
                 complexity: "Beginner",
-                stars: "3.5k+"
+                stars: "3.5k+",
+                setupCommands: {
+                    postInstall: "pip install -e ."
+                }
             },
             {
                 name: "Flask-JWT-Extended",
@@ -306,7 +384,10 @@ const REPO_LIST = [
                 description: "Extended JWT integration with Flask",
                 framework: "flask",
                 complexity: "Intermediate",
-                stars: "1.5k+"
+                stars: "1.5k+",
+                setupCommands: {
+                    postInstall: "pip install -e ."
+                }
             },
             {
                 name: "Flask-Admin",
@@ -314,7 +395,10 @@ const REPO_LIST = [
                 description: "Simple and extensible admin interface framework",
                 framework: "flask",
                 complexity: "Intermediate",
-                stars: "5.7k+"
+                stars: "5.7k+",
+                setupCommands: {
+                    postInstall: "pip install -e ."
+                }
             },
             {
                 name: "Flask-CORS",
@@ -322,7 +406,10 @@ const REPO_LIST = [
                 description: "Cross Origin Resource Sharing extension",
                 framework: "flask",
                 complexity: "Beginner",
-                stars: "880+"
+                stars: "880+",
+                setupCommands: {
+                    postInstall: "pip install -e ."
+                }
             },
             {
                 name: "Flask-Migrate",
@@ -330,7 +417,10 @@ const REPO_LIST = [
                 description: "SQLAlchemy database migrations",
                 framework: "flask",
                 complexity: "Intermediate",
-                stars: "2.4k+"
+                stars: "2.4k+",
+                setupCommands: {
+                    postInstall: "pip install -e ."
+                }
             },
             {
                 name: "Eve",
@@ -338,7 +428,10 @@ const REPO_LIST = [
                 description: "REST API framework powered by Flask",
                 framework: "flask",
                 complexity: "Intermediate",
-                stars: "6.7k+"
+                stars: "6.7k+",
+                setupCommands: {
+                    postInstall: "pip install -e ."
+                }
             },
             {
                 name: "Connexion",
@@ -346,7 +439,10 @@ const REPO_LIST = [
                 description: "Swagger/OpenAPI First framework on top of Flask",
                 framework: "flask",
                 complexity: "Intermediate",
-                stars: "4.5k+"
+                stars: "4.5k+",
+                setupCommands: {
+                    postInstall: "pip install -e ."
+                }
             }
         ]
     },
@@ -359,7 +455,10 @@ const REPO_LIST = [
                 description: "Python SQL toolkit and ORM",
                 framework: "generic",
                 complexity: "Advanced",
-                stars: "9k+"
+                stars: "9k+",
+                setupCommands: {
+                    postInstall: "pip install -e ."
+                }
             },
             {
                 name: "Alembic",
@@ -367,7 +466,10 @@ const REPO_LIST = [
                 description: "Database migration tool for SQLAlchemy",
                 framework: "generic",
                 complexity: "Intermediate",
-                stars: "2.5k+"
+                stars: "2.5k+",
+                setupCommands: {
+                    postInstall: "pip install -e ."
+                }
             },
             {
                 name: "Asyncpg",
@@ -375,7 +477,10 @@ const REPO_LIST = [
                 description: "Fast PostgreSQL database client library",
                 framework: "generic",
                 complexity: "Intermediate",
-                stars: "6.8k+"
+                stars: "6.8k+",
+                setupCommands: {
+                    postInstall: "pip install -e ."
+                }
             },
             {
                 name: "Motor",
@@ -383,7 +488,10 @@ const REPO_LIST = [
                 description: "Async Python driver for MongoDB",
                 framework: "generic",
                 complexity: "Intermediate",
-                stars: "2.4k+"
+                stars: "2.4k+",
+                setupCommands: {
+                    postInstall: "pip install -e ."
+                }
             },
             {
                 name: "Redis-py",
@@ -391,7 +499,10 @@ const REPO_LIST = [
                 description: "Python client for Redis",
                 framework: "generic",
                 complexity: "Beginner",
-                stars: "12k+"
+                stars: "12k+",
+                setupCommands: {
+                    postInstall: "pip install -e ."
+                }
             },
             {
                 name: "Tortoise ORM",
@@ -399,7 +510,10 @@ const REPO_LIST = [
                 description: "Easy async ORM for Python",
                 framework: "generic",
                 complexity: "Intermediate",
-                stars: "4.5k+"
+                stars: "4.5k+",
+                setupCommands: {
+                    postInstall: "pip install -e . && pip install -r requirements-dev.txt"
+                }
             },
             {
                 name: "Piccolo ORM",
@@ -407,7 +521,10 @@ const REPO_LIST = [
                 description: "Fast, user friendly ORM and query builder",
                 framework: "generic",
                 complexity: "Intermediate",
-                stars: "1.4k+"
+                stars: "1.4k+",
+                setupCommands: {
+                    postInstall: "pip install -e . && pip install -r requirements/dev.txt"
+                }
             },
             {
                 name: "Celery",
@@ -415,7 +532,10 @@ const REPO_LIST = [
                 description: "Distributed task queue",
                 framework: "generic",
                 complexity: "Advanced",
-                stars: "24k+"
+                stars: "24k+",
+                setupCommands: {
+                    postInstall: "pip install -e . && pip install -r requirements/dev.txt"
+                }
             },
             {
                 name: "Dependency Injector",
@@ -423,7 +543,10 @@ const REPO_LIST = [
                 description: "Dependency injection framework",
                 framework: "generic",
                 complexity: "Intermediate",
-                stars: "3.8k+"
+                stars: "3.8k+",
+                setupCommands: {
+                    postInstall: "pip install -e ."
+                }
             }
         ]
     },
@@ -472,7 +595,10 @@ const REPO_LIST = [
                 description: "GraphQL framework for Python",
                 framework: "generic",
                 complexity: "Intermediate",
-                stars: "8k+"
+                stars: "8k+",
+                setupCommands: {
+                    postInstall: "pip install -e . && pip install -r requirements-dev.txt"
+                }
             },
             {
                 name: "Prefect",
@@ -480,7 +606,10 @@ const REPO_LIST = [
                 description: "Modern workflow orchestration",
                 framework: "generic",
                 complexity: "Advanced",
-                stars: "16k+"
+                stars: "16k+",
+                setupCommands: {
+                    postInstall: "pip install -e . && pip install -r requirements-dev.txt"
+                }
             },
             {
                 name: "Airflow",
@@ -488,7 +617,10 @@ const REPO_LIST = [
                 description: "Platform to programmatically author workflows",
                 framework: "generic",
                 complexity: "Expert",
-                stars: "36k+"
+                stars: "36k+",
+                setupCommands: {
+                    postInstall: "pip install -e . && pip install -r requirements.txt"
+                }
             }
         ]
     },
@@ -501,7 +633,10 @@ const REPO_LIST = [
                 description: "Domain-driven e-commerce for Django",
                 framework: "django",
                 complexity: "Advanced",
-                stars: "6k+"
+                stars: "6k+",
+                setupCommands: {
+                    postInstall: "pip install -e . && pip install -r requirements.txt"
+                }
             },
             {
                 name: "Django CMS",
@@ -509,7 +644,10 @@ const REPO_LIST = [
                 description: "Enterprise CMS built with Django",
                 framework: "django",
                 complexity: "Advanced",
-                stars: "10k+"
+                stars: "10k+",
+                setupCommands: {
+                    postInstall: "pip install -e . && pip install -r requirements.txt"
+                }
             },
             {
                 name: "Wagtail Bakery",
@@ -520,6 +658,186 @@ const REPO_LIST = [
                 stars: "180+",
                 setupCommands: {
                     postInstall: "wagtail start myproject && cd myproject && pip install wagtail-bakery"
+                }
+            }
+        ]
+    },
+    {
+        category: "AI & Agents",
+        repos: [
+            {
+                name: "Strands Agents SDK",
+                url: "https://github.com/strands-agents/sdk-python.git",
+                description: "Model-Driven AI Agent Framework",
+                framework: "generic",
+                complexity: "Advanced",
+                stars: "New",
+                setupCommands: {
+                    postInstall: "pip install strands-agents strands-agents-tools"
+                }
+            },
+            {
+                name: "Pydantic AI",
+                url: "https://github.com/pydantic/pydantic-ai.git",
+                description: "GenAI Agent Framework",
+                framework: "generic",
+                complexity: "Intermediate",
+                stars: "New",
+                setupCommands: {
+                    postInstall: "pip install pydantic-ai"
+                }
+            },
+            {
+                name: "Instructor",
+                url: "https://github.com/567-labs/instructor.git",
+                description: "Structured JSON Output for LLMs",
+                framework: "generic",
+                complexity: "Intermediate",
+                stars: "5k+",
+                setupCommands: {
+                    postInstall: "pip install instructor"
+                }
+            },
+            {
+                name: "ScrapeGraph-AI",
+                url: "https://github.com/ScrapeGraphAI/Scrapegraph-ai.git",
+                description: "AI-Powered Web Scraping",
+                framework: "generic",
+                complexity: "Advanced",
+                stars: "8k+",
+                setupCommands: {
+                    postInstall: "pip install scrapegraphai && playwright install"
+                }
+            },
+            {
+                name: "smolagents",
+                url: "https://github.com/huggingface/smolagents.git",
+                description: "Agents that Think in Code",
+                framework: "generic",
+                complexity: "Intermediate",
+                stars: "4k+",
+                setupCommands: {
+                    postInstall: "pip install \"smolagents[toolkit]\""
+                }
+            },
+            {
+                name: "smolagents MCP",
+                url: "https://github.com/huggingface/smolagents-mcp.git",
+                description: "Model Context Protocol Integration for smolagents",
+                framework: "generic",
+                complexity: "Advanced",
+                stars: "New",
+                setupCommands: {
+                    postInstall: "pip install \"smolagents[mcp]\""
+                }
+            }
+        ]
+    },
+    {
+        category: "Modern Web Frameworks",
+        repos: [
+            {
+                name: "LiteStar",
+                url: "https://github.com/litestar-org/litestar.git",
+                description: "Production-Ready ASGI API Framework",
+                framework: "fastapi",
+                complexity: "Intermediate",
+                stars: "3k+",
+                setupCommands: {
+                    postInstall: "pip install 'litestar[standard]'"
+                }
+            },
+            {
+                name: "FastRTC",
+                url: "https://github.com/gradio-app/fastrtc.git",
+                description: "Real-Time Communication from Python",
+                framework: "generic",
+                complexity: "Intermediate",
+                stars: "1k+",
+                setupCommands: {
+                    postInstall: "pip install \"fastrtc[vad, tts]\""
+                }
+            },
+            {
+                name: "smallpond",
+                url: "https://github.com/deepseek-ai/smallpond.git",
+                description: "Lightweight Data Processing Framework",
+                framework: "generic",
+                complexity: "Advanced",
+                stars: "New",
+                setupCommands: {
+                    postInstall: "pip install smallpond"
+                }
+            },
+            {
+                name: "Falcon",
+                url: "https://github.com/falconry/falcon.git",
+                description: "High-Performance REST API Framework",
+                framework: "generic",
+                complexity: "Intermediate",
+                stars: "9k+",
+                setupCommands: {
+                    postInstall: "pip install uvicorn[standard] && pip install falcon"
+                }
+            }
+        ]
+    },
+    {
+        category: "Tools & Utilities",
+        repos: [
+            {
+                name: "Click",
+                url: "https://github.com/pallets/click.git",
+                description: "Command Line Interface Toolkit",
+                framework: "generic",
+                complexity: "Beginner",
+                stars: "14k+",
+                setupCommands: {
+                    postInstall: "pip install click"
+                }
+            },
+            {
+                name: "IceCream",
+                url: "https://github.com/gruns/icecream.git",
+                description: "Enhanced Print Debugging",
+                framework: "generic",
+                complexity: "Beginner",
+                stars: "8k+",
+                setupCommands: {
+                    postInstall: "pip install icecream"
+                }
+            },
+            {
+                name: "Pokete",
+                url: "https://github.com/lxgr-linux/pokete.git",
+                description: "Terminal-Based Pokemon Game",
+                framework: "generic",
+                complexity: "Intermediate",
+                stars: "1k+",
+                setupCommands: {
+                    postInstall: "pip install pokete"
+                }
+            },
+            {
+                name: "Gaphor",
+                url: "https://github.com/gaphor/gaphor.git",
+                description: "UML/SysML Modeling Tool",
+                framework: "generic",
+                complexity: "Advanced",
+                stars: "2k+",
+                setupCommands: {
+                    postInstall: "pip install gaphor"
+                }
+            },
+            {
+                name: "Docling",
+                url: "https://github.com/reliableengineer0308/docling.git",
+                description: "Document Parsing & Analysis",
+                framework: "generic",
+                complexity: "Intermediate",
+                stars: "New",
+                setupCommands: {
+                    postInstall: "pip install docling"
                 }
             }
         ]

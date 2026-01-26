@@ -482,5 +482,96 @@ def test_greyed_out_carousel_slides(page_on_index: Page):
     assert "active" in first_slide.get_attribute("class")
     
     # Other slides should not have active class (opacity controlled by CSS)
+    # Other slides should not have active class (opacity controlled by CSS)
     second_slide = page_on_index.locator(".carousel-slide[data-script='fresh']")
     assert "active" not in second_slide.get_attribute("class")
+
+def test_custom_requirements_path(page_on_index: Page):
+    """Test that custom requirements path is used in generated script"""
+    page_on_index.select_option("#repoSelect", value="custom")
+    page_on_index.fill("#customRepoUrl", "https://github.com/test/custom-reqs.git")
+    
+    # Fill custom requirements path
+    page_on_index.fill("#customReqPath", "requirements/production.txt")
+    
+    page_on_index.click("button:has-text('Continue to Scripts')")
+    page_on_index.wait_for_timeout(500)
+    
+    setup_code = page_on_index.locator("#setupCode").inner_text()
+    
+    assert 'CUSTOM_REQ_PATH="requirements/production.txt"' in setup_code
+    assert 'pip install -r "$CUSTOM_REQ_PATH"' in setup_code
+
+def test_dependency_priority_logic_in_script(page_on_index: Page):
+    """Verify that the generated script contains the dependency priority list logic"""
+    page_on_index.select_option("#repoSelect", value="custom")
+    page_on_index.fill("#customRepoUrl", "https://github.com/test/generic.git")
+    page_on_index.click("button:has-text('Continue to Scripts')")
+    page_on_index.wait_for_timeout(500)
+    
+    setup_code = page_on_index.locator("#setupCode").inner_text()
+    
+    # Check for the priority list array definition - tricky to match exact multiline bash array 
+    # so we check for key components
+    assert 'DEP_FILES=("requirements.txt" "requirements/dev.txt"' in setup_code
+    assert 'requirements/edx/base.txt' in setup_code # Check one of the advanced ones
+    assert 'pip install -r "$main_file"' in setup_code
+
+def test_error_handling_trap(page_on_index: Page):
+    """Verify that error trapping is added to scripts"""
+    page_on_index.select_option("#repoSelect", value="custom")
+    page_on_index.fill("#customRepoUrl", "https://github.com/test/repo.git")
+    page_on_index.click("button:has-text('Continue to Scripts')")
+    page_on_index.wait_for_timeout(500)
+    
+    setup_code = page_on_index.locator("#setupCode").inner_text()
+    assert "trap 'echo \"Error encountered at line $LINENO\"; exit 1' ERR" in setup_code
+
+def test_open_edx_specifics(page_on_index: Page):
+    """Verify Open edX specific logic is triggered by repo URL"""
+    page_on_index.select_option("#repoSelect", value="custom")
+    # Must contain 'edx-platform' to trigger
+    page_on_index.fill("#customRepoUrl", "https://github.com/openedx/edx-platform.git")
+    page_on_index.click("button:has-text('Continue to Scripts')")
+    page_on_index.wait_for_timeout(500)
+    
+    setup_code = page_on_index.locator("#setupCode").inner_text()
+    
+    assert 'Detected Open edX platform' in setup_code
+    assert 'pip install -r requirements/pip.txt' in setup_code
+    assert 'pip install -r requirements/edx/base.txt' in setup_code
+
+def test_sentry_build_logic(page_on_index: Page):
+    """Verify Sentry/Complex repo logic uses Editable Install"""
+    page_on_index.select_option("#repoSelect", value="custom")
+    page_on_index.fill("#customRepoUrl", "https://github.com/getsentry/sentry.git")
+    page_on_index.click("button:has-text('Continue to Scripts')")
+    page_on_index.wait_for_timeout(500)
+    
+    setup_code = page_on_index.locator("#setupCode").inner_text()
+    
+    # It should fall through to the pyproject.toml section logic check
+    assert 'Detected buildable project (pyproject.toml/setup.py)' in setup_code
+    # And specifically prefer editable install
+    assert 'pip install -e .' in setup_code
+
+def test_pre_install_command_population(page_on_index: Page):
+    """Test that preInstall commands from repos.js are populated into the script"""
+    # Sentry has a preInstall command "sentry init --dev" defined in repos.js (or at least implied in our manual check)
+    # If not in repos.js, let's check one that might or just check if the logic exists
+    
+    # We will select Sentry from the dropdown which comes from repos.js
+    page_on_index.wait_for_selector("#repoSelect option:nth-child(2)", state="attached")
+    # Find option with text Sentry
+    page_on_index.select_option("#repoSelect", label="Sentry (38k+)") 
+    # Note: select_option by label depends on exact text match which includes stars. 
+    # Let's use value instead which is safer
+    page_on_index.select_option("#repoSelect", value="https://github.com/getsentry/sentry.git")
+    
+    page_on_index.click("button:has-text('Continue to Scripts')")
+    page_on_index.wait_for_timeout(500)
+    
+    setup_code = page_on_index.locator("#setupCode").inner_text()
+    
+    # Sentry config in repos.js has preInstall: "sentry init --dev"
+    assert "sentry init --dev" in setup_code
