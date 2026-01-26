@@ -1279,9 +1279,10 @@ DB_IN_PASSWORD=horilla
             }
         }
 
-        async function copyCode(elementId) {
+        async function copyCode(elementIdOrText) {
             try {
-                const text = document.getElementById(elementId).textContent;
+                const element = document.getElementById(elementIdOrText);
+                const text = element ? element.textContent : elementIdOrText;
                 await navigator.clipboard.writeText(text);
                 showFeedback("Copied to clipboard!");
             } catch (err) {
