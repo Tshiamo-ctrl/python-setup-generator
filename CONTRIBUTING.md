@@ -42,7 +42,8 @@ Before submitting a PR, please ensure all tests pass.
 ## specific Guidelines
 
 - **Redundancy**: When adding new features (like new script options), ensure you consider the impact on "Fresh DB" vs "Initial Setup" scenarios.
-- **Safety**: The `clear_*.sh` scripts are destructive. Always ensure they include user confirmation prompts (`read -p`) before executing `rm -rf`.
+- **Safety**: Cleanup actions are destructive. Always ensure they include strict user confirmation (e.g., `read -p` in shell scripts or `confirm()` in JavaScript/Browser API) before executing deletions like `rm -rf` or `removeEntry`.
+- **Browser API**: For the "Danger Zone" browser-based deletion, always include a second check to verify the selected folder name matches the project path to prevent accidental data loss.
 - **Cross-Platform**: While the scripts are Bash-focused (Linux/macOS), keeping them POSIX compliant is preferred.
 
 ## Pull Requests

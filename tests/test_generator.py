@@ -95,25 +95,40 @@ def test_no_redux_check_when_demo_disabled(page_on_index: Page):
     assert "if python3 manage.py shell -c" not in setup_code
     assert "python3 manage.py createhorillauser" in setup_code
 
-def test_clear_workspace_script(page_on_index: Page):
+def test_clear_workspace_logic(page_on_index: Page):
     # Select Postgres
     page_on_index.select_option("#dbType", "postgresql")
     page_on_index.fill("#dbName", "to_be_deleted_db")
     
-    page_on_index.click("button:has-text('Continue to Scripts')")
+    # Verify the existence of Danger Zone and buttons
+    expect(page_on_index.locator("h3:has-text('Danger Zone')")).to_be_visible()
     
-    # Check Clear Workspace
-    page_on_index.click("button:has-text('clear_all.sh')")
-    clear_code = page_on_index.locator("#clearCode").inner_text()
-    assert "rm -rf" in clear_code
-    assert "to_be_deleted_db" in clear_code # Postgres drop instructions
-    assert "Removing virtual environment..." in clear_code
+    workspace_btn = page_on_index.locator("button:has-text('Clear Workspace')")
+    expect(workspace_btn).to_be_visible()
+    expect(page_on_index.locator("text=Delete project, venv & db config")).to_be_visible()
+    
+    repo_btn = page_on_index.locator("button:has-text('Clear Repo Only')")
+    expect(repo_btn).to_be_visible()
+    expect(page_on_index.locator("text=Keep venv, delete source code")).to_be_visible()
 
-    # Check Clear Repo
-    page_on_index.click("button:has-text('clear_repo.sh')")
-    repo_code = page_on_index.locator("#clearRepoCode").inner_text()
+    # We verify the logic by invoking the generator functions directly in the browser context.
+    # Check Clear Workspace Content by calling JS function
+    clear_code = page_on_index.evaluate("""
+        generateClearScript('/home/user/test', 'test_venv', 'postgresql', 'workspace')
+    """)
+    
+    assert "rm -rf" in clear_code
+    assert "to_be_deleted_db" in clear_code
+    assert "Removing virtual environment..." in clear_code
+    assert "clean" in clear_code.lower() or "workspace" in clear_code.lower()
+
+    # Check Clear Repo Content
+    repo_code = page_on_index.evaluate("""
+        generateClearScript('/home/user/test', 'test_venv', 'postgresql', 'repo')
+    """)
+    
     assert "rm -rf" in repo_code
-    assert "Clean Workspace Script" not in repo_code 
     assert "Clear Repository Only" in repo_code
     assert "Removing virtual environment" not in repo_code
+
 

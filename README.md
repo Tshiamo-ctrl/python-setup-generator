@@ -7,6 +7,7 @@ Developing with Horilla often involves making code changes that require frequent
 - Full environment initialization (git clone, venv, deps, migration)
 - One-command "Fresh Database" wipes (drops DB, cleans migrations, recreates everything)
 - "Clear Workspace" utilities to nuking the environment or just the repo
+- **Direct Workspace Cleanup**: Browser-integrated folder empty logic (Chrome/Edge)
 - Quick-launch development server script
 - Environment variable `.env` templates
 
@@ -23,7 +24,9 @@ Developing with Horilla often involves making code changes that require frequent
 - **Smart Checks**: Scripts check for `python3` and `git` before running.
 - **Robustness**: Handles virtual environment activation and pip upgrades automatically.
 - **Demo Data**: Options to automatically load Horilla's official demo dataset.
-- **User Friendly**: Minimal inline comments to help you understand exactly what the scripts are doing.
+- **Danger Zone**: One-click cleanup using the File System Access API (with user confirmation).
+- **User Friendly**: Minimal monochrome aesthetic and subtle accents for a frictionless experience.
+- **Logic Verification**: Test suite built with Playwright to ensure script correctness.
 
 ## License
 [MIT](LICENSE)

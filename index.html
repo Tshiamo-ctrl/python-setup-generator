@@ -615,6 +615,41 @@
                         title="Save all files directly to a folder">Save Workspace Folder</button>
                     <button class="btn-secondary" onclick="resetForm()">Reset</button>
                 </div>
+
+                <div style="margin-top: 48px; padding-top: 24px;">
+                    <h3
+                        style="font-size: 13px; margin-bottom: 16px; font-weight: 700; color: var(--muted-foreground); text-transform: uppercase; display: flex; align-items: center; gap: 8px;">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path
+                                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                            </path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        Danger Zone
+                    </h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <button class="btn-secondary" onclick="handleDeletionAction('workspace')"
+                            style="border-color: #000; color: #000; opacity: 0.8; justify-content: flex-start; height: auto; padding: 16px;">
+                            <div style="text-align: left;">
+                                <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">Clear Workspace
+                                </div>
+                                <div style="font-size: 11px; font-weight: 400; opacity: 0.7;">Delete project, venv & db
+                                    config</div>
+                            </div>
+                        </button>
+                        <button class="btn-secondary" onclick="handleDeletionAction('repo')"
+                            style="border-color: #000; color: #000; opacity: 0.8; justify-content: flex-start; height: auto; padding: 16px;">
+                            <div style="text-align: left;">
+                                <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">Clear Repo Only
+                                </div>
+                                <div style="font-size: 11px; font-weight: 400; opacity: 0.7;">Keep venv, delete source
+                                    code</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="panel">
@@ -680,8 +715,6 @@
                     <button class="tab-btn active" onclick="switchTab(event, 'setup')">setup.sh</button>
                     <button class="tab-btn" onclick="switchTab(event, 'fresh')">fresh-db.sh</button>
                     <button class="tab-btn" onclick="switchTab(event, 'server')">dev-server.sh</button>
-                    <button class="tab-btn" onclick="switchTab(event, 'clear')">clear_all.sh</button>
-                    <button class="tab-btn" onclick="switchTab(event, 'clearRepo')">clear_repo.sh</button>
                     <button class="tab-btn" onclick="switchTab(event, 'env')">.env</button>
                 </div>
 
@@ -924,15 +957,11 @@
             let setupScript = generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail, adminPass, serverPort);
             let freshScript = generateFreshDbScript(projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort);
             let serverScript = generateServerScript(projectPath, venvName, serverPort);
-            let clearWorkspaceScript = generateClearScript(projectPath, venvName, dbType, 'workspace');
-            let clearRepoScript = generateClearScript(projectPath, venvName, dbType, 'repo');
             let envFile = generateEnvFile(dbType, dbInitPass, serverPort);
 
             document.getElementById('setupCode').textContent = setupScript;
             document.getElementById('freshCode').textContent = freshScript;
             document.getElementById('serverCode').textContent = serverScript;
-            document.getElementById('clearCode').textContent = clearWorkspaceScript;
-            document.getElementById('clearRepoCode').textContent = clearRepoScript;
             document.getElementById('envCode').textContent = envFile;
 
             // Show output section with animation
@@ -966,6 +995,102 @@
             const a = document.createElement('a');
             a.href = url;
             a.download = fullFilename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        async function handleDeletionAction(mode) {
+            if (!('showDirectoryPicker' in window)) {
+                // Fallback immediately if API not supported
+                downloadClearScript(mode);
+                return;
+            }
+
+            // Reducing friction: We don't ask for mode confirmation anymore.
+            // We just prompt to pick the folder, with a clear hint.
+
+            // Try to use a "well known" starting point if possible (e.g., 'documents')
+            // but we can't force the exact path.
+
+            const projectPath = document.getElementById('projectPath').value;
+
+            // We use alert because showDirectoryPicker needs a user gesture, but an alert might break it?
+            // Actually, showDirectoryPicker MUST be the direct result of a click.
+            // So we can't do confirm() -> showDirectoryPicker() in some strict browsers?
+            // Chrome is usually fine.
+            // Let's rely on the native picker's text if possible, but we can't control it much.
+            // We will just do a final safety check AFTER selection.
+
+            try {
+                // Tip for the user (using a non-blocking toast or just trust the user knows what they clicked)
+                // User clicked "Clear Workspace" -> they expect to pick the workspace folder.
+
+                const dirHandle = await window.showDirectoryPicker();
+
+                // Safety check: is this the right folder?
+                // We can check if it matches the folder name in projectPath?
+                // e.g. projectPath = ~/dev/horilla-hrms -> check if dirHandle.name == horilla-hrms
+
+                // Extract expected folder name
+                const parts = projectPath.split('/');
+                const expectedName = parts[parts.length - 1] || parts[parts.length - 2]; // handle trailing slash
+
+                let warningMsg = `Are you sure you want to PERMANENTLY DELETE all contents of '${dirHandle.name}'?`;
+                if (expectedName && dirHandle.name !== expectedName && !projectPath.includes(dirHandle.name)) {
+                    warningMsg = `⚠️ WARNING: Folder name '${dirHandle.name}' does not match your Project Path settings ('...${expectedName}').\n\nAre you sure you want to delete this folder's contents?`;
+                }
+
+                if (!confirm(warningMsg)) {
+                    return;
+                }
+
+                showFeedback("Deleting contents...", true);
+
+                let deletedCount = 0;
+                // Iterate and delete
+                for await (const entry of dirHandle.values()) {
+                    // Logic:
+                    // If mode == 'repo', we want to SKIP 'horillavenv' or whatever the venv name is.
+
+                    const venvName = document.getElementById('venvName').value || 'horillavenv';
+
+                    if (mode === 'repo' && entry.name === venvName) {
+                        console.log("Skipping venv:", entry.name);
+                        continue;
+                    }
+
+                    await dirHandle.removeEntry(entry.name, { recursive: true });
+                    deletedCount++;
+                }
+
+                showFeedback(`Deleted ${deletedCount} items. Workspace cleared.`);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error(err);
+                    // If permissions fail, offer script
+                    if (confirm("Browser deletion failed or permission denied. Download shell script instead?")) {
+                        downloadClearScript(mode);
+                    }
+                }
+            }
+        }
+
+        function downloadClearScript(mode) {
+            const projectPath = document.getElementById('projectPath').value || platforms[currentPlatform].defaultPath;
+            const venvName = document.getElementById('venvName').value || 'horillavenv';
+            const dbType = document.getElementById('dbType').value;
+
+            const content = generateClearScript(projectPath, venvName, dbType, mode);
+            const filename = mode === 'repo' ? 'clear_repo.sh' : 'clear_workspace.sh';
+
+            // Create temp blob for download
+            const blob = new Blob([content], { type: 'text/x-sh' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
