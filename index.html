@@ -703,23 +703,37 @@
         });
 
         // Carousel Management
+
+        /**
+         * Navigate to the next slide in the carousel
+         */
         function carouselNext() {
             const slides = document.querySelectorAll('.carousel-slide');
             currentSlide = (currentSlide + 1) % slides.length;
             updateCarousel();
         }
 
+        /**
+         * Navigate to the previous slide in the carousel
+         */
         function carouselPrev() {
             const slides = document.querySelectorAll('.carousel-slide');
             currentSlide = (currentSlide - 1 + slides.length) % slides.length;
             updateCarousel();
         }
 
+        /**
+         * Navigate to a specific slide by index
+         * @param {number} index - Zero-based index of the slide to display
+         */
         function goToSlide(index) {
             currentSlide = index;
             updateCarousel();
         }
 
+        /**
+         * Update carousel position and active states for slides and indicators
+         */
         function updateCarousel() {
             const track = document.querySelector('.carousel-track');
             const slides = document.querySelectorAll('.carousel-slide');
