@@ -42,6 +42,7 @@ Before submitting a PR, please ensure all tests pass.
 ## specific Guidelines
 
 - **Redundancy**: When adding new features (like new script options), ensure you consider the impact on "Fresh DB" vs "Initial Setup" scenarios.
+- **Safety**: The `clear_*.sh` scripts are destructive. Always ensure they include user confirmation prompts (`read -p`) before executing `rm -rf`.
 - **Cross-Platform**: While the scripts are Bash-focused (Linux/macOS), keeping them POSIX compliant is preferred.
 
 ## Pull Requests

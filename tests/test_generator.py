@@ -94,3 +94,26 @@ def test_no_redux_check_when_demo_disabled(page_on_index: Page):
     # Should NOT have the python shell check, just the straightforward creation
     assert "if python3 manage.py shell -c" not in setup_code
     assert "python3 manage.py createhorillauser" in setup_code
+
+def test_clear_workspace_script(page_on_index: Page):
+    # Select Postgres
+    page_on_index.select_option("#dbType", "postgresql")
+    page_on_index.fill("#dbName", "to_be_deleted_db")
+    
+    page_on_index.click("button:has-text('Continue to Scripts')")
+    
+    # Check Clear Workspace
+    page_on_index.click("button:has-text('clear_all.sh')")
+    clear_code = page_on_index.locator("#clearCode").inner_text()
+    assert "rm -rf" in clear_code
+    assert "to_be_deleted_db" in clear_code # Postgres drop instructions
+    assert "Removing virtual environment..." in clear_code
+
+    # Check Clear Repo
+    page_on_index.click("button:has-text('clear_repo.sh')")
+    repo_code = page_on_index.locator("#clearRepoCode").inner_text()
+    assert "rm -rf" in repo_code
+    assert "Clean Workspace Script" not in repo_code 
+    assert "Clear Repository Only" in repo_code
+    assert "Removing virtual environment" not in repo_code
+

@@ -6,6 +6,7 @@ A lightweight, browser-based tool to generate automated setup, database reset, a
 Developing with Horilla often involves making code changes that require frequent database resets. This tool generates a suite of shell scripts to automate:
 - Full environment initialization (git clone, venv, deps, migration)
 - One-command "Fresh Database" wipes (drops DB, cleans migrations, recreates everything)
+- "Clear Workspace" utilities to nuking the environment or just the repo
 - Quick-launch development server script
 - Environment variable `.env` templates
 

@@ -680,6 +680,8 @@
                     <button class="tab-btn active" onclick="switchTab(event, 'setup')">setup.sh</button>
                     <button class="tab-btn" onclick="switchTab(event, 'fresh')">fresh-db.sh</button>
                     <button class="tab-btn" onclick="switchTab(event, 'server')">dev-server.sh</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'clear')">clear_all.sh</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'clearRepo')">clear_repo.sh</button>
                     <button class="tab-btn" onclick="switchTab(event, 'env')">.env</button>
                 </div>
 
@@ -719,6 +721,34 @@
                                 onclick="downloadFile('serverCode', 'dev-server.sh')">Download</button>
                         </div>
                         <pre id="serverCode"></pre>
+                    </div>
+                </div>
+
+                <div id="clear" class="tab-content">
+                    <p style="font-size: 14px; color: var(--muted-foreground); margin-bottom: 20px;">
+                        <strong>Danger:</strong> Completely remove the project and virtual environment.
+                    </p>
+                    <div class="code-block">
+                        <div class="code-actions">
+                            <button class="btn-secondary" onclick="copyCode('clearCode')">Copy</button>
+                            <button class="btn-primary"
+                                onclick="downloadFile('clearCode', 'clear_workspace.sh')">Download</button>
+                        </div>
+                        <pre id="clearCode"></pre>
+                    </div>
+                </div>
+
+                <div id="clearRepo" class="tab-content">
+                    <p style="font-size: 14px; color: var(--muted-foreground); margin-bottom: 20px;">Removes
+                        <strong>only</strong> the project repository folder. Retains virtual environment and database.
+                    </p>
+                    <div class="code-block">
+                        <div class="code-actions">
+                            <button class="btn-secondary" onclick="copyCode('clearRepoCode')">Copy</button>
+                            <button class="btn-primary"
+                                onclick="downloadFile('clearRepoCode', 'clear_repo.sh')">Download</button>
+                        </div>
+                        <pre id="clearRepoCode"></pre>
                     </div>
                 </div>
 
@@ -894,11 +924,15 @@
             let setupScript = generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail, adminPass, serverPort);
             let freshScript = generateFreshDbScript(projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort);
             let serverScript = generateServerScript(projectPath, venvName, serverPort);
+            let clearWorkspaceScript = generateClearScript(projectPath, venvName, dbType, 'workspace');
+            let clearRepoScript = generateClearScript(projectPath, venvName, dbType, 'repo');
             let envFile = generateEnvFile(dbType, dbInitPass, serverPort);
 
             document.getElementById('setupCode').textContent = setupScript;
             document.getElementById('freshCode').textContent = freshScript;
             document.getElementById('serverCode').textContent = serverScript;
+            document.getElementById('clearCode').textContent = clearWorkspaceScript;
+            document.getElementById('clearRepoCode').textContent = clearRepoScript;
             document.getElementById('envCode').textContent = envFile;
 
             // Show output section with animation
@@ -950,6 +984,8 @@
                     { name: 'setup.sh', id: 'setupCode' },
                     { name: 'fresh-db.sh', id: 'freshCode' },
                     { name: 'dev-server.sh', id: 'serverCode' },
+                    { name: 'clear_workspace.sh', id: 'clearCode' },
+                    { name: 'clear_repo.sh', id: 'clearRepoCode' },
                     { name: document.getElementById('platform-hrms').classList.contains('active') ? '.env.dist' : '.env.example', id: 'envCode' }
                 ];
 
@@ -1291,6 +1327,74 @@ else
     exit 1
 fi
 `;
+        }
+
+        function generateClearScript(projectPath, venvName, dbType, mode = 'workspace') {
+            let script = `#!/bin/bash
+
+# ${platforms[currentPlatform].name} - ${mode === 'repo' ? 'Clear Repository Only' : 'Clean Workspace Script'}
+# WARNING: This will DELETE ${mode === 'repo' ? 'your project repository folder' : 'your project, virtual environment, and database'}.
+
+PROJECT_PATH="${projectPath}"
+VENV_NAME="${venvName}"
+
+echo "⚠️  WARNING: You are about to DESTROY ${mode === 'repo' ? 'the project repository' : 'your entire development environment'}."
+echo "    - Project folder: $PROJECT_PATH"
+`;
+            if (mode !== 'repo') {
+                script += `echo "    - Virtual env: $VENV_NAME"
+if [ "${dbType}" == "sqlite" ]; then
+    echo "    - Database: SQLite (inside project)"
+else
+    echo "    - Database: PostgreSQL (requires manual drop, or use provided command)"
+fi
+`;
+            }
+
+            script += `echo ""
+read -p "Type 'DELETE' to confirm: " confirm
+
+if [ "$confirm" != "DELETE" ]; then
+    echo "Aborted."
+    exit 0
+fi
+`;
+
+            if (mode !== 'repo') {
+                script += `
+# Deactivate venv if active
+if [ -n "$VIRTUAL_ENV" ]; then
+    deactivate 2>/dev/null || true
+fi
+`;
+            }
+
+            script += `
+echo "Removing project folder..."
+rm -rf "$PROJECT_PATH"
+`;
+
+            if (mode !== 'repo') {
+                script += `
+echo "Removing virtual environment..."
+rm -rf "$VENV_NAME"
+`;
+            }
+
+            if (mode !== 'repo' && dbType === 'postgresql') {
+                const dbName = document.getElementById('dbName').value;
+                const dbUser = document.getElementById('dbUser').value;
+                script += `
+echo "To drop the PostgreSQL database, run manually:"
+echo "psql -U ${dbUser} -c 'DROP DATABASE ${dbName};'"
+`;
+            }
+
+            script += `
+echo ""
+echo "Done."
+`;
+            return script;
         }
 
         function generateEnvFile(dbType, dbInitPass, serverPort) {
