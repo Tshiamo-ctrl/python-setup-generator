@@ -1044,15 +1044,24 @@ ${generateEnvFile(dbType, dbInitPass, serverPort)}
 EOF
 
 # Compile translations
-if python3 manage.py compilemessages --help >/dev/null 2>&1; then
+if command -v msgfmt >/dev/null 2>&1; then
     echo "Compiling translations..."
-    python3 manage.py compilemessages || echo "Note: Translation compilation failed (gettext might be missing)"
+    python3 manage.py compilemessages || echo "Note: Translation compilation failed"
+else
+    echo "Note: gettext (msgfmt) not found. Attempting to install..."
+    if command -v apt-get >/dev/null 2>&1; then
+        sudo apt-get update -y && sudo apt-get install -y gettext || echo "Could not install gettext automatically"
+    fi
+    if command -v msgfmt >/dev/null 2>&1; then
+        python3 manage.py compilemessages
+    else
+        echo "Skipping translation compilation (gettext missing)"
+    fi
 fi
 
 # Database setup
 if [ -f "manage.py" ]; then
     echo "Generating and applying migrations..."
-    # Ensure migrations are created for all apps
     python3 manage.py makemigrations --noinput
     python3 manage.py migrate --noinput
 else
@@ -1066,30 +1075,32 @@ fi
                 script += `
 # PostgreSQL specific setup
 echo "PostgreSQL database configured in .env"
-echo "   Make sure PostgreSQL is running locally or update .env with correct credentials"
 `;
             }
 
             if (loadDemo) {
                 script += `
-# Load initial demo data
-if [ -f "fixtures/initial_data.json" ] || python3 manage.py loaddata initial_data --help >/dev/null 2>&1; then
-    echo "Loading demo data..."
-    python3 manage.py loaddata initial_data 2>/dev/null || echo "Note: Demo data fixture not found or already loaded"
+# Load initial demo data/fixtures
+echo "Initializing database data..."
+# Horilla HRMS often needs specific fixtures or initialization commands
+if [ -f "fixtures/initial_data.json" ]; then
+    python3 manage.py loaddata initial_data
 fi
+
+# Try common Horilla init commands if they exist
+python3 manage.py load_fixtures 2>/dev/null || true
 `;
             }
 
             if (createSuper) {
                 script += `
-# Create administrator account
+# Create administrator account and associated employee record
 echo "Creating admin user..."
 export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
-# Try Horilla-specific creation command, fallback to standard createsuperuser
+# Try Horilla's specific command which creates both User and Employee
 python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password="${adminPass}" 2>/dev/null || \
 python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
-echo "Could not create superuser automatically. You may need to run it manually."
-echo "   Target credentials: ${adminUser} / ${adminPass}"
+echo "Could not create superuser automatically."
 `;
             }
 
