@@ -12,6 +12,39 @@
  */
 const REPO_LIST = [
     {
+        category: "Horilla Apps",
+        repos: [
+            {
+                name: "Horilla HRM",
+                url: "https://github.com/horilla-opensource/horilla.git",
+                description: "Open source Human Resource Management System",
+                framework: "django",
+                complexity: "Advanced",
+                stars: "1.2k+",
+                setupCommands: {
+                    preInstall: "cp .env.dist .env",
+                    postInstall: "python3 manage.py migrate",
+                    adminCreate: "python3 manage.py createhorillauser --first_name Admin --last_name Admin --username admin --password admin123 --email admin@example.com --phone 1234567890",
+                    demoData: "python3 manage.py loaddata demo_data.json"
+                }
+            },
+            {
+                name: "Horilla CRM",
+                url: "https://github.com/horilla-opensource/horilla-crm.git",
+                description: "Open source Customer Relationship Management",
+                framework: "django",
+                complexity: "Advanced",
+                stars: "500+",
+                setupCommands: {
+                    preInstall: "cp .env.dist .env",
+                    postInstall: "python3 manage.py migrate",
+                    adminCreate: "python3 manage.py createsuperuser --noinput --username admin --email admin@example.com",
+                    demoData: "python3 manage.py loaddata demo_data.json"
+                }
+            }
+        ]
+    },
+    {
         category: "Django Frameworks",
         repos: [
             {

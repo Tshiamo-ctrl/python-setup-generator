@@ -69,6 +69,9 @@ Setting up local development environments often involves repetitive terminal wor
 
 ## 📋 Repository Categories
 
+### Horilla Apps (2 repos)
+Horilla HRM, Horilla CRM
+
 ### Django Frameworks (15 repos)
 Saleor, Wagtail CMS, Open edX, Zulip, Mayan EDMS, PostHog, DefectDojo, NetBox, Taiga, Flagsmith, Sentry, Mezzanine, Django REST Framework, Django itself, Django-allauth
 

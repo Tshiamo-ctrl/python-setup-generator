@@ -569,3 +569,43 @@ def test_pre_install_command_population(page_on_index: Page):
     
     # Sentry config in repos.js has preInstall: "sentry init --dev"
     assert "sentry init --dev" in setup_code
+
+def test_horilla_specific_setup(page_on_index: Page):
+    """Test that Horilla HRM/CRM are in the dropdown and generate specific commands"""
+    dropdown = page_on_index.locator("#repoSelect")
+    page_on_index.wait_for_selector("#repoSelect option:nth-child(2)", state="attached")
+    
+    # Select Horilla HRM
+    page_on_index.select_option("#repoSelect", label="Horilla HRM (1.2k+)")
+    
+    # Check auto-filled admin command
+    page_on_index.check("#enableCustomConfig")
+    admin_cmd = page_on_index.locator("#cmdAdmin").input_value()
+    assert "createhorillauser" in admin_cmd
+    
+    # Generate scripts
+    page_on_index.click("button:has-text('Continue to Scripts')")
+    page_on_index.wait_for_timeout(500)
+    
+    # Verify setup.sh has demo data command
+    setup_code = page_on_index.locator("#setupCode").inner_text()
+    assert "loaddata demo_data.json" in setup_code
+    assert "createhorillauser" in setup_code
+    
+    # Verify .env has DB_IN_PASSWORD
+    indicators = page_on_index.locator(".indicator")
+    indicators.nth(3).click() # .env is the 4th tab
+    page_on_index.wait_for_timeout(300)
+    env_code = page_on_index.locator("#envCode").inner_text()
+    assert "DB_IN_PASSWORD=horilla" in env_code
+
+    # Select Horilla CRM
+    page_on_index.reload()
+    page_on_index.wait_for_selector("#repoSelect option:nth-child(2)", state="attached")
+    page_on_index.select_option("#repoSelect", label="Horilla CRM (500+)")
+    page_on_index.click("button:has-text('Continue to Scripts')")
+    page_on_index.wait_for_timeout(500)
+    
+    # Verify setup.sh has demo data command for CRM too
+    setup_code = page_on_index.locator("#setupCode").inner_text()
+    assert "loaddata demo_data.json" in setup_code
