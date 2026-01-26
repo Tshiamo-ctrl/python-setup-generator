@@ -8,6 +8,7 @@
     <meta name="description"
         content="Generate production-ready setup and maintenance scripts for Python/Django projects. Automate database wipes, migrations, and environment configuration locally.">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.1/umd/index.js"></script>
 </head>
 
 <body>
@@ -25,11 +26,23 @@
                     Supports Django, Flask, FastAPI & Generic Python
                 </div>
             </div>
-            <button class="btn-secondary theme-toggle" onclick="toggleTheme()" id="themeToggle" title="Toggle Theme">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                </svg>
-            </button>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-secondary" onclick="startTour()" id="tourButton" title="Start Interactive Tour"
+                    style="padding: 8px 16px; display: flex; align-items: center; gap: 6px;">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span style="font-size: 13px;">Tour</span>
+                </button>
+                <button class="btn-secondary theme-toggle" onclick="toggleTheme()" id="themeToggle"
+                    title="Toggle Theme">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
         </header>
 
         <div class="alert alert-info">
@@ -63,7 +76,9 @@
 
                 <div class="form-group" id="customRepoField">
                     <label for="customRepoUrl">Git Repository URL</label>
-                    <input type="text" id="customRepoUrl" placeholder="https://github.com/username/project.git">
+                    <input type="text" id="customRepoUrl" placeholder="https://github.com/username/project.git"
+                        title="Enter a valid Git repository URL (HTTPS or SSH). Examples: https://github.com/user/repo.git or git@github.com:user/repo.git">
+                    <p class="help-text">✓ Accepts HTTPS (https://...) or SSH (git@...) URLs ending in .git</p>
                 </div>
 
                 <div class="form-group" id="customConfigCheckbox" style="display: none;">
@@ -229,6 +244,25 @@
                     <button class="btn-secondary" id="saveFolderBtn" onclick="saveToFolder()"
                         title="Save all files directly to a folder">Save Workspace Folder</button>
                     <button class="btn-secondary" onclick="resetForm()">Reset</button>
+                </div>
+
+                <div class="divider"></div>
+
+                <div style="margin-top: 32px;">
+                    <h3 style="margin-bottom: 16px; font-size: 16px; color: var(--foreground);">Utilities</h3>
+                    <button class="btn-secondary" onclick="handleArchiveCreation()" style="width: 100%;">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            <strong>Archive Workspace</strong>
+                        </div>
+                        <p style="margin-top: 4px; font-size: 12px; opacity: 0.8;">Create TAR.GZ backup of any directory
+                        </p>
+                    </button>
                 </div>
 
                 <div class="danger-zone">
@@ -626,6 +660,24 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tour Overlay -->
+    <div id="tourOverlay"
+        style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9998;">
+    </div>
+    <div id="tourModal"
+        style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card); border-radius: 12px; padding: 32px; max-width: 600px; width: 90%; z-index: 9999; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+        <h3 id="tourTitle" style="margin: 0 0 16px 0; font-size: 20px; color: var(--foreground);"></h3>
+        <p id="tourContent" style="margin: 0 0 24px 0; line-height: 1.6; color: var(--muted-foreground);"></p>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span id="tourProgress" style="font-size: 12px; color: var(--muted-foreground);"></span>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-secondary" onclick="previousTourStep()" id="tourPrevBtn">Previous</button>
+                <button class="btn-primary" onclick="nextTourStep()" id="tourNextBtn">Next</button>
+                <button class="btn-secondary" onclick="endTour()" style="margin-left: 8px;">Skip Tour</button>
             </div>
         </div>
     </div>
@@ -1489,12 +1541,28 @@ DB_IN_PASSWORD=horilla` : ''}
             }
         }
 
+        let isDeletionInProgress = false;
+
         async function handleDeletionAction(mode) {
-            // Basic implementation reusing user's clear logic
-            if (!('showDirectoryPicker' in window)) { alert("Browser not supported for deletion"); return; }
+            // Prevent multiple simultaneous executions
+            if (isDeletionInProgress) return;
+            isDeletionInProgress = true;
+
             try {
+                // Basic implementation reusing user's clear logic
+                if (!('showDirectoryPicker' in window)) {
+                    alert("Browser not supported for deletion");
+                    return;
+                }
+
                 const dirHandle = await window.showDirectoryPicker();
-                if (!confirm("Are you sure you want to delete contents of " + dirHandle.name + "?")) return;
+
+                // Confirm action before proceeding
+                const confirmMessage = `Are you sure you want to delete contents of ${dirHandle.name}?`;
+                const userConfirmed = confirm(confirmMessage);
+
+                if (!userConfirmed) return;
+
                 let count = 0;
                 for await (const entry of dirHandle.values()) {
                     if (mode === 'repo' && entry.name === document.getElementById('venvName').value) continue;
@@ -1508,8 +1576,153 @@ DB_IN_PASSWORD=horilla` : ''}
                 }
                 showFeedback(`Deleted ${count} items.`);
             } catch (e) {
-                console.error(e);
+                if (e.name !== 'AbortError') {
+                    console.error(e);
+                }
+            } finally {
+                // Always reset the flag when done
+                isDeletionInProgress = false;
             }
+        }
+
+        let isArchiveInProgress = false;
+
+        async function handleArchiveCreation() {
+            // Prevent multiple simultaneous executions
+            if (isArchiveInProgress) return;
+            isArchiveInProgress = true;
+
+            try {
+                // Check browser support
+                if (!('showDirectoryPicker' in window)) {
+                    alert("Browser not supported. Please use Chrome, Edge, or Opera 86+");
+                    return;
+                }
+
+                // Check if fflate is loaded
+                if (typeof fflate === 'undefined') {
+                    alert("Archive library not loaded. Please refresh the page.");
+                    return;
+                }
+
+                // Step 1: Select source directory
+                showFeedback("Select directory to archive...");
+                const sourceHandle = await window.showDirectoryPicker();
+
+                // Step 2: Prompt for archive name with smart default
+                const date = new Date().toISOString().split('T')[0];
+                const defaultName = `${sourceHandle.name}-backup-${date}.tar.gz`;
+                const archiveName = prompt("Enter archive name:", defaultName);
+
+                if (!archiveName) return; // User cancelled
+
+                // Ensure .tar.gz extension
+                const finalName = archiveName.endsWith('.tar.gz') ? archiveName :
+                    archiveName.endsWith('.tar') ? archiveName + '.gz' :
+                        archiveName + '.tar.gz';
+
+                showFeedback(`Creating archive: ${finalName}...`);
+
+                // Step 3: Read directory contents recursively
+                const files = await readDirectoryRecursive(sourceHandle, '');
+
+                if (files.length === 0) {
+                    alert("No files found to archive.");
+                    return;
+                }
+
+                showFeedback(`Archiving ${files.length} files...`);
+
+                // Step 4: Create TAR archive using fflate
+                const tarData = await createTarGz(files);
+
+                // Step 5: Save the file
+                showFeedback("Saving archive...");
+                const blob = new Blob([tarData], { type: 'application/gzip' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = finalName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showFeedback(`Archive created successfully: ${files.length} files archived!`);
+            } catch (e) {
+                if (e.name !== 'AbortError') {
+                    console.error(e);
+                    alert(`Error creating archive: ${e.message}`);
+                }
+            } finally {
+                isArchiveInProgress = false;
+            }
+        }
+
+        /**
+         * Recursively read directory contents
+         * @param {FileSystemDirectoryHandle} dirHandle - Directory to read
+         * @param {string} path - Current path relative to root
+         * @returns {Promise<Array>} - Array of {name, data} objects
+         */
+        async function readDirectoryRecursive(dirHandle, path) {
+            const files = [];
+            const skipDirs = ['.git', 'node_modules', '__pycache__', '.pytest_cache', 'test_venv', '.vscode', '.idea'];
+            const venvName = document.getElementById('venvName')?.value || 'venv';
+            skipDirs.push(venvName);
+
+            for await (const entry of dirHandle.values()) {
+                const entryPath = path ? `${path}/${entry.name}` : entry.name;
+
+                if (entry.kind === 'directory') {
+                    // Skip common directories
+                    if (skipDirs.includes(entry.name)) continue;
+
+                    // Recursively read subdirectory
+                    const subFiles = await readDirectoryRecursive(entry, entryPath);
+                    files.push(...subFiles);
+                } else if (entry.kind === 'file') {
+                    // Skip certain file types
+                    if (entry.name.endsWith('.pyc') || entry.name === '.DS_Store') continue;
+
+                    const file = await entry.getFile();
+                    const data = await file.arrayBuffer();
+                    files.push({
+                        name: entryPath,
+                        data: new Uint8Array(data)
+                    });
+                }
+            }
+
+            return files;
+        }
+
+        /**
+         * Create TAR.GZ archive from files using fflate
+         * @param {Array} files - Array of {name, data} objects
+         * @returns {Promise<Uint8Array>} - Compressed TAR.GZ data
+         */
+        async function createTarGz(files) {
+            return new Promise((resolve, reject) => {
+                try {
+                    // Create TAR format using fflate
+                    const tarFiles = {};
+
+                    for (const file of files) {
+                        tarFiles[file.name] = file.data;
+                    }
+
+                    // Use fflate to create tar.gz
+                    fflate.tarGzip(tarFiles, {
+                        mtime: new Date()
+                    }, (err, data) => {
+                        if (err) reject(err);
+                        else resolve(data);
+                    });
+                } catch (e) {
+                    reject(e);
+                }
+            });
         }
 
         async function copyCode(elementIdOrText) {
@@ -1534,6 +1747,89 @@ DB_IN_PASSWORD=horilla` : ''}
             updateDbFields();
             handleRepoChange(); // Re-apply repo defaults
             updateFrameworkDefaults(); // Re-apply framework defaults
+        }
+
+        // Tour Guide System
+        let currentTourStep = 0;
+        const tourSteps = [
+            {
+                title: "Welcome to Local Setup Generator! 👋",
+                content: "This tool helps you generate automated setup scripts for Python web projects. Let's take a quick tour to show you how to use it effectively and avoid common mistakes."
+            },
+            {
+                title: "Step 1: Choose Your Repository",
+                content: "Select from our curated list of popular Python projects (Django, Flask, FastAPI) or choose 'Custom Repository URL' to use your own project. <br><br><strong>Custom URLs must be:</strong><br>✓ Valid Git repository URLs<br>✓ HTTPS format: <code>https://github.com/user/repo.git</code><br>✓ Or SSH format: <code>git@github.com:user/repo.git</code><br>✗ Not plain GitHub page URLs"
+            },
+            {
+                title: "Step 2: Configure Your Setup",
+                content: "For pre-configured repos, settings are optimized automatically. For custom repos, enable 'Custom Configuration' to adjust:<br>• Framework type (Django, Flask, FastAPI, etc.)<br>• Database settings (SQLite or PostgreSQL)<br>• Admin credentials<br>• Post-install commands"
+            },
+            {
+                title: "Step 3: Generate Scripts",
+                content: "Click 'Continue to Scripts' to generate:<br>• <strong>setup.sh</strong> - Complete environment initialization<br>• <strong>fresh-db.sh</strong> - Database reset and cleanup<br>• <strong>dev-server.sh</strong> - Development server launcher<br>• <strong>.env.example</strong> - Environment variables template"
+            },
+            {
+                title: "Step 4: Download & Execute",
+                content: "After generation, you can:<br>• Download individual scripts<br>• Use 'Save Workspace Folder' to download all files<br>• Copy commands directly from Quick Actions<br><br><strong>To run:</strong><br>1. <code>chmod +x *.sh</code><br>2. <code>./setup.sh</code><br>3. <code>./dev-server.sh</code>"
+            },
+            {
+                title: "Utilities: Archive Workspace 📦",
+                content: "Create TAR.GZ backups of any project directory:<br>1. Click 'Archive Workspace'<br>2. Select directory to archive<br>3. Enter custom archive name (or use smart default)<br>4. Archive downloads automatically<br><br><strong>Smart filtering:</strong> Automatically skips .git, node_modules, venv, __pycache__, etc."
+            },
+            {
+                title: "Danger Zone: Clear Operations ⚠️",
+                content: "Three destructive operations for cleaning up:<br>• <strong>Clear Workspace</strong>: Delete everything (project +venv + db)<br>• <strong>Clear Repo Only</strong>: Delete source code, keep venv<br>• <strong>Clear Env Only</strong>: Delete venv & config, keep source<br><br><strong>⚠️ Warning:</strong> These cannot be undone! You'll be asked to confirm."
+            },
+            {
+                title: "Browser Compatibility 🌐",
+                content: "Some features require modern browsers:<br>• <strong>Archive & Clear operations</strong>: Chrome 86+, Edge 86+, Opera 72+<br>• <strong>Script generation</strong>: Works in all modern browsers<br>• <strong>Not supported</strong>: Firefox, Safari (for file operations)<br><br>The app runs entirely in your browser - no data sent to servers!"
+            },
+            {
+                title: "You're All Set! 🎉",
+                content: "You now know how to:<br>✓ Generate setup scripts<br>✓ Use custom repositories<br>✓ Create archives<br>✓ Safely clean workspaces<br><br>Need help? Look for tooltips (hover over inputs) or restart this tour anytime from the header.<br><br><strong>Happy coding!</strong>"
+            }
+        ];
+
+        function startTour() {
+            currentTourStep = 0;
+            showTourStep();
+        }
+
+        function showTourStep() {
+            const step = tourSteps[currentTourStep];
+            document.getElementById('tourTitle').textContent = step.title;
+            document.getElementById('tourContent').innerHTML = step.content;
+            document.getElementById('tourProgress').textContent = `Step ${currentTourStep + 1} of ${tourSteps.length}`;
+
+            // Update button states
+            document.getElementById('tourPrevBtn').disabled = currentTourStep === 0;
+            document.getElementById('tourNextBtn').textContent = currentTourStep === tourSteps.length - 1 ? 'Finish' : 'Next';
+
+            // Show overlay and modal
+            document.getElementById('tourOverlay').style.display = 'block';
+            document.getElementById('tourModal').style.display = 'block';
+        }
+
+        function nextTourStep() {
+            if (currentTourStep < tourSteps.length - 1) {
+                currentTourStep++;
+                showTourStep();
+            } else {
+                endTour();
+            }
+        }
+
+        function previousTourStep() {
+            if (currentTourStep > 0) {
+                currentTourStep--;
+                showTourStep();
+            }
+        }
+
+        function endTour() {
+            document.getElementById('tourOverlay').style.display = 'none';
+            document.getElementById('tourModal').style.display = 'none';
+            currentTourStep = 0;
         }
     </script>
 </body>
