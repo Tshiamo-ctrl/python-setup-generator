@@ -1093,15 +1093,29 @@ python3 manage.py load_fixtures 2>/dev/null || true
             }
 
             if (createSuper) {
-                script += `
-# Create administrator account and associated employee record
+                if (loadDemo) {
+                    script += `
+# Create administrator account
+if python3 manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); exit(0 if User.objects.filter(username='${adminUser}').exists() else 1)"; then
+    echo "Admin user '${adminUser}' already exists. Skipping creation."
+else
+    echo "Creating admin user..."
+    export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
+    python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password="${adminPass}" 2>/dev/null || \
+    python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
+    echo "Could not create superuser automatically."
+fi
+`;
+                } else {
+                    script += `
+# Create administrator account
 echo "Creating admin user..."
 export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
-# Try Horilla's specific command which creates both User and Employee
 python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password="${adminPass}" 2>/dev/null || \
 python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
 echo "Could not create superuser automatically."
 `;
+                }
             }
 
             script += `
@@ -1204,7 +1218,21 @@ fi
             }
 
             if (createSuper) {
-                script += `
+                if (loadDemo) {
+                    script += `
+# Recreate administrative user
+if python3 manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); exit(0 if User.objects.filter(username='${adminUser}').exists() else 1)"; then
+    echo "Admin user '${adminUser}' already exists. Skipping creation."
+else
+    echo "Creating admin user..."
+    export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
+    python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password="${adminPass}" 2>/dev/null || \
+    python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
+    echo "Superuser creation skipped or failed."
+fi
+`;
+                } else {
+                    script += `
 # Recreate administrative user
 echo "Creating admin user..."
 export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
@@ -1212,6 +1240,7 @@ python3 manage.py createhorillauser --noinput --username="${adminUser}" --email=
 python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
 echo "Superuser creation skipped or failed."
 `;
+                }
             }
 
             script += `
