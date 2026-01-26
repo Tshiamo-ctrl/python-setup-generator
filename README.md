@@ -1,32 +1,27 @@
-# Horilla Dev Setup Generator 
+# Universal Python Workspace Generator
 
-A lightweight, browser-based tool to generate automated setup, database reset, and development server scripts for [Horilla HRMS](https://github.com/horilla-opensource/horilla).
+A lightweight, browser-based tool to generate automated setup, database reset, and development server scripts for any Python web project (Django, Flask, FastAPI).
 
 ## Purpose
-Developing with Horilla often involves making code changes that require frequent database resets. This tool generates a suite of shell scripts to automate:
-- Full environment initialization (git clone, venv, deps, migration)
-- One-command "Fresh Database" wipes (drops DB, cleans migrations, recreates everything)
-- "Clear Workspace" utilities to nuking the environment or just the repo
-- **Direct Workspace Cleanup**: Browser-integrated folder empty logic (Chrome/Edge)
-- Quick-launch development server script
-- Environment variable `.env` templates
+Setting up local development environments often involves repetitive terminal work. This tool automates the "nitty-gritty" so you can get straight to coding:
+- **Environment Initialization**: `git clone`, venv creation, dependency installation.
+- **Minimalist Workflow**: Select a curated repo (Cookiecutter, Wagtail, FastAPI Starters) and it auto-fills the best defaults for Project Path, Venv, and Framework.
+- **One-Command Resets**: Wipe and recreate databases/migrations reliably.
+- **Danger Zone**: Integrated browser-based workspace cleanup using the File System Access API.
 
 ## Usage
-1. Open `index.html` in any modern browser.
-2. Configure your project path (e.g., `~/projects/horilla`).
-3. Select your Database type (SQLite or PostgreSQL).
-4. Click **Generate Scripts**.
-5. Copy the generated scripts into your Horilla project root.
-6. Make them executable: `chmod +x *.sh`.
-7. Run `./setup.sh` to get started!
+1. Open [Live Preview](https://tshiamo-ctrl.github.io/Horilla-setup-generator-app/preview/) or `index.html` locally.
+2. Select a **Source Repository** from the dropdown (or provide a Custom URL).
+3. (Optional) Toggle **Advanced Configuration** to customize paths, venv names, or database settings.
+4. Click **Continue to Scripts**.
+5. Save the generated scripts to your project folder (using the **Save Workspace Folder** button for Chrome/Edge).
+6. Run `./setup.sh` to initialize everything!
 
 ## Features
-- **Smart Checks**: Scripts check for `python3` and `git` before running.
-- **Robustness**: Handles virtual environment activation and pip upgrades automatically.
-- **Demo Data**: Options to automatically load Horilla's official demo dataset.
-- **Danger Zone**: One-click cleanup using the File System Access API (with user confirmation).
-- **User Friendly**: Minimal monochrome aesthetic and subtle accents for a frictionless experience.
-- **Logic Verification**: Test suite built with Playwright to ensure script correctness.
+- **Smart Auto-Config**: Automatically sets sensible defaults based on the chosen repository.
+- **Framework Support**: Optimized templates for Django, Flask, and FastAPI.
+- **Zero Dependencies**: Pure HTML/JS/CSS. Runs entirely in the browser.
+- **Playwright Verified**: Comprehensive test suite ensures generated scripts are syntactically correct and logical.
 
 ## License
 [MIT](LICENSE)

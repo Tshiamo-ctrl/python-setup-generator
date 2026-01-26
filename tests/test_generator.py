@@ -28,13 +28,32 @@ def test_repo_dropdown_population(page_on_index: Page):
     expect(dropdown.locator("option").filter(has_text="Cookiecutter Django")).to_have_count(1)
     expect(dropdown.locator("option").filter(has_text="Wagtail CMS")).to_have_count(1)
 
+def test_minimalist_ui_toggling(page_on_index: Page):
+    # By default, curated repo should be selected (populated from REPO_LIST)
+    # or at least on load we check #advancedConfig visibility
+    adv_config = page_on_index.locator("#advancedConfig")
+    
+    # Select a curated repo
+    page_on_index.select_option("#repoSelect", label="Cookiecutter Django")
+    expect(adv_config).to_be_hidden()
+    
+    # Check auto-filled defaults in the hidden fields
+    # (even if hidden, values should be set)
+    path_val = page_on_index.locator("#projectPath").input_value()
+    assert "cookiecutter-django" in path_val
+    assert path_val.startswith("~/")
+    
+    # Switch to Custom
+    page_on_index.select_option("#repoSelect", "custom")
+    expect(adv_config).to_be_visible()
+
 def test_custom_repo_selection(page_on_index: Page):
     # Select "Custom"
     page_on_index.select_option("#repoSelect", "custom")
     
-    # Input should become visible
-    custom_input = page_on_index.locator("#customRepoField")
-    expect(custom_input).to_be_visible()
+    # Advanced config and custom URL field should be visible
+    expect(page_on_index.locator("#advancedConfig")).to_be_visible()
+    expect(page_on_index.locator("#customRepoField")).to_be_visible()
     
     # Fill URL
     page_on_index.fill("#customRepoUrl", "https://github.com/testuser/testproject.git")
@@ -48,11 +67,11 @@ def test_custom_repo_selection(page_on_index: Page):
     # Check Setup content
     setup_code = page_on_index.locator("#setupCode").inner_text()
     assert "https://github.com/testuser/testproject.git" in setup_code
-    assert "testproject" in setup_code # Extracted name
-    assert "python3 manage.py migrate" in setup_code # Django default
+    assert "testproject" in setup_code 
+    assert "python3 manage.py migrate" in setup_code 
 
 def test_framework_switch_flask(page_on_index: Page):
-    # Select Custom
+    # Select Custom to expose framework dropdown
     page_on_index.select_option("#repoSelect", "custom")
     page_on_index.fill("#customRepoUrl", "https://github.com/flask/app.git")
     
@@ -96,7 +115,6 @@ def test_clear_workspace_danger_zone(page_on_index: Page):
     # Check if Danger Zone exists
     expect(page_on_index.locator("h3:has-text('Danger Zone')")).to_be_visible()
     
-    # We verify the logic by invoking the generator functions directly
     # Check Clear Workspace Content by calling JS function
     clear_code = page_on_index.evaluate("""
         generateClearScript('/home/user/test', 'test_venv', 'postgresql', 'workspace')

@@ -544,76 +544,90 @@
                     <input type="text" id="customRepoUrl" placeholder="https://github.com/username/project.git">
                 </div>
 
-                <div class="form-group">
-                    <label for="frameworkSelect">Project Framework</label>
-                    <select id="frameworkSelect" onchange="updateFrameworkDefaults()">
-                        <option value="django">Django (Standard)</option>
-                        <option value="flask">Flask</option>
-                        <option value="fastapi">FastAPI</option>
-                        <option value="generic">Generic Python</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="projectPath">Project Path</label>
-                    <input type="text" id="projectPath" value="~/dev/horilla-hrms"
-                        placeholder="/home/user/projects/horilla">
-                    <p class="help-text">Local path where Horilla will be cloned</p>
-                </div>
-
-                <div class="form-group">
-                    <label for="scriptPath">Script Download Prefix (Local)</label>
-                    <input type="text" id="scriptPath" value="" placeholder="e.g. scripts/">
-                    <p class="help-text">Optional prefix for file names when downloading</p>
-                </div>
-
-                <div class="form-group">
-                    <label for="venvName">Virtual Environment Name</label>
-                    <input type="text" id="venvName" value="horillavenv" placeholder="horillavenv">
-                    <p class="help-text">Name of the directory for Python isolation</p>
-                </div>
-
-                <div class="form-group">
-                    <label for="dbType">Database Type</label>
-                    <select id="dbType" onchange="updateDbFields()">
-                        <option value="sqlite">SQLite (Development)</option>
-                        <option value="postgresql">PostgreSQL (Production-ready)</option>
-                    </select>
-                </div>
-
-                <div id="postgresFields" style="display: none;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <div class="form-group">
-                            <label for="dbName">DB Name</label>
-                            <input type="text" id="dbName" value="horilla_dev">
-                        </div>
-                        <div class="form-group">
-                            <label for="dbUser">DB User</label>
-                            <input type="text" id="dbUser" value="horilla_user">
-                        </div>
+                <div id="advancedConfig" style="display: none;">
+                    <div class="form-group">
+                        <label for="frameworkSelect">Project Framework</label>
+                        <select id="frameworkSelect" onchange="updateFrameworkDefaults()">
+                            <option value="django">Django (Standard)</option>
+                            <option value="flask">Flask</option>
+                            <option value="fastapi">FastAPI</option>
+                            <option value="generic">Generic Python</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
-                        <label for="dbPass">Database Password</label>
-                        <input type="password" id="dbPass" value="dev_password_123">
+                        <label for="projectPath">Project Path</label>
+                        <input type="text" id="projectPath" value="~/dev/my-project"
+                            placeholder="/home/user/projects/my-project">
+                        <p class="help-text">Local path where the project will be cloned</p>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <div class="form-group">
-                            <label for="dbHost">Host</label>
-                            <input type="text" id="dbHost" value="localhost">
+                    <div class="form-group">
+                        <label for="scriptPath">Script Download Prefix (Local)</label>
+                        <input type="text" id="scriptPath" value="" placeholder="e.g. scripts/">
+                        <p class="help-text">Optional prefix for file names when downloading</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="venvName">Virtual Environment Name</label>
+                        <input type="text" id="venvName" value="venv" placeholder="venv">
+                        <p class="help-text">Name of the directory for Python isolation</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dbType">Database Type</label>
+                        <select id="dbType" onchange="updateDbFields()">
+                            <option value="sqlite">SQLite (Development)</option>
+                            <option value="postgresql">PostgreSQL (Production-ready)</option>
+                        </select>
+                    </div>
+
+                    <div id="postgresFields" style="display: none;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label for="dbName">DB Name</label>
+                                <input type="text" id="dbName" value="app_db">
+                            </div>
+                            <div class="form-group">
+                                <label for="dbUser">DB User</label>
+                                <input type="text" id="dbUser" value="db_user">
+                            </div>
                         </div>
+
                         <div class="form-group">
-                            <label for="dbPort">Port</label>
-                            <input type="number" id="dbPort" value="5432">
+                            <label for="dbPass">Database Password</label>
+                            <input type="password" id="dbPass" value="dev_password_123">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label for="dbHost">Host</label>
+                                <input type="text" id="dbHost" value="localhost">
+                            </div>
+                            <div class="form-group">
+                                <label for="dbPort">Port</label>
+                                <input type="number" id="dbPort" value="5432">
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label for="dbInitPass">DB Init Password</label>
-                    <input type="password" id="dbInitPass" value="d3f6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d">
-                    <p class="help-text">Password for initial login and database initialization</p>
+                    <div class="divider"></div>
+
+                    <div class="form-group">
+                        <label>Custom Commands (Optional)</label>
+                        <div style="background: var(--secondary); padding: 16px; border-radius: 8px;">
+                            <div class="form-group">
+                                <label for="cmdAdmin" style="font-size: 11px;">Admin Creation Command</label>
+                                <input type="text" id="cmdAdmin" value="python3 manage.py createsuperuser"
+                                    placeholder="Command to create admin user">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="cmdPostInstall" style="font-size: 11px;">Post-Install Command</label>
+                                <input type="text" id="cmdPostInstall" value=""
+                                    placeholder="e.g. npm install, python scripts/setup.py">
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="divider"></div>
@@ -631,26 +645,21 @@
                         </div>
                         <div class="checkbox-item" onclick="document.getElementById('runServer').click()">
                             <input type="checkbox" id="runServer" checked onclick="event.stopPropagation()">
-                            <span>Auto-run Server</span>
+                            <span>Launch Server after setup</span>
                         </div>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <div class="form-group">
-                        <label for="adminUser">Admin Username</label>
-                        <input type="text" id="adminUser" value="admin">
-                    </div>
-                    <div class="form-group">
-                        <label for="serverPort">Server Port</label>
-                        <input type="number" id="serverPort" value="8000">
-                    </div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <div class="form-group">
-                        <label for="adminEmail">Admin Email</label>
-                        <input type="text" id="adminEmail" value="admin@example.com">
+                <div id="adminFields">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label for="adminUser">Admin Username</label>
+                            <input type="text" id="adminUser" value="admin">
+                        </div>
+                        <div class="form-group">
+                            <label for="adminEmail">Admin Email</label>
+                            <input type="text" id="adminEmail" value="admin@example.com">
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="adminPass">Admin Password</label>
@@ -658,23 +667,7 @@
                     </div>
                 </div>
 
-                <div class="divider"></div>
-
-                <div class="form-group">
-                    <label>Custom Commands (Optional)</label>
-                    <div style="background: var(--secondary); padding: 16px; border-radius: 8px;">
-                        <div class="form-group">
-                            <label for="cmdAdmin" style="font-size: 11px;">Admin Creation Command</label>
-                            <input type="text" id="cmdAdmin" value="python3 manage.py createsuperuser"
-                                placeholder="Command to create admin user">
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="cmdPostInstall" style="font-size: 11px;">Post-Install Command</label>
-                            <input type="text" id="cmdPostInstall" value=""
-                                placeholder="e.g. npm install, python scripts/setup.py">
-                        </div>
-                    </div>
-                </div>
+                <!-- Removed dbInitPass field as it was Horilla-specific -->
 
                 <div class="button-group">
                     <button class="btn-primary" onclick="generateScripts()">Continue to Scripts</button>
@@ -1125,27 +1118,22 @@
 set -e
 
 # --- Configuration ---
+REPO_URL="${repoUrl}"
 PROJECT_PATH="${projectPath}"
 VENV_NAME="${venvName}"
-REPO_URL="${repoUrl}"
+
+echo "Starting setup for ${repoName}..."
 
 # --- Checks ---
 command -v python3 >/dev/null 2>&1 || { echo "Python3 required."; exit 1; }
 command -v git >/dev/null 2>&1 || { echo "Git required."; exit 1; }
 
-echo "Starting setup for ${repoName}..."
-echo "Target: $PROJECT_PATH"
-
-mkdir -p "$PROJECT_PATH"
-cd "$PROJECT_PATH"
-
 # --- Clone ---
-if [ ! -d ".git" ]; then
+if [ ! -d "$PROJECT_PATH" ]; then
     echo "Cloning repository..."
-    git clone "$REPO_URL" .
-else
-    echo "Repository already exists."
+    git clone "$REPO_URL" "$PROJECT_PATH"
 fi
+cd "$PROJECT_PATH"
 
 # --- Virtual Environment ---
 if [ ! -d "$VENV_NAME" ]; then
@@ -1160,8 +1148,8 @@ python3 -m pip install --upgrade pip
 if [ -f "requirements.txt" ]; then
     pip install -r requirements.txt
 elif [ -f "pyproject.toml" ]; then
-    pip install .  # Basic attempt for pyproject
-    echo "Note: pyproject.toml detected. 'pip install .' used. If using poetry/pdm, run manually."
+    pip install .
+    echo "Note: pyproject.toml detected. 'pip install .' used."
 else
     echo "Warning: No requirements.txt found."
 fi
@@ -1174,7 +1162,7 @@ pip install psycopg2-binary || echo "Warning: psycopg2-binary install failed."
 # --- Environment ---
 echo "Creating .env file..."
 cat > .env << 'EOF'
-${generateEnvFile(repoName, dbType, document.getElementById('dbInitPass').value, serverPort)}
+${generateEnvFile(repoName, dbType, adminPass, serverPort)}
 EOF
 
 # --- Post-Install Custom Commands ---
@@ -1409,7 +1397,135 @@ DB_NAME=db.sqlite3
             document.body.removeChild(a);
         }
 
-        async function saveToFolder() { // Same logic as before 
+
+        function handleRepoChange() {
+            const select = document.getElementById('repoSelect');
+            const customField = document.getElementById('customRepoField');
+            const advField = document.getElementById('advancedConfig');
+            const val = select.value;
+
+            if (val === 'custom') {
+                customField.style.display = 'block';
+                advField.style.display = 'block';
+                return;
+            }
+
+            customField.style.display = 'none';
+            advField.style.display = 'none'; // Minimalist mode: hide advanced by default
+
+            // Find repo data
+            let repo = null;
+            REPO_LIST.forEach(cat => {
+                const found = cat.repos.find(r => r.url === val);
+                if (found) repo = found;
+            });
+
+            if (repo) {
+                // Auto-configure Framework
+                if (repo.framework) {
+                    document.getElementById('frameworkSelect').value = repo.framework;
+                }
+
+                // Auto-configure defaults based on Repo Name
+                const cleanName = repo.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+                // Project Path: ~/clean-name
+                document.getElementById('projectPath').value = `~/${cleanName}`;
+
+                // Venv Name: clean-nameVENV
+                document.getElementById('venvName').value = `${cleanName}VENV`;
+
+                // DB Name default: clean_name_db
+                document.getElementById('dbName').value = cleanName.replace(/-/g, '_') + "_db";
+
+                // Admin Command
+                if (repo.adminCommand) {
+                    document.getElementById('cmdAdmin').value = repo.adminCommand;
+                } else {
+                    updateFrameworkDefaults(); // Fallback to framework default
+                }
+            }
+            updateDbFields();
+        }
+
+        function generateScripts() {
+            const projectPath = document.getElementById('projectPath').value;
+            const framework = document.getElementById('frameworkSelect').value;
+            const venvName = document.getElementById('venvName').value;
+            const dbType = document.getElementById('dbType').value;
+            const loadDemo = document.getElementById('loadDemo').checked;
+            const createSuper = document.getElementById('createSuper').checked;
+            const runServer = document.getElementById('runServer').checked;
+            const adminUser = document.getElementById('adminUser').value;
+            const adminEmail = document.getElementById('adminEmail').value;
+            const adminPass = document.getElementById('adminPass').value;
+            const serverPort = 8000; // Fixed for now or can be added back if needed
+            const cmdAdmin = document.getElementById('cmdAdmin').value;
+            const cmdPostInstall = document.getElementById('cmdPostInstall').value;
+            const repoUrl = document.getElementById('repoSelect').value === 'custom' ?
+                document.getElementById('customRepoUrl').value :
+                document.getElementById('repoSelect').value;
+
+            if (!repoUrl) {
+                showFeedback("Please select or enter a repository URL");
+                return;
+            }
+
+            // Extract repo name from URL
+            const repoName = repoUrl.split('/').pop().replace('.git', '') || 'my-project';
+
+            document.getElementById('setupCode').textContent = generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, runServer);
+            document.getElementById('freshCode').textContent = generateFreshDbScript(framework, projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin);
+            document.getElementById('serverCode').textContent = generateServerScript(framework, projectPath, venvName, serverPort);
+            document.getElementById('envCode').textContent = generateEnvFile(repoName, dbType, adminPass, serverPort); // Removed dbInitPass
+
+            // Switch to scripts tab
+            document.querySelectorAll('.tab-btn')[1].click();
+        }
+
+        function updateFrameworkDefaults() {
+            const fw = document.getElementById('frameworkSelect').value;
+            const cmdAdmin = document.getElementById('cmdAdmin');
+
+            if (fw === 'django') {
+                cmdAdmin.value = "python3 manage.py createsuperuser";
+            } else if (fw === 'flask') {
+                cmdAdmin.value = "flask create-user";
+            } else if (fw === 'fastapi') {
+                cmdAdmin.value = "# No standard admin command";
+            } else {
+                cmdAdmin.value = "# Custom admin command";
+            }
+        }
+
+        function generateEnvFile(repoName, dbType, adminPass, serverPort) {
+            const dbName = document.getElementById('dbName').value;
+            const dbUser = document.getElementById('dbUser').value;
+            const dbPass = document.getElementById('dbPass').value;
+            const dbHost = document.getElementById('dbHost').value;
+            const dbPort = document.getElementById('dbPort').value;
+
+            return `# ${repoName} Environment Variables
+DEBUG=True
+SECRET_KEY=dev-secret-key-CHANGE-IN-PROD
+ALLOWED_HOSTS=*
+
+# Database
+${dbType === 'postgresql' ? `
+DB_ENGINE=django.db.backends.postgresql
+DB_NAME=${dbName}
+DB_USER=${dbUser}
+DB_PASSWORD=${dbPass}
+DB_HOST=${dbHost}
+DB_PORT=${dbPort}
+` : `
+DB_ENGINE=django.db.backends.sqlite3
+DB_NAME=db.sqlite3
+`}
+`;
+        }
+
+        async function saveToFolder() {
             if (!('showDirectoryPicker' in window)) { showFeedback("Browser not supported."); return; }
             try {
                 const dirHandle = await window.showDirectoryPicker();
