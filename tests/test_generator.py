@@ -2,13 +2,7 @@ import pytest
 from playwright.sync_api import Page, expect
 import os
 
-# Helper to load the local index.html
-@pytest.fixture
-def page_on_index(page: Page):
-    cwd = os.getcwd()
-    file_path = os.path.join(cwd, "index.html")
-    page.goto(f"file://{file_path}")
-    return page
+
 
 def test_title_and_rendering(page_on_index: Page):
     expect(page_on_index).to_have_title("Local Setup Generator | Automate Your Python Workspace")

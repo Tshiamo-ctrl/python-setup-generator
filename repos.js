@@ -1,3 +1,15 @@
+/**
+ * Repository Configuration Database
+ * 
+ * Structure for each entry:
+ * - name: Display name in dropdown
+ * - url: Git clone URL (used as unique ID)
+ * - framework: 'django', 'flask', 'fastapi', 'frappe', or 'generic'
+ * - setupCommands: Object with optional overrides:
+ *      - preInstall: Commands to run before venv creation/requirements
+ *      - postInstall: Commands to run after pip install
+ *      - adminCreate: Custom admin creation command
+ */
 const REPO_LIST = [
     {
         category: "Django Frameworks",
