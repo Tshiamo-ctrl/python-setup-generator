@@ -10,6 +10,7 @@ Setting up local development environments often involves repetitive terminal wor
 - **Smart Repository Catalog**: 70+ curated Python projects across 6 categories
 - **Framework-Aware**: Optimized defaults for Django, Flask, FastAPI, Frappe, and generic Python
 - **Custom Configuration**: Override any defaults when needed
+- **Advanced Dependency Control**: Custom keys, explicit file paths, or full command overrides
 - **One-Command Resets**: Wipe and recreate databases/migrations reliably
 - **Modern Carousel UI**: Navigate through generated scripts with smooth animations
 - **Danger Zone**: Integrated browser-based workspace cleanup using the File System Access API
@@ -43,7 +44,9 @@ Setting up local development environments often involves repetitive terminal wor
 - **Auto-Detection**: Framework type automatically set based on repo
 - **Smart Naming**: Project paths and venv names derived from repo name
 - **Custom Override**: Optional checkbox to access advanced settings
+- **Dependency Overrides**: Specify custom requirements paths or exact install commands
 - **State-Aware UI**: Only shows relevant options for selected framework
+- **Feature Toggles**: Automatically hides database/demo options for libraries that don't need them
 
 ### Modern Carousel Interface
 - **Smooth Navigation**: Arrow buttons and dot indicators
@@ -119,6 +122,14 @@ Tests verify:
 - Script generation for each framework type
 - Copy/download button functionality
 - Configuration summary display
+
+### Repository Verification
+A full-coverage test suite `tests/verify_repos.js` is included to validate the generation logic for **all 60+ supported repositories**.
+
+```bash
+node tests/verify_repos.js
+```
+This script acts as a regression test to ensure that dependency commands and setup logic remain correct for every defined repo.
 
 ## 🛠️ Technical Stack
 

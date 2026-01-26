@@ -113,11 +113,19 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="dbType">Database Type</label>
-                        <select id="dbType" onchange="updateDbFields()">
-                            <option value="sqlite">SQLite (Development)</option>
-                            <option value="postgresql">PostgreSQL (Production-ready)</option>
-                        </select>
+                        <label for="customInstallCmd">Custom Install Command (Advanced)</label>
+                        <input type="text" id="customInstallCmd" value="" placeholder="e.g. poetry install">
+                        <p class="help-text">Completely override dependency installation logic</p>
+                    </div>
+
+                    <div id="dbOptionContainer">
+                        <div class="form-group">
+                            <label for="dbType">Database Type</label>
+                            <select id="dbType" onchange="updateDbFields()">
+                                <option value="sqlite">SQLite (Development)</option>
+                                <option value="postgresql">PostgreSQL (Production-ready)</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div id="postgresFields" style="display: none;">
@@ -173,15 +181,18 @@
                 <div class="form-group">
                     <label>Features & Automation</label>
                     <div class="checkbox-group">
-                        <div class="checkbox-item" onclick="document.getElementById('initDb').click()">
+                        <div class="checkbox-item" id="initDbContainer"
+                            onclick="document.getElementById('initDb').click()">
                             <input type="checkbox" id="initDb" checked onclick="event.stopPropagation()">
                             <span>Initialize Database</span>
                         </div>
-                        <div class="checkbox-item" onclick="document.getElementById('loadDemo').click()">
+                        <div class="checkbox-item" id="demoOptionContainer"
+                            onclick="document.getElementById('loadDemo').click()">
                             <input type="checkbox" id="loadDemo" checked onclick="event.stopPropagation()">
                             <span>Load Demo Data</span>
                         </div>
-                        <div class="checkbox-item" onclick="document.getElementById('createSuper').click()">
+                        <div class="checkbox-item" id="createSuperContainer"
+                            onclick="document.getElementById('createSuper').click()">
                             <input type="checkbox" id="createSuper" checked onclick="event.stopPropagation()">
                             <span>Create Admin User</span>
                         </div>
@@ -192,20 +203,22 @@
                     </div>
                 </div>
 
-                <div id="adminFields">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <div class="form-group">
-                            <label for="adminUser">Admin Username</label>
-                            <input type="text" id="adminUser" value="admin">
+                <div id="adminOptionContainer">
+                    <div id="adminFields">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label for="adminUser">Admin Username</label>
+                                <input type="text" id="adminUser" value="admin">
+                            </div>
+                            <div class="form-group">
+                                <label for="adminEmail">Admin Email</label>
+                                <input type="text" id="adminEmail" value="admin@example.com">
+                            </div>
                         </div>
                         <div class="form-group">
-                            <label for="adminEmail">Admin Email</label>
-                            <input type="text" id="adminEmail" value="admin@example.com">
+                            <label for="adminPass">Admin Password</label>
+                            <input type="password" id="adminPass" value="admin123">
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="adminPass">Admin Password</label>
-                        <input type="password" id="adminPass" value="admin123">
                     </div>
                 </div>
 
@@ -787,7 +800,7 @@
 
 
 
-        function generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, preInstall, customReqPath, runServer, demoDataCmd, initDb) {
+        function generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, preInstall, customReqPath, runServer, demoDataCmd, initDb, dependencies, customInstallCmd) {
             return `#!/bin/bash
 # ${repoName} - Development Setup Script
 # Generated: $(date)
@@ -800,6 +813,7 @@ REPO_URL="${repoUrl}"
 PROJECT_PATH="${projectPath}"
 VENV_NAME="${venvName}"
 CUSTOM_REQ_PATH="${customReqPath}"
+CUSTOM_INSTALL_CMD="${customInstallCmd}"
 
 echo "Starting setup for ${repoName}..."
 
@@ -844,37 +858,51 @@ if [ -n "$CUSTOM_REQ_PATH" ] && [ -f "$CUSTOM_REQ_PATH" ]; then
     INSTALLED_DEPS=true
 fi
 
-# 2. Open edX / Specific Logic (Repo Name check)
-if [[ "$REPO_URL" == *"edx-platform"* ]]; then
-    echo "Detected Open edX platform..."
-    if [ -f "requirements/pip.txt" ]; then pip install -r requirements/pip.txt; fi
-    if [ -f "requirements/edx/base.txt" ]; then 
-        pip install -r requirements/edx/base.txt
-        INSTALLED_DEPS=true
-    fi
-fi
-
-# 3. Auto-Discovery Priority List
-if [ "$INSTALLED_DEPS" = false ]; then
-    DEP_FILES=("requirements.txt" "requirements/dev.txt" "requirements/development.txt" "requirements/base.txt" "requirements-dev.txt")
-    for main_file in "\${DEP_FILES[@]}"; do
-        if [ -f "$main_file" ]; then
-            echo "Found $main_file, installing..."
-            pip install -r "$main_file"
-            INSTALLED_DEPS=true
-            break # Stop after finding the primary one? Or continue? Usually one is main.
-        fi
-    done
-fi
-
-# 4. Build Systems (pyproject.toml / setup.py)
-# Open edX and Sentry both often use this. Sentry needs -e for dev.
-if [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
-    echo "Detected buildable project (pyproject.toml/setup.py)..."
-    # Use editable mode for development
-    pip install -e . || echo "Editable install failed, trying standard install..." || pip install .
+# 1.5 Custom Install Command
+if [ -n "$CUSTOM_INSTALL_CMD" ]; then
+    echo "Running custom install command..."
+    $CUSTOM_INSTALL_CMD
     INSTALLED_DEPS=true
 fi
+
+# 2. Configured Dependencies (from repos.js)
+${dependencies ? `
+    echo "Using configured dependencies..."
+    ${dependencies.command ? dependencies.command :
+                        dependencies.files ? dependencies.files.map(f => `pip install -r "${f}"`).join('\n    ') :
+                            'echo "No specific dependency files configured."'}
+    INSTALLED_DEPS=true
+` : `
+    # 3. Fallback: Open edX / Specific Logic (Legacy/Backup)
+    if [[ "$REPO_URL" == *"edx-platform"* ]]; then
+        echo "Detected Open edX platform..."
+        if [ -f "requirements/pip.txt" ]; then pip install -r requirements/pip.txt; fi
+        if [ -f "requirements/edx/base.txt" ]; then 
+            pip install -r requirements/edx/base.txt
+            INSTALLED_DEPS=true
+        fi
+    fi
+
+    # 4. Fallback: Auto-Discovery
+    if [ "$INSTALLED_DEPS" = false ]; then
+        DEP_FILES=("requirements.txt" "requirements/dev.txt" "requirements/development.txt" "requirements/base.txt" "requirements-dev.txt")
+        for main_file in "\${DEP_FILES[@]}"; do
+            if [ -f "$main_file" ]; then
+                echo "Found $main_file, installing..."
+                pip install -r "$main_file"
+                INSTALLED_DEPS=true
+                break 
+            fi
+        done
+    fi
+
+    # 5. Fallback: Build Systems
+    if [ "$INSTALLED_DEPS" = false ] && ([ -f "pyproject.toml" ] || [ -f "setup.py" ]); then
+        echo "Detected buildable project..."
+        pip install -e . || pip install .
+        INSTALLED_DEPS=true
+    fi
+`}
 
 if [ "$INSTALLED_DEPS" = false ]; then
     echo "WARNING: No standard dependency files found (requirements.txt, pyproject.toml, etc)."
@@ -912,7 +940,12 @@ if [ -f "manage.py" ]; then
     ${dbType === 'postgresql' ? `
     # Pre-flight Postgres Check
     if command -v pg_isready >/dev/null 2>&1; then
-        pg_isready -h "$DB_HOST" -p "$DB_PORT" || echo "⚠️  Postgres does not seem to be running on $DB_HOST:$DB_PORT"
+        echo "Waiting for Postgres to be ready at $DB_HOST:$DB_PORT..."
+        until pg_isready -h "$DB_HOST" -p "$DB_PORT"; do
+            sleep 2
+            echo "Waiting for DB..."
+        done
+        echo "Postgres is online."
     fi
     ` : ''}
     python3 manage.py migrate --noinput
@@ -1139,6 +1172,10 @@ echo "Done."
                 enableCustomConfig.checked = true;
                 enableCustomConfig.disabled = true;
                 selectedRepo = null;
+                // Show all options for custom
+                document.getElementById('dbOptionContainer').style.display = 'block';
+                document.getElementById('demoOptionContainer').style.display = 'block';
+                document.getElementById('adminOptionContainer').style.display = 'block';
                 return;
             }
 
@@ -1200,6 +1237,36 @@ echo "Done."
                         document.getElementById('adminPass').value = "admin123";
                     }
                 }
+
+                // Feature Flags Control
+                const hasDb = repo.features ? (repo.features.hasDb !== false) : true;
+                const hasDemo = repo.features ? (repo.features.hasDemo !== false) : true;
+
+                // Show/Hide Containers
+                // dbOptionContainer is a block (div wrapping form-group)
+                document.getElementById('dbOptionContainer').style.display = hasDb ? 'block' : 'none';
+                // adminOptionContainer is a block
+                document.getElementById('adminOptionContainer').style.display = hasDb ? 'block' : 'none';
+
+                // Checkbox Containers (checkbox-item is flex)
+                if (document.getElementById('initDbContainer')) {
+                    document.getElementById('initDbContainer').style.display = hasDb ? 'flex' : 'none';
+                }
+                if (document.getElementById('createSuperContainer')) {
+                    document.getElementById('createSuperContainer').style.display = hasDb ? 'flex' : 'none';
+                }
+                if (document.getElementById('demoOptionContainer')) {
+                    document.getElementById('demoOptionContainer').style.display = hasDemo ? 'flex' : 'none';
+                }
+
+                // Uncheck if hidden
+                if (!hasDb) {
+                    document.getElementById('initDb').checked = false;
+                    document.getElementById('createSuper').checked = false;
+                }
+                if (!hasDemo) {
+                    document.getElementById('loadDemo').checked = false;
+                }
             }
 
             updateDbFields();
@@ -1222,27 +1289,34 @@ echo "Done."
             let cmdAdmin = document.getElementById('cmdAdmin').value;
             const cmdPostInstall = document.getElementById('cmdPostInstall').value;
             const customReqPath = document.getElementById('customReqPath').value;
+            const customInstallCmd = document.getElementById('customInstallCmd').value;
 
             const repoUrl = document.getElementById('repoSelect').value === 'custom' ?
                 document.getElementById('customRepoUrl').value :
                 document.getElementById('repoSelect').value;
 
-            // Get preInstall command if available from repo list
+            // Get preInstall command and Dependencies if available from repo list
             let preInstall = "";
             let demoDataCmd = "";
+            let dependencies = null;
             let repo = null;
             REPO_LIST.forEach(cat => {
                 const found = cat.repos.find(r => r.url === repoUrl);
                 if (found) repo = found;
             });
-            if (repo && repo.setupCommands) {
-                if (repo.setupCommands.preInstall) preInstall = repo.setupCommands.preInstall;
-                if (repo.setupCommands.demoData) demoDataCmd = repo.setupCommands.demoData;
-                if (repo.setupCommands.adminCreate) {
-                    cmdAdmin = repo.setupCommands.adminCreate
-                        .replace(/__USER__/g, adminUser)
-                        .replace(/__PASS__/g, adminPass)
-                        .replace(/__EMAIL__/g, adminEmail);
+            if (repo) {
+                if (repo.setupCommands) {
+                    if (repo.setupCommands.preInstall) preInstall = repo.setupCommands.preInstall;
+                    if (repo.setupCommands.demoData) demoDataCmd = repo.setupCommands.demoData;
+                    if (repo.setupCommands.adminCreate) {
+                        cmdAdmin = repo.setupCommands.adminCreate
+                            .replace(/__USER__/g, adminUser)
+                            .replace(/__PASS__/g, adminPass)
+                            .replace(/__EMAIL__/g, adminEmail);
+                    }
+                }
+                if (repo.dependencies) {
+                    dependencies = repo.dependencies;
                 }
             }
 
@@ -1254,7 +1328,7 @@ echo "Done."
             // Extract repo name from URL
             const repoName = repoUrl.split('/').pop().replace('.git', '') || 'my-project';
 
-            document.getElementById('setupCode').textContent = generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, preInstall, customReqPath, runServer, demoDataCmd, initDb);
+            document.getElementById('setupCode').textContent = generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, preInstall, customReqPath, runServer, demoDataCmd, initDb, dependencies, customInstallCmd);
             document.getElementById('freshCode').textContent = generateFreshDbScript(repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin);
             document.getElementById('serverCode').textContent = generateServerScript(repoName, projectPath, venvName, framework, serverPort);
             document.getElementById('envCode').textContent = generateEnvFile(repoName, dbType, adminPass, serverPort);

@@ -23,9 +23,17 @@ const REPO_LIST = [
                 stars: "1.2k+",
                 setupCommands: {
                     preInstall: "cp .env.dist .env 2>/dev/null || cp .env.example .env 2>/dev/null || true",
-                    postInstall: "python3 manage.py migrate",
+                    postInstall: "python3 manage.py makemigrations && python3 manage.py migrate",
                     adminCreate: "python3 manage.py createhorillauser --first_name Admin --last_name Admin --username __USER__ --password __PASS__ --email __EMAIL__ --phone 1234567890",
                     demoData: "python3 manage.py loaddata demo_data.json"
+                },
+                dependencies: {
+                    mode: 'pip',
+                    files: ['requirements.txt']
+                },
+                features: {
+                    hasDb: true,
+                    hasDemo: true
                 }
             },
             {
@@ -37,14 +45,19 @@ const REPO_LIST = [
                 stars: "500+",
                 setupCommands: {
                     preInstall: "cp .env.dist .env 2>/dev/null || cp .env.example .env 2>/dev/null || true",
-                    postInstall: "python3 manage.py migrate",
+                    postInstall: "python3 manage.py makemigrations && python3 manage.py migrate",
                     adminCreate: "export DJANGO_SUPERUSER_PASSWORD=__PASS__ && python3 manage.py createsuperuser --noinput --username __USER__ --email __EMAIL__",
                     demoData: "python3 manage.py loaddata demo_data.json"
+                },
+                features: {
+                    hasDb: true,
+                    hasDemo: true
                 }
             }
         ]
     },
     {
+
         category: "Django Frameworks",
         repos: [
             {
@@ -57,6 +70,10 @@ const REPO_LIST = [
                 setupCommands: {
                     postInstall: "cp .env.example .env 2>/dev/null || true && echo \"SECRET_KEY=dev-secret\nRSA_PRIVATE_KEY=internal\" >> .env && python3 manage.py migrate",
                     adminCreate: "python3 manage.py createsuperuser --noinput --username admin --email admin@example.com"
+                },
+                dependencies: {
+                    mode: 'poetry',
+                    command: 'pip install poetry && poetry install'
                 }
             },
             {
@@ -68,6 +85,10 @@ const REPO_LIST = [
                 stars: "18k+",
                 setupCommands: {
                     postInstall: "pip install -e . && wagtail start myproject && cd myproject && pip install -r requirements.txt && python3 manage.py migrate"
+                },
+                dependencies: {
+                    mode: 'manual',
+                    command: 'echo "Wagtail requires project creation first. See post-install commands."'
                 }
             },
             {
@@ -81,6 +102,10 @@ const REPO_LIST = [
                     preInstall: "sudo apt-get install -y build-essential python3-dev libmysqlclient-dev libssl-dev libffi-dev || echo 'System deps install skipped'",
                     postInstall: "pip install -r requirements/pip.txt && pip install -r requirements/edx/base.txt",
                     runServer: "python3 manage.py runserver 0.0.0.0:8000 --settings=lms.envs.devstack"
+                },
+                dependencies: {
+                    mode: 'pip',
+                    files: ['requirements/pip.txt', 'requirements/edx/base.txt']
                 }
             },
             {
@@ -93,6 +118,10 @@ const REPO_LIST = [
                 setupCommands: {
                     preInstall: "./tools/setup/install || (pip install -r requirements/dev.txt && python manage.py initialize_database)",
                     runServer: "./tools/run-dev.py"
+                },
+                dependencies: {
+                    mode: 'pip',
+                    files: ['requirements/dev.txt']
                 }
             },
             {
@@ -104,6 +133,10 @@ const REPO_LIST = [
                 stars: "2k+",
                 setupCommands: {
                     postInstall: "pip install -r requirements.txt && python manage.py shell -c \"from mayan.apps.documents.models import DocumentType; DocumentType.objects.get_or_create(label='Default')\""
+                },
+                dependencies: {
+                    mode: 'pip',
+                    files: ['requirements.txt']
                 }
             },
             {
@@ -116,6 +149,10 @@ const REPO_LIST = [
                 setupCommands: {
                     postInstall: "cp .env.example .env 2>/dev/null || true && echo \"DATABASE_URL=postgres://postgres:postgres@localhost:5432/posthog\" >> .env && pip install -r requirements.txt",
                     adminCreate: "python3 manage.py createsuperuser --noinput --username admin --email admin@example.com"
+                },
+                dependencies: {
+                    mode: 'pip',
+                    files: ['requirements.txt']
                 }
             },
             {
@@ -128,6 +165,10 @@ const REPO_LIST = [
                 setupCommands: {
                     postInstall: "cp ./dojo/settings/template-settings.dist.py ./dojo/settings/local_settings.py || true && pip install -r requirements.txt",
                     adminCreate: "python3 manage.py createsuperuser --noinput --username admin --email admin@example.com"
+                },
+                dependencies: {
+                    mode: 'pip',
+                    files: ['requirements.txt']
                 }
             },
             {
@@ -139,6 +180,10 @@ const REPO_LIST = [
                 stars: "16k+",
                 setupCommands: {
                     postInstall: "mkdir -p netbox/netbox/configuration && echo \"ALLOWED_HOSTS = ['*']\nDATABASE = {'ENGINE': 'django.db.backends.sqlite3', 'NAME': 'netbox'}\nSECRET_KEY = 'temp-key'\" > netbox/netbox/configuration/configuration.py"
+                },
+                dependencies: {
+                    mode: 'pip',
+                    files: ['requirements.txt']
                 }
             },
             {
@@ -150,6 +195,10 @@ const REPO_LIST = [
                 stars: "7k+",
                 setupCommands: {
                     postInstall: "cp settings/local.py.example settings/local.py"
+                },
+                dependencies: {
+                    mode: 'pip',
+                    files: ['requirements.txt']
                 }
             },
             {
@@ -162,6 +211,10 @@ const REPO_LIST = [
                 setupCommands: {
                     postInstall: "echo \"DJANGO_ALLOWED_HOSTS=*\" > .env && pip install -r requirements.txt",
                     adminCreate: "python3 manage.py createsuperuser --noinput --username admin --email admin@example.com"
+                },
+                dependencies: {
+                    mode: 'pip',
+                    files: ['requirements.txt']
                 }
             },
             {
@@ -175,6 +228,10 @@ const REPO_LIST = [
                     preInstall: "echo 'Sentry requires significant system resources (Docker recommended)'",
                     postInstall: "pip install -e .",
                     runServer: "sentry devserver"
+                },
+                dependencies: {
+                    mode: 'pip',
+                    command: 'pip install -e .'
                 }
             },
             {
@@ -186,6 +243,10 @@ const REPO_LIST = [
                 stars: "4.7k+",
                 setupCommands: {
                     postInstall: "mezzanine-project myproject && cd myproject"
+                },
+                dependencies: {
+                    mode: 'pip',
+                    command: 'pip install mezzanine'
                 }
             },
             {
@@ -194,7 +255,11 @@ const REPO_LIST = [
                 description: "Powerful and flexible toolkit for building Web APIs",
                 framework: "django",
                 complexity: "Intermediate",
-                stars: "28k+"
+                stars: "28k+",
+                features: {
+                    hasDb: false,
+                    hasDemo: false
+                }
             },
             {
                 name: "Django itself",
@@ -202,7 +267,11 @@ const REPO_LIST = [
                 description: "The Django web framework source code",
                 framework: "django",
                 complexity: "Advanced",
-                stars: "79k+"
+                stars: "79k+",
+                features: {
+                    hasDb: false,
+                    hasDemo: false
+                }
             },
             {
                 name: "Django-allauth",
@@ -227,6 +296,10 @@ const REPO_LIST = [
                 setupCommands: {
                     postInstall: "pip install -r ./backend/requirements.txt && echo \"SECRET_KEY=temp\nSQLALCHEMY_DATABASE_URL=sqlite:///./test.db\" > .env && cd backend && alembic upgrade head",
                     runServer: "fastapi dev backend/app/main.py"
+                },
+                dependencies: {
+                    mode: 'pip',
+                    files: ['backend/requirements.txt']
                 }
             },
             {
@@ -238,6 +311,11 @@ const REPO_LIST = [
                 stars: "76k+",
                 setupCommands: {
                     postInstall: "pip install -e . && pip install -r requirements-dev.txt"
+                },
+                dependencies: {
+                    mode: 'pip',
+                    files: ['requirements-dev.txt'],
+                    command: 'pip install -e . && pip install -r requirements-dev.txt'
                 }
             },
             {
@@ -249,6 +327,10 @@ const REPO_LIST = [
                 stars: "3k+",
                 setupCommands: {
                     postInstall: "pip install -r requirements.txt && echo \"DATABASE_URL=sqlite:///./test.db\" > .env && alembic upgrade head"
+                },
+                dependencies: {
+                    mode: 'pip',
+                    files: ['requirements.txt']
                 }
             },
             {
@@ -609,6 +691,10 @@ const REPO_LIST = [
                     preInstall: "bench init frappe-app && cd frappe-app",
                     postInstall: "bench get-app erpnext && bench new-site mysite.local && bench --site mysite.local install-app erpnext",
                     runServer: "bench start"
+                },
+                dependencies: {
+                    mode: 'manual',
+                    command: 'echo "Frappe/ERPNext uses bench for dependencies."'
                 }
             },
             {
@@ -621,6 +707,10 @@ const REPO_LIST = [
                 setupCommands: {
                     preInstall: "bench init frappe-app",
                     runServer: "bench start"
+                },
+                dependencies: {
+                    mode: 'manual',
+                    command: 'echo "Frappe uses bench for dependencies."'
                 }
             },
             {
@@ -632,6 +722,10 @@ const REPO_LIST = [
                 stars: "37k+",
                 setupCommands: {
                     runServer: "python odoo-bin -d demo --addons-path=addons --xmlrpc-port=8069"
+                },
+                dependencies: {
+                    mode: 'pip',
+                    files: ['requirements.txt']
                 }
             },
             {
@@ -681,6 +775,11 @@ const REPO_LIST = [
                 stars: "6k+",
                 setupCommands: {
                     postInstall: "pip install -e . && pip install -r requirements.txt"
+                },
+                dependencies: {
+                    mode: 'pip',
+                    files: ['requirements.txt'],
+                    command: 'pip install -e . && pip install -r requirements.txt'
                 }
             },
             {
@@ -692,6 +791,11 @@ const REPO_LIST = [
                 stars: "10k+",
                 setupCommands: {
                     postInstall: "pip install -e . && pip install -r requirements.txt"
+                },
+                dependencies: {
+                    mode: 'pip',
+                    files: ['requirements.txt'],
+                    command: 'pip install -e . && pip install -r requirements.txt'
                 }
             },
             {
@@ -850,6 +954,10 @@ const REPO_LIST = [
                 stars: "8k+",
                 setupCommands: {
                     postInstall: "pip install icecream"
+                },
+                features: {
+                    hasDb: false,
+                    hasDemo: false
                 }
             },
             {
