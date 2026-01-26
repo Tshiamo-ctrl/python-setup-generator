@@ -246,6 +246,12 @@
                                 <p>Keep venv, delete source code</p>
                             </div>
                         </button>
+                        <button class="btn-danger env-only" onclick="handleDeletionAction('env')">
+                            <div>
+                                <strong>Clear Env Only</strong>
+                                <p>Keep repo, delete venv & config</p>
+                            </div>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -532,6 +538,20 @@
                     </div>
                 </div>
 
+                <div id="clearEnv" class="tab-content">
+                    <p style="font-size: 14px; color: var(--muted-foreground); margin-bottom: 20px;">Removes
+                        <strong>only</strong> the virtual environment and local config. Retains source code.
+                    </p>
+                    <div class="code-block">
+                        <div class="code-actions">
+                            <button class="btn-secondary" onclick="copyCode('clearEnvCode')">Copy</button>
+                            <button class="btn-primary"
+                                onclick="downloadFile('clearEnvCode', 'clear_env.sh')">Download</button>
+                        </div>
+                        <pre id="oldClearEnvCode"></pre>
+                    </div>
+                </div>
+
                 <div id="env" class="tab-content">
                     <p style="font-size: 14px; color: var(--muted-foreground); margin-bottom: 20px;">Environment
                         variable template for your project root.</p>
@@ -814,6 +834,7 @@ PROJECT_PATH="${projectPath}"
 VENV_NAME="${venvName}"
 CUSTOM_REQ_PATH="${customReqPath}"
 CUSTOM_INSTALL_CMD="${customInstallCmd}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "Starting setup for ${repoName}..."
 
@@ -825,8 +846,23 @@ if [ -f "package.json" ]; then
 fi
 
 # --- Clone ---
-if [ ! -d "$PROJECT_PATH" ]; then
+# --- Clone ---
+if [ -d "$PROJECT_PATH" ]; then
+    if [ "$(ls -A "$PROJECT_PATH")" ]; then
+        if [ -d "$PROJECT_PATH/.git" ]; then
+             echo "Repository already exists at $PROJECT_PATH"
+        else
+             echo "ERROR: Target directory $PROJECT_PATH exists and is not empty."
+             echo "Please clear the directory or choose a different path."
+             exit 1
+        fi
+    else
+        echo "Directory exists but is empty. Proceeding..."
+        git clone "$REPO_URL" "$PROJECT_PATH" || { echo "Clone failed."; exit 1; }
+    fi
+else
     echo "Cloning repository..."
+    mkdir -p "$(dirname "$PROJECT_PATH")"
     git clone "$REPO_URL" "$PROJECT_PATH" || { echo "Clone failed. Check your internet connection or URL."; exit 1; }
 fi
 cd "$PROJECT_PATH"
@@ -973,7 +1009,7 @@ echo ""
 echo "Setup Complete!"
 ${runServer ? `
 echo "Launching Server..."
-./dev-server.sh` : `echo "Run ./dev-server.sh to start."`}
+"$SCRIPT_DIR/dev-server.sh"` : `echo "Run ./dev-server.sh to start."`}
 `;
         }
 
@@ -1054,19 +1090,19 @@ echo "Please edit the server script to run your specific entry point (e.g. pytho
         function generateClearScript(projectPath, venvName, dbType, mode = 'workspace') {
             let script = `#!/bin/bash
 
-# Local Setup Generator - ${mode === 'repo' ? 'Clear Repository Only' : 'Clean Workspace Script'}
-# WARNING: This will DELETE ${mode === 'repo' ? 'your project repository folder' : 'your project, virtual environment, and database'}.
+# Local Setup Generator - ${mode === 'repo' ? 'Clear Repository Only' : mode === 'env' ? 'Clear Environment Only' : 'Clean Workspace Script'}
+# WARNING: This will DELETE ${mode === 'repo' ? 'your project repository folder' : mode === 'env' ? 'your virtual environment and database' : 'your project, virtual environment, and database'}.
 
 PROJECT_PATH="${projectPath}"
 VENV_NAME="${venvName}"
 
-echo "⚠️  WARNING: You are about to DESTROY ${mode === 'repo' ? 'the project repository' : 'your entire development environment'}."
-echo "    - Project folder: $PROJECT_PATH"
+echo "⚠️  WARNING: You are about to DESTROY ${mode === 'repo' ? 'the project repository' : mode === 'env' ? 'your virtual environment' : 'your entire development environment'}."
+${mode !== 'env' ? `echo "    - Project folder: $PROJECT_PATH"` : ''}
 `;
             if (mode !== 'repo') {
                 script += `echo "    - Virtual env: $VENV_NAME"
 if [ "${dbType}" == "sqlite" ]; then
-    echo "    - Database: SQLite (inside project)"
+    ${mode === 'env' ? `echo "    - Database: SQLite (inside project)"` : `echo "    - Database: SQLite (inside project)"`}
 else
     echo "    - Database: PostgreSQL (requires manual drop, or use provided command)"
 fi
@@ -1091,16 +1127,37 @@ fi
 `;
             }
 
-            script += `
+            if (mode !== 'env') {
+                script += `
 echo "Removing project folder..."
 rm -rf "$PROJECT_PATH"
 `;
+            } else {
+                // Clear Env Only: Keep Project Path, Delete Venv + DB + node_modules
+                script += `
+echo "Leaving project folder intact: $PROJECT_PATH"
+`;
+            }
+
 
             if (mode !== 'repo') {
+
                 script += `
 echo "Removing virtual environment..."
 rm -rf "$VENV_NAME"
 `;
+                if (mode === 'env') {
+                    script += `
+# Cleanup inside project
+if [ -d "$PROJECT_PATH" ]; then
+    echo "Cleaning up inside project..."
+    find "$PROJECT_PATH" -name "__pycache__" -type d -exec rm -rf {} +
+    find "$PROJECT_PATH" -name "*.pyc" -delete
+    rm -rf "$PROJECT_PATH/node_modules"
+    rm -f "$PROJECT_PATH/db.sqlite3"
+fi
+`;
+                }
             }
 
             if (mode !== 'repo' && dbType === 'postgresql') {
@@ -1125,7 +1182,7 @@ echo "Done."
             const dbType = document.getElementById('dbType').value;
 
             const content = generateClearScript(projectPath, venvName, dbType, mode);
-            const filename = mode === 'repo' ? 'clear_repo.sh' : 'clear_workspace.sh';
+            const filename = mode === 'repo' ? 'clear_repo.sh' : mode === 'env' ? 'clear_env.sh' : 'clear_workspace.sh';
 
             const blob = new Blob([content], { type: 'text/x-sh' });
             const url = window.URL.createObjectURL(blob);
@@ -1412,6 +1469,11 @@ DB_IN_PASSWORD=horilla` : ''}
                 let count = 0;
                 for await (const entry of dirHandle.values()) {
                     if (mode === 'repo' && entry.name === document.getElementById('venvName').value) continue;
+                    if (mode === 'env') {
+                        const venvName = document.getElementById('venvName').value;
+                        const targets = [venvName, 'node_modules', 'db.sqlite3', '__pycache__'];
+                        if (!targets.includes(entry.name) && !entry.name.endsWith('.pyc')) continue;
+                    }
                     await dirHandle.removeEntry(entry.name, { recursive: true });
                     count++;
                 }
