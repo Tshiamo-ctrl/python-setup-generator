@@ -55,7 +55,8 @@ const REPO_LIST = [
                 complexity: "Advanced",
                 stars: "20k+",
                 setupCommands: {
-                    postInstall: "cp .env.example .env && python manage.py migrate && python manage.py create_demo_data"
+                    postInstall: "cp .env.example .env 2>/dev/null || true && echo \"SECRET_KEY=dev-secret\nRSA_PRIVATE_KEY=internal\" >> .env && python3 manage.py migrate",
+                    adminCreate: "python3 manage.py createsuperuser --noinput --username admin --email admin@example.com"
                 }
             },
             {
@@ -66,7 +67,7 @@ const REPO_LIST = [
                 complexity: "Advanced",
                 stars: "18k+",
                 setupCommands: {
-                    postInstall: "pip install -e . && pip install -r requirements/development.txt && wagtail start myproject && cd myproject && pip install -r requirements.txt"
+                    postInstall: "pip install -e . && wagtail start myproject && cd myproject && pip install -r requirements.txt && python3 manage.py migrate"
                 }
             },
             {
@@ -77,9 +78,9 @@ const REPO_LIST = [
                 complexity: "Expert",
                 stars: "7k+",
                 setupCommands: {
-                    preInstall: "sudo apt-get install -y build-essential python3-dev libmysqlclient-dev default-libmysqlclient-dev libssl-dev libffi-dev",
-                    postInstall: "pip install -r requirements/pip.txt && pip install -r requirements/edx/base.txt && pip install -r requirements/edx/development.txt",
-                    runServer: "python manage.py runserver 0.0.0.0:8000 --settings=lms.envs.devstack"
+                    preInstall: "sudo apt-get install -y build-essential python3-dev libmysqlclient-dev libssl-dev libffi-dev || echo 'System deps install skipped'",
+                    postInstall: "pip install -r requirements/pip.txt && pip install -r requirements/edx/base.txt",
+                    runServer: "python3 manage.py runserver 0.0.0.0:8000 --settings=lms.envs.devstack"
                 }
             },
             {
@@ -113,9 +114,8 @@ const REPO_LIST = [
                 complexity: "Expert",
                 stars: "20k+",
                 setupCommands: {
-                    preInstall: "sudo apt-get install -y build-essential libssl-dev libffi-dev python3-dev",
-                    postInstall: "cp .env.example .env && npm install && npm run build",
-                    adminCreate: "python manage.py createsuperuser"
+                    postInstall: "cp .env.example .env 2>/dev/null || true && echo \"DATABASE_URL=postgres://postgres:postgres@localhost:5432/posthog\" >> .env && pip install -r requirements.txt",
+                    adminCreate: "python3 manage.py createsuperuser --noinput --username admin --email admin@example.com"
                 }
             },
             {
@@ -126,8 +126,8 @@ const REPO_LIST = [
                 complexity: "Advanced",
                 stars: "3.6k+",
                 setupCommands: {
-                    preInstall: "sudo apt-get install -y build-essential python3-dev libmysqlclient-dev libssl-dev",
-                    postInstall: "echo \"DEBUG=True\nSECRET_KEY=$(python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())')\nDATABASE_URL=sqlite:///db.sqlite3\" > .env"
+                    postInstall: "cp ./dojo/settings/template-settings.dist.py ./dojo/settings/local_settings.py || true && pip install -r requirements.txt",
+                    adminCreate: "python3 manage.py createsuperuser --noinput --username admin --email admin@example.com"
                 }
             },
             {
@@ -160,7 +160,8 @@ const REPO_LIST = [
                 complexity: "Intermediate",
                 stars: "4k+",
                 setupCommands: {
-                    postInstall: "echo \"DEBUG=True\nSECRET_KEY=temp\nDATABASE_URL=sqlite:///db.sqlite3\" > .env"
+                    postInstall: "echo \"DJANGO_ALLOWED_HOSTS=*\" > .env && pip install -r requirements.txt",
+                    adminCreate: "python3 manage.py createsuperuser --noinput --username admin --email admin@example.com"
                 }
             },
             {
@@ -171,9 +172,8 @@ const REPO_LIST = [
                 complexity: "Expert",
                 stars: "38k+",
                 setupCommands: {
-                    preInstall: "sentry init --dev || echo 'Sentry init failed or already initialized'",
-                    postInstall: "pip install -e . && pip install -r requirements-dev.txt",
-                    adminCreate: "sentry createuser",
+                    preInstall: "echo 'Sentry requires significant system resources (Docker recommended)'",
+                    postInstall: "pip install -e .",
                     runServer: "sentry devserver"
                 }
             },

@@ -806,6 +806,9 @@ echo "Starting setup for ${repoName}..."
 # --- Checks ---
 command -v python3 >/dev/null 2>&1 || { echo "Python3 required."; exit 1; }
 command -v git >/dev/null 2>&1 || { echo "Git required."; exit 1; }
+if [ -f "package.json" ]; then
+    command -v npm >/dev/null 2>&1 || echo "⚠️  Node.js/NPM not found but package.json detected. UI builds may fail."
+fi
 
 # --- Clone ---
 if [ ! -d "$PROJECT_PATH" ]; then
@@ -1289,9 +1292,11 @@ DB_USER=${dbUser}
 DB_PASSWORD=${dbPass}
 DB_HOST=${dbHost}
 DB_PORT=${dbPort}
+DATABASE_URL=postgres://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}
 ` : `
 DB_ENGINE=django.db.backends.sqlite3
 DB_NAME=db.sqlite3
+DATABASE_URL=sqlite:///db.sqlite3
 `}
 ${repoName.toLowerCase().includes('horilla') ? `
 # Horilla Specific
