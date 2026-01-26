@@ -383,11 +383,11 @@ def test_quick_actions_panel(page_on_index: Page):
     # Quick actions should be visible
     expect(page_on_index.locator("#quickActions")).to_be_visible()
     
-    # Check all 4 action buttons exist
-    expect(page_on_index.locator("button:has-text('Save All Scripts')")).to_be_visible()
-    expect(page_on_index.locator("button:has-text('Copy Command')").first).to_be_visible()
-    expect(page_on_index.locator("button:has-text('Copy ./setup.sh')")).to_be_visible()
-    expect(page_on_index.locator("button:has-text('Copy Server Command')")).to_be_visible()
+    # Check all 4 action cards exist by their unique text
+    expect(page_on_index.locator(".action-card:has-text('Save All')")).to_be_visible()
+    expect(page_on_index.locator(".action-card:has-text('Chmod +x')")).to_be_visible()
+    expect(page_on_index.locator(".action-card:has-text('Run Setup')")).to_be_visible()
+    expect(page_on_index.locator(".action-card:has-text('Start Server')")).to_be_visible()
 
 def test_copy_button_functionality(page_on_index: Page):
     """Test that copy buttons work and show feedback"""
@@ -398,7 +398,8 @@ def test_copy_button_functionality(page_on_index: Page):
     
     page_on_index.wait_for_timeout(500)
     
-    # Click copy button on first carousel slide
+    # Click copy on the carousel slide (first slide - setup.sh)
+    # Note: Carousel still uses buttons for copy/download
     copy_button = page_on_index.locator("#scriptsCarousel .carousel-slide.active button:has-text('Copy')")
     copy_button.click()
     
