@@ -365,6 +365,33 @@
             border-color: var(--primary);
         }
 
+        .btn-danger {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            height: auto;
+            padding: 16px;
+            text-align: left;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--foreground);
+            opacity: 0.8;
+            transition: all 0.2s;
+        }
+
+        .btn-danger:hover {
+            opacity: 1;
+            border-color: var(--danger-text, #ef4444);
+            color: var(--danger-text, #ef4444);
+            background: var(--secondary);
+        }
+
+        /* Specific override for the 'repo only' warning style if needed */
+        .btn-danger.repo-only {
+            border-color: var(--danger-border);
+            color: var(--danger-text);
+        }
+
         .feature-list li {
             font-size: 14px;
             margin-bottom: 16px;
@@ -670,8 +697,7 @@
                         Danger Zone
                     </h3>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <button class="btn-secondary" onclick="handleDeletionAction('workspace')"
-                            style="border-color: #000; color: #000; opacity: 0.8; justify-content: flex-start; height: auto; padding: 16px;">
+                        <button class="btn-danger" onclick="handleDeletionAction('workspace')">
                             <div style="text-align: left;">
                                 <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">Clear Workspace
                                 </div>
@@ -679,8 +705,7 @@
                                     config</div>
                             </div>
                         </button>
-                        <button class="btn-secondary" onclick="handleDeletionAction('repo')"
-                            style="border-color: var(--danger-border, #000); color: var(--danger-text, #000); opacity: 0.8; justify-content: flex-start; height: auto; padding: 16px;">
+                        <button class="btn-danger repo-only" onclick="handleDeletionAction('repo')">
                             <div style="text-align: left;">
                                 <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">Clear Repo Only
                                 </div>
