@@ -25,4 +25,4 @@ Developing with Horilla often involves making code changes that require frequent
 - **User Friendly**: Minimal inline comments to help you understand exactly what the scripts are doing.
 
 ## License
-MIT
+[MIT](LICENSE)
