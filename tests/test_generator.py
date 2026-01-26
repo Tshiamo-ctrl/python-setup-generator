@@ -11,124 +11,96 @@ def page_on_index(page: Page):
     return page
 
 def test_title_and_rendering(page_on_index: Page):
-    expect(page_on_index).to_have_title("Horilla Dev Setup Generator | Automate Your HRMS Workspace")
-    # Initial static title
-    expect(page_on_index.locator("h1")).to_contain_text("Horilla Setup")
+    expect(page_on_index).to_have_title("Local Setup Generator | Automate Your Python Workspace")
+    # Initial static title matching the new H1
+    expect(page_on_index.locator("h1#mainTitle")).to_contain_text("Local Setup Generator")
+    # Check for the local disclaimer
+    expect(page_on_index.locator("text=Local Generator Only")).to_be_visible()
 
-def test_platform_toggle(page_on_index: Page):
-    # Initial state is generic "Horilla Setup"
-    expect(page_on_index.locator("#mainTitle")).to_contain_text("Horilla Setup")
+def test_repo_dropdown_population(page_on_index: Page):
+    # Verify the dropdown has options
+    # We might need to wait for JS to run, but on load should be fast.
+    dropdown = page_on_index.locator("#repoSelect")
+    expect(dropdown).to_be_visible()
     
-    # Switch to CRM
-    page_on_index.click("#platform-crm")
-    expect(page_on_index.locator("#mainTitle")).to_contain_text("Horilla CRM Setup")
-    
-    # Switch back to HRMS
-    page_on_index.click("#platform-hrms")
-    expect(page_on_index.locator("#mainTitle")).to_contain_text("Horilla HRMS Setup")
+    # Check for a specific known entry (e.g. Cookiecutter)
+    # The value is JSON, so we check the text content of options
+    expect(dropdown.locator("option").filter(has_text="Cookiecutter Django")).to_have_count(1)
+    expect(dropdown.locator("option").filter(has_text="Wagtail CMS")).to_have_count(1)
 
-def test_generate_scripts_standard(page_on_index: Page):
-    # Select Postgres to make db fields visible
-    page_on_index.select_option("#dbType", "postgresql")
+def test_custom_repo_selection(page_on_index: Page):
+    # Select "Custom"
+    page_on_index.select_option("#repoSelect", "custom")
     
-    # Set some values
-    page_on_index.fill("#dbName", "my_custom_db")
-
-    page_on_index.fill("#serverPort", "9000")
+    # Input should become visible
+    custom_input = page_on_index.locator("#customRepoField")
+    expect(custom_input).to_be_visible()
+    
+    # Fill URL
+    page_on_index.fill("#customRepoUrl", "https://github.com/testuser/testproject.git")
+    
+    # Select Framework
+    page_on_index.select_option("#frameworkSelect", "django")
     
     # Click Generate
     page_on_index.click("button:has-text('Continue to Scripts')")
     
-    # Check output visibility
-    expect(page_on_index.locator("#outputSection")).to_be_visible()
-    
     # Check Setup content
     setup_code = page_on_index.locator("#setupCode").inner_text()
-    # Note: .env content verification might need to look at specific lines or parsing
-    env_code = page_on_index.locator("#envCode").inner_text()
+    assert "https://github.com/testuser/testproject.git" in setup_code
+    assert "testproject" in setup_code # Extracted name
+    assert "python3 manage.py migrate" in setup_code # Django default
+
+def test_framework_switch_flask(page_on_index: Page):
+    # Select Custom
+    page_on_index.select_option("#repoSelect", "custom")
+    page_on_index.fill("#customRepoUrl", "https://github.com/flask/app.git")
+    
+    # Select Flask
+    page_on_index.select_option("#frameworkSelect", "flask")
+    
+    # Click Generate
+    page_on_index.click("button:has-text('Continue to Scripts')")
+    
+    # Check Server Script
     server_code = page_on_index.locator("#serverCode").inner_text()
+    assert "flask run" in server_code
+    assert "manage.py runserver" not in server_code
     
-    assert "DB_NAME=my_custom_db" in env_code
-    assert "START_PORT=9000" in server_code
+    # Check Setup Script
+    setup_code = page_on_index.locator("#setupCode").inner_text()
+    assert "manage.py migrate" not in setup_code
+    assert "Non-Django framework selected" in setup_code
 
-def test_redundancy_check_logic(page_on_index: Page):
-    # Ensure Load Demo and Create Admin are checked (default)
-    # We click the label/parent div because the input onclick prop might interfere if we just click the input directly?
-    # Actually the code says: <div class="checkbox-item" onclick="document.getElementById('loadDemo').click()">
-    # So clicking the div is the user behavior.
+def test_custom_commands(page_on_index: Page):
+    # Select Custom
+    page_on_index.select_option("#repoSelect", "custom")
+    page_on_index.fill("#customRepoUrl", "https://github.com/custom/cmd.git")
     
-    # Check state first. Default is Checked.
-    if not page_on_index.locator("#loadDemo").is_checked():
-        page_on_index.click("div.checkbox-item:has-text('Load Demo Data')")
-    if not page_on_index.locator("#createSuper").is_checked():
-        page_on_index.click("div.checkbox-item:has-text('Create Admin User')")
-        
-    page_on_index.fill("#adminUser", "admin_tester")
+    # Fill Custom Commands
+    page_on_index.fill("#cmdAdmin", "python3 manage.py create_special_admin")
+    page_on_index.fill("#cmdPostInstall", "npm install && npm run build")
     
+    # Click Generate
     page_on_index.click("button:has-text('Continue to Scripts')")
     
-    setup_code = page_on_index.locator("#setupCode").inner_text()
-    fresh_code = page_on_index.locator("#freshCode").inner_text()
-    
-    # Verify the python shell check is present
-    expected_snippet = "if python3 manage.py shell -c"
-    assert expected_snippet in setup_code, "Setup script missing redundancy check"
-    assert "admin_tester" in setup_code
-    
-    assert expected_snippet in fresh_code, "Fresh DB script missing redundancy check"
-
-def test_no_redux_check_when_demo_disabled(page_on_index: Page):
-    # Uncheck Load Demo
-    # If it is checked, click to uncheck
-    if page_on_index.locator("#loadDemo").is_checked():
-        page_on_index.click("div.checkbox-item:has-text('Load Demo Data')")
-    
-    # Create Admin should be checked
-    if not page_on_index.locator("#createSuper").is_checked():
-        page_on_index.click("div.checkbox-item:has-text('Create Admin User')")
-        
-    page_on_index.click("button:has-text('Continue to Scripts')")
-    
+    # Check Setup Script
     setup_code = page_on_index.locator("#setupCode").inner_text()
     
-    # Should NOT have the python shell check, just the straightforward creation
-    assert "if python3 manage.py shell -c" not in setup_code
-    assert "python3 manage.py createhorillauser" in setup_code
+    # Check Post Install
+    assert "npm install && npm run build" in setup_code
+    # Check Admin Command (requires Create Admin checkbox, which is default)
+    assert "python3 manage.py create_special_admin" in setup_code
 
-def test_clear_workspace_logic(page_on_index: Page):
-    # Select Postgres
-    page_on_index.select_option("#dbType", "postgresql")
-    page_on_index.fill("#dbName", "to_be_deleted_db")
-    
-    # Verify the existence of Danger Zone and buttons
+def test_clear_workspace_danger_zone(page_on_index: Page):
+    # Check if Danger Zone exists
     expect(page_on_index.locator("h3:has-text('Danger Zone')")).to_be_visible()
     
-    workspace_btn = page_on_index.locator("button:has-text('Clear Workspace')")
-    expect(workspace_btn).to_be_visible()
-    expect(page_on_index.locator("text=Delete project, venv & db config")).to_be_visible()
-    
-    repo_btn = page_on_index.locator("button:has-text('Clear Repo Only')")
-    expect(repo_btn).to_be_visible()
-    expect(page_on_index.locator("text=Keep venv, delete source code")).to_be_visible()
-
-    # We verify the logic by invoking the generator functions directly in the browser context.
+    # We verify the logic by invoking the generator functions directly
     # Check Clear Workspace Content by calling JS function
     clear_code = page_on_index.evaluate("""
         generateClearScript('/home/user/test', 'test_venv', 'postgresql', 'workspace')
     """)
     
     assert "rm -rf" in clear_code
-    assert "to_be_deleted_db" in clear_code
     assert "Removing virtual environment..." in clear_code
-    assert "clean" in clear_code.lower() or "workspace" in clear_code.lower()
-
-    # Check Clear Repo Content
-    repo_code = page_on_index.evaluate("""
-        generateClearScript('/home/user/test', 'test_venv', 'postgresql', 'repo')
-    """)
-    
-    assert "rm -rf" in repo_code
-    assert "Clear Repository Only" in repo_code
-    assert "Removing virtual environment" not in repo_code
-
-

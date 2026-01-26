@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Horilla Dev Setup Generator | Automate Your HRMS Workspace</title>
+    <title>Local Setup Generator | Automate Your Python Workspace</title>
     <meta name="description"
-        content="Generate production-ready setup and maintenance scripts for Horilla HRMS development. Automate database wipes, migrations, and environment configuration.">
+        content="Generate production-ready setup and maintenance scripts for Python/Django projects. Automate database wipes, migrations, and environment configuration locally.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -46,6 +46,8 @@
             --input: #111114;
             --ring: #ffffff;
             --shadow: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+            --danger-border: #fca5a5;
+            --danger-text: #fecaca;
         }
 
         * {
@@ -470,8 +472,13 @@
     <div class="container">
         <header>
             <div>
-                <h1 id="mainTitle">Horilla Setup</h1>
-                <p class="header-subtitle" id="mainSubtitle">Automated workspace scripts for Horilla HRMS</p>
+                <h1 id="mainTitle">Local Setup Generator</h1>
+                <p class="header-subtitle" id="mainSubtitle">Generate automated setup scripts for any Python web project
+                </p>
+                <div
+                    style="margin-top: 12px; font-size: 13px; color: var(--muted-foreground); background: var(--secondary); display: inline-block; padding: 4px 12px; border-radius: 20px;">
+                    Supports Django, Flask, FastAPI & Generic Python
+                </div>
             </div>
             <button class="btn-secondary theme-toggle" onclick="toggleTheme()" id="themeToggle" title="Toggle Theme">
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -487,8 +494,9 @@
                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
             <div>
-                <strong>Platform Agnostic:</strong> Now supporting both Horilla HRMS and Horilla CRM. Select your
-                platform to generate correct setup and maintenance scripts.
+                <strong>Local Generator Only:</strong> This tool runs entirely in your browser. It does not use AI to
+                analyze repositories.
+                Ensure you provide correct commands for custom projects.
             </div>
         </div>
 
@@ -497,12 +505,26 @@
                 <h2>Configuration</h2>
 
                 <div class="form-group">
-                    <label>Target Platform</label>
-                    <div class="platform-toggle">
-                        <button class="platform-btn active" id="platform-hrms" onclick="setPlatform('hrms')">Horilla
-                            HRMS</button>
-                        <button class="platform-btn" id="platform-crm" onclick="setPlatform('crm')">Horilla CRM</button>
-                    </div>
+                    <label>Source Repository</label>
+                    <select id="repoSelect" onchange="handleRepoChange()">
+                        <option value="custom">Custom Repository URL...</option>
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+
+                <div class="form-group" id="customRepoField">
+                    <label for="customRepoUrl">Git Repository URL</label>
+                    <input type="text" id="customRepoUrl" placeholder="https://github.com/username/project.git">
+                </div>
+
+                <div class="form-group">
+                    <label for="frameworkSelect">Project Framework</label>
+                    <select id="frameworkSelect" onchange="updateFrameworkDefaults()">
+                        <option value="django">Django (Standard)</option>
+                        <option value="flask">Flask</option>
+                        <option value="fastapi">FastAPI</option>
+                        <option value="generic">Generic Python</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -587,25 +609,43 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                     <div class="form-group">
                         <label for="adminUser">Admin Username</label>
                         <input type="text" id="adminUser" value="admin">
                     </div>
                     <div class="form-group">
                         <label for="serverPort">Server Port</label>
-                        <input type="number" id="serverPort" value="8000" onchange="generateScripts()">
+                        <input type="number" id="serverPort" value="8000">
                     </div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                     <div class="form-group">
                         <label for="adminEmail">Admin Email</label>
-                        <input type="text" id="adminEmail" value="admin@horilla.local">
+                        <input type="text" id="adminEmail" value="admin@example.com">
                     </div>
                     <div class="form-group">
                         <label for="adminPass">Admin Password</label>
                         <input type="password" id="adminPass" value="admin123">
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="form-group">
+                    <label>Custom Commands (Optional)</label>
+                    <div style="background: var(--secondary); padding: 16px; border-radius: 8px;">
+                        <div class="form-group">
+                            <label for="cmdAdmin" style="font-size: 11px;">Admin Creation Command</label>
+                            <input type="text" id="cmdAdmin" value="python3 manage.py createsuperuser"
+                                placeholder="Command to create admin user">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="cmdPostInstall" style="font-size: 11px;">Post-Install Command</label>
+                            <input type="text" id="cmdPostInstall" value=""
+                                placeholder="e.g. npm install, python scripts/setup.py">
+                        </div>
                     </div>
                 </div>
 
@@ -640,7 +680,7 @@
                             </div>
                         </button>
                         <button class="btn-secondary" onclick="handleDeletionAction('repo')"
-                            style="border-color: #000; color: #000; opacity: 0.8; justify-content: flex-start; height: auto; padding: 16px;">
+                            style="border-color: var(--danger-border, #000); color: var(--danger-text, #000); opacity: 0.8; justify-content: flex-start; height: auto; padding: 16px;">
                             <div style="text-align: left;">
                                 <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">Clear Repo Only
                                 </div>
@@ -865,46 +905,97 @@
 
     <div class="copy-feedback" id="copyFeedback">✓ Copied to clipboard</div>
 
+    <script src="repos.js"></script>
+
     <script>
-        let currentPlatform = 'hrms';
-        const platforms = {
-            hrms: {
-                name: "Horilla HRMS",
-                repo: "https://github.com/horilla-opensource/horilla.git",
-                envDist: ".env.dist",
-                defaultPath: "~/dev/horilla-hrms"
-            },
-            crm: {
-                name: "Horilla CRM",
-                repo: "https://github.com/horilla-opensource/horilla-crm.git",
-                envDist: ".env.example",
-                defaultPath: "~/dev/horilla-crm"
+        // Defaults and Globals
+        let selectedRepo = null;
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
             }
-        };
+            populateRepoDropdown();
+            updateDbFields();
+            updateFrameworkDefaults(); // Set initial defaults
+        });
 
-        function setPlatform(platform) {
-            currentPlatform = platform;
-            document.getElementById('platform-hrms').classList.toggle('active', platform === 'hrms');
-            document.getElementById('platform-crm').classList.toggle('active', platform === 'crm');
-
-            document.getElementById('mainTitle').textContent = platforms[platform].name + " Setup";
-            document.getElementById('mainSubtitle').textContent = "Automated workspace scripts for " + platforms[platform].name;
-
-            // Suggest path if it's still default
-            const pathInput = document.getElementById('projectPath');
-            if (pathInput.value === platforms[platform === 'hrms' ? 'crm' : 'hrms'].defaultPath) {
-                pathInput.value = platforms[platform].defaultPath;
+        function populateRepoDropdown() {
+            const select = document.getElementById('repoSelect');
+            if (typeof REPO_LIST === 'undefined') {
+                console.error("REPO_LIST not found. Is repos.js loaded?");
+                return;
             }
 
-            // Update DB defaults for CRM if switched
-            if (platform === 'crm') {
-                document.getElementById('dbName').value = 'horilla_main';
-                document.getElementById('dbUser').value = 'horilla';
-                document.getElementById('dbPass').value = 'horilla';
+            REPO_LIST.forEach(category => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = category.category;
+                category.repos.forEach((repo, index) => {
+                    const option = document.createElement('option');
+                    option.value = JSON.stringify(repo); // Store object for easy access
+                    option.textContent = repo.name + (repo.stars ? ` (${repo.stars})` : "");
+                    optgroup.appendChild(option);
+                });
+                select.appendChild(optgroup);
+            });
+
+            // Trigger change handler for initial state
+            handleRepoChange();
+        }
+
+        function handleRepoChange() {
+            const select = document.getElementById('repoSelect');
+            const customField = document.getElementById('customRepoField');
+
+            if (select.value === 'custom') {
+                customField.style.display = 'block';
+                selectedRepo = null;
+                // Allow user to manually select framework
             } else {
-                document.getElementById('dbName').value = 'horilla_dev';
-                document.getElementById('dbUser').value = 'horilla_user';
-                document.getElementById('dbPass').value = 'dev_password_123';
+                customField.style.display = 'none';
+                try {
+                    selectedRepo = JSON.parse(select.value);
+                    // Auto-fill configuration based on preset
+                    if (selectedRepo.framework) {
+                        document.getElementById('frameworkSelect').value = selectedRepo.framework;
+                    }
+                    if (selectedRepo.adminCommand) {
+                        document.getElementById('cmdAdmin').value = selectedRepo.adminCommand;
+                    }
+                    // If repo has specific setup instructions/needs, we could show a tip or pre-fill post code
+                    // For now, clear custom fields to defaults if switching presets
+                    updateFrameworkDefaults(true); // Helper to reset defaults if needed
+                } catch (e) {
+                    console.error("Error parsing repo data", e);
+                }
+            }
+        }
+
+        function updateFrameworkDefaults(preserveIfCustom = false) {
+            const framework = document.getElementById('frameworkSelect').value;
+            const cmdAdmin = document.getElementById('cmdAdmin');
+
+            // If we are switching generic presets, update the admin command suggestion
+            // Logic: Only overwrite if it matches a known default or if forced
+            const defaults = {
+                django: "python3 manage.py createsuperuser",
+                flask: "flask create-user # (Hypothetical, customize as needed)",
+                fastapi: "python3 scripts/create_user.py # (Customize)",
+                generic: "python3 setup.py admin",
+            };
+
+            // Using this logic: If the current value is one of the defaults, we update it to the new default.
+            // If user typed something custom, we leave it alone unless it's a fresh preset load.
+            const isDefaultValue = Object.values(defaults).some(v => v === cmdAdmin.value);
+
+            if (isDefaultValue || preserveIfCustom) {
+                if (selectedRepo && selectedRepo.adminCommand) {
+                    cmdAdmin.value = selectedRepo.adminCommand;
+                } else if (defaults[framework]) {
+                    cmdAdmin.value = defaults[framework];
+                }
             }
         }
 
@@ -913,7 +1004,6 @@
             const isDark = document.documentElement.classList.contains('dark');
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
 
-            // Update icon
             const btn = document.getElementById('themeToggle');
             if (isDark) {
                 btn.innerHTML = `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
@@ -930,534 +1020,244 @@
         function switchTab(e, tabName) {
             const container = e.target.closest('.output-section');
             if (!container) return;
-
-            // Hide all tabs in this container
             container.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             container.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-
-            // Show selected tab
             const targetContent = container.querySelector('#' + tabName);
             if (targetContent) targetContent.classList.add('active');
             e.target.classList.add('active');
         }
 
         function generateScripts() {
-            const projectPath = document.getElementById('projectPath').value || platforms[currentPlatform].defaultPath;
-            const venvName = document.getElementById('venvName').value || 'horillavenv';
+            // Gather Inputs
+            const framework = document.getElementById('frameworkSelect').value;
+            const projectPath = document.getElementById('projectPath').value || "~/dev/my-project";
+            const venvName = document.getElementById('venvName').value || 'venv';
             const dbType = document.getElementById('dbType').value;
+
             const loadDemo = document.getElementById('loadDemo').checked;
             const createSuper = document.getElementById('createSuper').checked;
             const runServer = document.getElementById('runServer').checked;
-            const adminUser = document.getElementById('adminUser').value || 'admin';
-            const adminEmail = document.getElementById('adminEmail').value || 'admin@horilla.local';
-            const adminPass = document.getElementById('adminPass').value || 'admin123';
-            const serverPort = document.getElementById('serverPort').value || '8000';
-            const dbInitPass = document.getElementById('dbInitPass').value || 'd3f6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d';
 
-            let setupScript = generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail, adminPass, serverPort);
-            let freshScript = generateFreshDbScript(projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort);
-            let serverScript = generateServerScript(projectPath, venvName, serverPort);
-            let envFile = generateEnvFile(dbType, dbInitPass, serverPort);
+            const adminUser = document.getElementById('adminUser').value;
+            const adminEmail = document.getElementById('adminEmail').value;
+            const adminPass = document.getElementById('adminPass').value;
+            const serverPort = document.getElementById('serverPort').value;
+            const dbInitPass = document.getElementById('dbInitPass').value;
 
+            // Custom Commands
+            const cmdAdmin = document.getElementById('cmdAdmin').value;
+            const cmdPostInstall = document.getElementById('cmdPostInstall').value;
+
+            // Determine Repo URL
+            let repoUrl = "";
+            let repoName = "Project";
+            if (document.getElementById('repoSelect').value === 'custom') {
+                repoUrl = document.getElementById('customRepoUrl').value.trim();
+                // Extract name from URL if possible
+                const matches = repoUrl.match(/\/([^\/]+)(\.git)?$/);
+                if (matches) repoName = matches[1].replace('.git', '');
+            } else if (selectedRepo) {
+                repoUrl = selectedRepo.url;
+                repoName = selectedRepo.name;
+            }
+
+            if (!repoUrl) {
+                alert("Please select a repository or enter a custom URL.");
+                return;
+            }
+
+            // Generate
+            let setupScript = generateSetupScript(repoUrl, repoName, framework, projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall);
+            let freshScript = generateFreshDbScript(framework, projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin);
+            let serverScript = generateServerScript(framework, projectPath, venvName, serverPort);
+            let envFile = generateEnvFile(repoName, dbType, dbInitPass, serverPort);
+
+            // Display
             document.getElementById('setupCode').textContent = setupScript;
             document.getElementById('freshCode').textContent = freshScript;
             document.getElementById('serverCode').textContent = serverScript;
             document.getElementById('envCode').textContent = envFile;
 
-            // Show output section with animation
             const output = document.getElementById('outputSection');
             output.style.display = 'block';
             setTimeout(() => output.classList.add('visible'), 50);
-
-            showFeedback("Success! New scripts generated.", true);
-
-            // Scroll to output
+            showFeedback("Success! Scripts generated.", true);
             output.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        function showFeedback(message, isGen = false) {
+        function showFeedback(message) {
             const feedback = document.getElementById('copyFeedback');
-            feedback.innerHTML = `<span style="display:flex;align-items:center;gap:8px;">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"></path></svg>
-                ${message}
-            </span>`;
+            feedback.innerHTML = `<span style="display:flex;align-items:center;gap:8px;"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"></path></svg>${message}</span>`;
             feedback.className = 'copy-feedback show';
             setTimeout(() => feedback.classList.remove('show'), 3000);
         }
 
-        function downloadFile(elementId, filename) {
-            const prefix = document.getElementById('scriptPath').value;
-            const fullFilename = prefix ? (prefix.endsWith('/') ? prefix : prefix + '/') + filename : filename;
-
-            const content = document.getElementById(elementId).textContent;
-            const blob = new Blob([content], { type: 'text/x-sh' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fullFilename;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        }
-
-        async function handleDeletionAction(mode) {
-            if (!('showDirectoryPicker' in window)) {
-                // Fallback immediately if API not supported
-                downloadClearScript(mode);
-                return;
-            }
-
-            // Reducing friction: We don't ask for mode confirmation anymore.
-            // We just prompt to pick the folder, with a clear hint.
-
-            // Try to use a "well known" starting point if possible (e.g., 'documents')
-            // but we can't force the exact path.
-
-            const projectPath = document.getElementById('projectPath').value;
-
-            // We use alert because showDirectoryPicker needs a user gesture, but an alert might break it?
-            // Actually, showDirectoryPicker MUST be the direct result of a click.
-            // So we can't do confirm() -> showDirectoryPicker() in some strict browsers?
-            // Chrome is usually fine.
-            // Let's rely on the native picker's text if possible, but we can't control it much.
-            // We will just do a final safety check AFTER selection.
-
-            try {
-                // Tip for the user (using a non-blocking toast or just trust the user knows what they clicked)
-                // User clicked "Clear Workspace" -> they expect to pick the workspace folder.
-
-                const dirHandle = await window.showDirectoryPicker();
-
-                // Safety check: is this the right folder?
-                // We can check if it matches the folder name in projectPath?
-                // e.g. projectPath = ~/dev/horilla-hrms -> check if dirHandle.name == horilla-hrms
-
-                // Extract expected folder name
-                const parts = projectPath.split('/');
-                const expectedName = parts[parts.length - 1] || parts[parts.length - 2]; // handle trailing slash
-
-                let warningMsg = `Are you sure you want to PERMANENTLY DELETE all contents of '${dirHandle.name}'?`;
-                if (expectedName && dirHandle.name !== expectedName && !projectPath.includes(dirHandle.name)) {
-                    warningMsg = `⚠️ WARNING: Folder name '${dirHandle.name}' does not match your Project Path settings ('...${expectedName}').\n\nAre you sure you want to delete this folder's contents?`;
-                }
-
-                if (!confirm(warningMsg)) {
-                    return;
-                }
-
-                showFeedback("Deleting contents...", true);
-
-                let deletedCount = 0;
-                // Iterate and delete
-                for await (const entry of dirHandle.values()) {
-                    // Logic:
-                    // If mode == 'repo', we want to SKIP 'horillavenv' or whatever the venv name is.
-
-                    const venvName = document.getElementById('venvName').value || 'horillavenv';
-
-                    if (mode === 'repo' && entry.name === venvName) {
-                        console.log("Skipping venv:", entry.name);
-                        continue;
-                    }
-
-                    await dirHandle.removeEntry(entry.name, { recursive: true });
-                    deletedCount++;
-                }
-
-                showFeedback(`Deleted ${deletedCount} items. Workspace cleared.`);
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    console.error(err);
-                    // If permissions fail, offer script
-                    if (confirm("Browser deletion failed or permission denied. Download shell script instead?")) {
-                        downloadClearScript(mode);
-                    }
-                }
-            }
-        }
-
-        function downloadClearScript(mode) {
-            const projectPath = document.getElementById('projectPath').value || platforms[currentPlatform].defaultPath;
-            const venvName = document.getElementById('venvName').value || 'horillavenv';
-            const dbType = document.getElementById('dbType').value;
-
-            const content = generateClearScript(projectPath, venvName, dbType, mode);
-            const filename = mode === 'repo' ? 'clear_repo.sh' : 'clear_workspace.sh';
-
-            // Create temp blob for download
-            const blob = new Blob([content], { type: 'text/x-sh' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        }
-
-        async function saveToFolder() {
-            if (!('showDirectoryPicker' in window)) {
-                showFeedback("Your browser doesn't support direct folder access. Please download files individually.", false);
-                return;
-            }
-
-            try {
-                const dirHandle = await window.showDirectoryPicker();
-                const files = [
-                    { name: 'setup.sh', id: 'setupCode' },
-                    { name: 'fresh-db.sh', id: 'freshCode' },
-                    { name: 'dev-server.sh', id: 'serverCode' },
-                    { name: 'clear_workspace.sh', id: 'clearCode' },
-                    { name: 'clear_repo.sh', id: 'clearRepoCode' },
-                    { name: document.getElementById('platform-hrms').classList.contains('active') ? '.env.dist' : '.env.example', id: 'envCode' }
-                ];
-
-                for (const file of files) {
-                    const content = document.getElementById(file.id).textContent;
-                    if (!content) continue;
-
-                    const fileHandle = await dirHandle.getFileHandle(file.name, { create: true });
-                    const writable = await fileHandle.createWritable();
-                    await writable.write(content);
-                    await writable.close();
-                }
-
-                showFeedback("All files saved to " + dirHandle.name);
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    console.error(err);
-                    showFeedback("Error saving to folder");
-                }
-            }
-        }
-
-        function generateSetupScript(projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail, adminPass, serverPort) {
-            let script = `#!/bin/bash
-
-# ${platforms[currentPlatform].name} - Complete Development Setup Script
-# Official documentation: https://github.com/horilla-opensource
+        function generateSetupScript(repoUrl, repoName, framework, projectPath, venvName, dbType, loadDemo, createSuper, runServer, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall) {
+            return `#!/bin/bash
+# ${repoName} - Development Setup Script
 # Generated: $(date)
 
-set -e  # Exit on error
+set -e
 
-# Check for required tools
-command -v python3 >/dev/null 2>&1 || { echo "Python3 required but not found. Exiting."; exit 1; }
-command -v git >/dev/null 2>&1 || { echo "Git required but not found. Exiting."; exit 1; }
-
+# --- Configuration ---
 PROJECT_PATH="${projectPath}"
 VENV_NAME="${venvName}"
+REPO_URL="${repoUrl}"
 
-echo "Starting ${platforms[currentPlatform].name} development setup..."
-echo "Project path: \${PROJECT_PATH}"
-echo ""
+# --- Checks ---
+command -v python3 >/dev/null 2>&1 || { echo "Python3 required."; exit 1; }
+command -v git >/dev/null 2>&1 || { echo "Git required."; exit 1; }
 
-# Ensure we are in the right directory
-mkdir -p "\${PROJECT_PATH}"
-cd "\${PROJECT_PATH}"
+echo "Starting setup for ${repoName}..."
+echo "Target: $PROJECT_PATH"
 
-# Check if repo already cloned
-if [ ! -f "manage.py" ]; then
-    echo "Cloning ${platforms[currentPlatform].name} repository..."
-    git clone ${platforms[currentPlatform].repo} .
+mkdir -p "$PROJECT_PATH"
+cd "$PROJECT_PATH"
+
+# --- Clone ---
+if [ ! -d ".git" ]; then
+    echo "Cloning repository..."
+    git clone "$REPO_URL" .
 else
-    echo "${platforms[currentPlatform].name} repository already exists"
+    echo "Repository already exists."
 fi
 
-# Create virtual environment if needed
+# --- Virtual Environment ---
 if [ ! -d "$VENV_NAME" ]; then
-    echo "Creating Python virtual environment..."
+    echo "Creating virtual env..."
     python3 -m venv "$VENV_NAME"
-else
-    echo "Virtual environment already exists"
 fi
-
-# Activate virtual environment
-echo "Activating virtual environment..."
 source "$VENV_NAME/bin/activate"
 
-# Upgrade pip and install dependencies
-echo "Upgrading pip..."
+# --- Dependencies ---
+echo "Installing dependencies..."
 python3 -m pip install --upgrade pip
-
 if [ -f "requirements.txt" ]; then
-    echo "Installing dependencies..."
-    python3 -m pip install -r requirements.txt || { echo "Failed to install dependencies. Check your internet connection."; exit 1; }
+    pip install -r requirements.txt
+elif [ -f "pyproject.toml" ]; then
+    pip install .  # Basic attempt for pyproject
+    echo "Note: pyproject.toml detected. 'pip install .' used. If using poetry/pdm, run manually."
+else
+    echo "Warning: No requirements.txt found."
 fi
 
-if [ "${dbType}" == "postgresql" ]; then
-    echo "Installing PostgreSQL drivers..."
-    python3 -m pip install psycopg2-binary || echo "Note: Failed to install psycopg2-binary, you may need to install it manually."
-    
-    echo "Verifying database connectivity..."
-    if ! python3 -c "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.settimeout(2); s.connect(('${document.getElementById('dbHost').value}', ${document.getElementById('dbPort').value})); s.close()" 2>/dev/null; then
-        echo "Error: Cannot connect to PostgreSQL at ${document.getElementById('dbHost').value}:${document.getElementById('dbPort').value}"
-        echo "Please ensure your database server is running and accessible."
-        exit 1
-    fi
-fi
+${dbType === 'postgresql' ? `
+# --- Database Drivers (Postgres) ---
+pip install psycopg2-binary || echo "Warning: psycopg2-binary install failed."
+` : ''}
 
-# Initialize environment file
-echo "Configuring environment variables (.env)..."
+# --- Environment ---
+echo "Creating .env file..."
 cat > .env << 'EOF'
-${generateEnvFile(dbType, dbInitPass, serverPort)}
+${generateEnvFile(repoName, dbType, document.getElementById('dbInitPass').value, serverPort)}
 EOF
 
-# Compile translations
-if command -v msgfmt >/dev/null 2>&1; then
-    echo "Compiling translations..."
-    python3 manage.py compilemessages || echo "Note: Translation compilation failed"
-else
-    echo "Note: gettext (msgfmt) not found. Attempting to install..."
-    if command -v apt-get >/dev/null 2>&1; then
-        sudo apt-get update -y && sudo apt-get install -y gettext || echo "Could not install gettext automatically"
-    fi
-    if command -v msgfmt >/dev/null 2>&1; then
-        python3 manage.py compilemessages
-    else
-        echo "Skipping translation compilation (gettext missing)"
-    fi
-fi
+# --- Post-Install Custom Commands ---
+${cmdPostInstall ? `
+echo "Running post-install commands..."
+${cmdPostInstall}
+` : ''}
 
-# Database setup
+# --- Framework Specifics ---
+${framework === 'django' ? `
+echo "Running Django specific setup..."
 if [ -f "manage.py" ]; then
-    echo "Generating and applying migrations..."
-    python3 manage.py makemigrations --noinput
     python3 manage.py migrate --noinput
-else
-    echo "manage.py not found. Are you in the correct directory?"
-    exit 1
-fi
-
-`;
-
-            if (dbType === 'postgresql') {
-                script += `
-# PostgreSQL specific setup
-echo "PostgreSQL database configured in .env"
-`;
-            }
-
-            if (loadDemo) {
-                script += `
-# Load initial demo data/fixtures
-echo "Initializing database data..."
-# Horilla HRMS often needs specific fixtures or initialization commands
-if [ -f "fixtures/initial_data.json" ]; then
-    python3 manage.py loaddata initial_data
-fi
-
-# Try common Horilla init commands if they exist
-python3 manage.py load_fixtures 2>/dev/null || true
-`;
-            }
-
-            if (createSuper) {
-                if (loadDemo) {
-                    script += `
-# Create administrator account
-if python3 manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); exit(0 if User.objects.filter(username='${adminUser}').exists() else 1)"; then
-    echo "Admin user '${adminUser}' already exists. Skipping creation."
-else
-    echo "Creating admin user..."
+    python3 manage.py compilemessages 2>/dev/null || true
+    
+    ${createSuper ? `
+    echo "Creating Admin User..."
     export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
-    python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password="${adminPass}" 2>/dev/null || \
-    python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
-    echo "Could not create superuser automatically."
+    ${cmdAdmin} || echo "Admin creation failed or user exists."
+    ` : ''}
+    
+    ${loadDemo ? `
+    # Demo Data Loading
+    python3 manage.py loaddata initial_data 2>/dev/null || echo "No 'initial_data' fixture found."
+    ` : ''}
+else
+    echo "Warning: manage.py not found!"
 fi
-`;
-                } else {
-                    script += `
-# Create administrator account
-echo "Creating admin user..."
-export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
-python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password="${adminPass}" 2>/dev/null || \
-python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
-echo "Could not create superuser automatically."
-`;
-                }
-            }
+` : `
+echo "Non-Django framework selected. Skipping manage.py commands."
+`}
 
-            script += `
 echo ""
-echo "Setup complete!"
-echo ""
-echo "Next steps:"
+echo "Setup Complete!"
+${runServer ? `./dev-server.sh` : `echo "Run ./dev-server.sh to start."`}
 `;
-
-            if (runServer) {
-                script += `echo "   1. Run: ./dev-server.sh"`;
-            } else {
-                script += `echo "   1. Run: python manage.py runserver 0.0.0.0:${serverPort}"`;
-            }
-
-            script += `
-echo "   2. Open: http://localhost:${serverPort}"
-echo "   3. Navigate to /admin for admin panel"
-echo ""
-echo "Development tip: Use './fresh-db.sh' after code changes to reset database"
-`;
-
-            return script;
         }
 
-        function generateFreshDbScript(projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort) {
-            let script = `#!/bin/bash
-
-# ${platforms[currentPlatform].name} - Fresh Database Reset Script
-# Use this when you modify models and need to start fresh
-# Official commands follow Horilla documentation
-
-set -e  # Exit on error
-
-PROJECT_PATH="${projectPath}"
-VENV_NAME="${venvName}"
-
-echo "This will DROP your database and recreate it fresh"
-if [[ "$1" != "--force" ]]; then
-    read -p "Are you sure? (type 'yes' to continue): " confirm
-    if [ "$confirm" != "yes" ]; then
-        echo "Cancelled."
-        exit 0
-    fi
-fi
-
-# Check for required tools
-command -v python3 >/dev/null 2>&1 || { echo "Python3 required but not found. Exiting."; exit 1; }
-
-cd "$PROJECT_PATH"
-
-# Activate environment
-if [ -d "$VENV_NAME" ]; then
-    echo "Activating virtual environment..."
-    source "$VENV_NAME/bin/activate"
-else
-    echo "Virtual environment '$VENV_NAME' not found. Run setup.sh first."
-    exit 1
-fi
-
-echo ""
-echo "Cleaning up old database and migration files..."
-`;
-
-            if (dbType === 'sqlite') {
-                script += `
-# Remove SQLite database
-rm -f db.sqlite3
-echo "   Removed db.sqlite3"
-`;
-            } else {
-                script += `
-# Drop PostgreSQL database (requires .env or manual setup)
-echo "   Note: PostgreSQL database will need manual drop or Django will skip"
-echo "   Run: psql -U horilla_user -d horilla_dev -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'"
+        function generateFreshDbScript(framework, projectPath, venvName, dbType, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin) {
+            if (framework !== 'django') {
+                return `#!/bin/bash
+echo "Fresh DB script is currently optimized for Django.";
+echo "For generic Python projects, manual cleanup is recommended.";
 `;
             }
 
-            script += `
-# Remove pycache and migrations
-find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-find . -type d -name "migrations" -path "*/apps/*" -exec rm -rf {} + 2>/dev/null || true
-echo "   Cleaned __pycache__ and old migrations"
-
-# Generate and apply new migrations
-echo "Running fresh migrations..."
-python3 manage.py makemigrations # Detect code changes
-python3 manage.py migrate        # Apply to database
-
-`;
-
-            if (loadDemo) {
-                script += `
-# Load initial demo data
-if [ -f "fixtures/initial_data.json" ] || python3 manage.py loaddata initial_data --help >/dev/null 2>&1; then
-    echo "Loading demo data..."
-    python3 manage.py loaddata initial_data 2>/dev/null || echo "Note: Demo data fixture skipped or unavailable"
-fi
-`;
-            }
-
-            if (createSuper) {
-                if (loadDemo) {
-                    script += `
-# Recreate administrative user
-if python3 manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); exit(0 if User.objects.filter(username='${adminUser}').exists() else 1)"; then
-    echo "Admin user '${adminUser}' already exists. Skipping creation."
-else
-    echo "Creating admin user..."
-    export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
-    python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password="${adminPass}" 2>/dev/null || \
-    python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
-    echo "Superuser creation skipped or failed."
-fi
-`;
-                } else {
-                    script += `
-# Recreate administrative user
-echo "Creating admin user..."
-export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
-python3 manage.py createhorillauser --noinput --username="${adminUser}" --email="${adminEmail}" --password="${adminPass}" 2>/dev/null || \
-python3 manage.py createsuperuser --noinput --username="${adminUser}" --email="${adminEmail}" 2>/dev/null || \
-echo "Superuser creation skipped or failed."
-`;
-                }
-            }
-
-            script += `
-echo ""
-echo "Fresh database ready!"
-echo ""
-echo "Next: Run ./dev-server.sh to start development"
-`;
-
-            return script;
-        }
-
-        function generateServerScript(projectPath, venvName, serverPort) {
             return `#!/bin/bash
-
-# ${platforms[currentPlatform].name} - Development Server Launcher
-# Quick start for the Django development server with port fallback
-
+# Fresh Database Reset (Django)
+set -e
 PROJECT_PATH="${projectPath}"
 VENV_NAME="${venvName}"
-START_PORT=${serverPort}
+
+echo "⚠️  This will DELETE your database (db.sqlite3) and migrations!"
+if [[ "$1" != "--force" ]]; then
+    read -p "Confirm? (y/n): " confirm
+    if [[ "$confirm" != "y" ]]; then exit 0; fi
+fi
 
 cd "$PROJECT_PATH"
+source "$VENV_NAME/bin/activate"
 
-# Activate virtual environment if not already active
-if [ -z "$VIRTUAL_ENV" ]; then
-    source "$VENV_NAME/bin/activate"
-fi
+# Cleanup
+rm -f db.sqlite3
+find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
+find . -path "*/migrations/*.pyc"  -delete
+find . -name "__pycache__" -type d -exec rm -rf {} +
 
-# Find available port
-echo "Checking port availability..."
-ACTUAL_PORT=$START_PORT
-while ! python3 -c "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.bind(('0.0.0.0', $ACTUAL_PORT)); s.close()" 2>/dev/null; do
-    echo "   Port $ACTUAL_PORT is busy, trying $((ACTUAL_PORT+1))..."
-    ACTUAL_PORT=$((ACTUAL_PORT+1))
-done
+# Re-init
+python3 manage.py makemigrations
+python3 manage.py migrate
 
-echo "Starting Horilla development server..."
-echo "Access at: http://localhost:$ACTUAL_PORT"
-echo "Press Ctrl+C to stop"
-echo ""
+${createSuper ? `
+export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
+${cmdAdmin} || true
+` : ''}
 
-# Start the Django development server
-if [ -f "manage.py" ]; then
-    python3 manage.py runserver 0.0.0.0:$ACTUAL_PORT
-else
-    echo "manage.py not found. Please run this from the project root."
-    exit 1
-fi
+echo "Database reset complete."
+`;
+        }
+
+        function generateServerScript(framework, projectPath, venvName, serverPort) {
+            return `#!/bin/bash
+PROJECT_PATH="${projectPath}"
+VENV_NAME="${venvName}"
+PORT=${serverPort}
+
+cd "$PROJECT_PATH"
+source "$VENV_NAME/bin/activate"
+
+echo "Starting Server on port $PORT..."
+
+${framework === 'django' ? `
+python3 manage.py runserver 0.0.0.0:$PORT
+` : framework === 'flask' ? `
+export FLASK_APP=app  # Change as needed
+flask run --host=0.0.0.0 --port=$PORT
+` : framework === 'fastapi' ? `
+uvicorn main:app --host 0.0.0.0 --port $PORT --reload
+` : `
+echo "Please edit the server script to run your specific entry point (e.g. python main.py)."
+`}
 `;
         }
 
         function generateClearScript(projectPath, venvName, dbType, mode = 'workspace') {
             let script = `#!/bin/bash
 
-# ${platforms[currentPlatform].name} - ${mode === 'repo' ? 'Clear Repository Only' : 'Clean Workspace Script'}
+# Local Setup Generator - ${mode === 'repo' ? 'Clear Repository Only' : 'Clean Workspace Script'}
 # WARNING: This will DELETE ${mode === 'repo' ? 'your project repository folder' : 'your project, virtual environment, and database'}.
 
 PROJECT_PATH="${projectPath}"
@@ -1522,71 +1322,109 @@ echo "Done."
             return script;
         }
 
-        function generateEnvFile(dbType, dbInitPass, serverPort) {
+        function downloadClearScript(mode) {
+            const projectPath = document.getElementById('projectPath').value;
+            const venvName = document.getElementById('venvName').value;
+            const dbType = document.getElementById('dbType').value;
+
+            const content = generateClearScript(projectPath, venvName, dbType, mode);
+            const filename = mode === 'repo' ? 'clear_repo.sh' : 'clear_workspace.sh';
+
+            const blob = new Blob([content], { type: 'text/x-sh' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        function generateEnvFile(repoName, dbType, dbInitPass, serverPort) {
             const dbName = document.getElementById('dbName').value;
             const dbUser = document.getElementById('dbUser').value;
             const dbPass = document.getElementById('dbPass').value;
             const dbHost = document.getElementById('dbHost').value;
             const dbPort = document.getElementById('dbPort').value;
 
-            let extraEnv = "";
-            if (currentPlatform === 'crm') {
-                extraEnv = `CSRF_TRUSTED_ORIGINS=http://localhost:${serverPort},http://127.0.0.1:${serverPort}\n`;
-            }
+            return `# ${repoName} Environment Variables
+DEBUG=True
+SECRET_KEY=dev-secret-key-CHANGE-IN-PROD
+ALLOWED_HOSTS=*
 
-            if (dbType === 'postgresql') {
-                return `# ${platforms[currentPlatform].name} Development Environment Variables
-# Configure database and application settings
-
-# Database Configuration (PostgreSQL)
+# Database
+${dbType === 'postgresql' ? `
 DB_ENGINE=django.db.backends.postgresql
 DB_NAME=${dbName}
 DB_USER=${dbUser}
 DB_PASSWORD=${dbPass}
 DB_HOST=${dbHost}
 DB_PORT=${dbPort}
-
-# Django Settings
-DEBUG=True
-SECRET_KEY=django-insecure-j8op9)1q8$1&@^s&p*_0%d#pr@w9qj@lo=3#@d=a(^@9@zd@%j
-ALLOWED_HOSTS=localhost,127.0.0.1,*
-DB_INIT_PASSWORD=${dbInitPass}
-${extraEnv}
-# Localization
-TIME_ZONE=UTC
-
-# Additional Settings
-SECURE_SSL_REDIRECT=False
-SESSION_COOKIE_SECURE=False
-CSRF_COOKIE_SECURE=False
-`;
-            } else {
-                return `# ${platforms[currentPlatform].name} Development Environment Variables
-# Configure database and application settings
-
-# Database Configuration (SQLite - Forced)
+` : `
 DB_ENGINE=django.db.backends.sqlite3
 DB_NAME=db.sqlite3
-
-# Django Settings
-DEBUG=True
-SECRET_KEY=django-insecure-j8op9)1q8$1&@^s&p*_0%d#pr@w9qj@lo=3#@d=a(^@9@zd@%j
-ALLOWED_HOSTS=localhost,127.0.0.1,*
-DB_INIT_PASSWORD=${dbInitPass}
-${extraEnv}
-# Additional Settings
-SECURE_SSL_REDIRECT=False
-SESSION_COOKIE_SECURE=False
-CSRF_COOKIE_SECURE=False
+`}
 `;
+        }
+
+        // ... (Download/Save helpers same as before) ...
+        function downloadFile(elementId, filename) {
+            const prefix = document.getElementById('scriptPath').value;
+            const fullFilename = prefix ? (prefix.endsWith('/') ? prefix : prefix + '/') + filename : filename;
+            const content = document.getElementById(elementId).textContent;
+            const blob = new Blob([content], { type: 'text/x-sh' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fullFilename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        async function saveToFolder() { // Same logic as before 
+            if (!('showDirectoryPicker' in window)) { showFeedback("Browser not supported."); return; }
+            try {
+                const dirHandle = await window.showDirectoryPicker();
+                const files = [
+                    { name: 'setup.sh', id: 'setupCode' },
+                    { name: 'fresh-db.sh', id: 'freshCode' },
+                    { name: 'dev-server.sh', id: 'serverCode' },
+                    { name: '.env.example', id: 'envCode' }
+                ];
+                for (const file of files) {
+                    const content = document.getElementById(file.id).textContent;
+                    if (!content) continue;
+                    const fileHandle = await dirHandle.getFileHandle(file.name, { create: true });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(content);
+                    await writable.close();
+                }
+                showFeedback("Saved to " + dirHandle.name);
+            } catch (e) {
+                console.error(e);
+                showFeedback("Error saving to folder");
             }
         }
 
-        function copyCode(elementId) {
-            const code = document.getElementById(elementId).textContent;
-            navigator.clipboard.writeText(code).then(() => {
-                showFeedback("Copied to clipboard");
-            });
+        async function handleDeletionAction(mode) {
+            // Basic implementation reusing user's clear logic
+            if (!('showDirectoryPicker' in window)) { alert("Browser not supported for deletion"); return; }
+            try {
+                const dirHandle = await window.showDirectoryPicker();
+                if (!confirm("Are you sure you want to delete contents of " + dirHandle.name + "?")) return;
+                let count = 0;
+                for await (const entry of dirHandle.values()) {
+                    if (mode === 'repo' && entry.name === document.getElementById('venvName').value) continue;
+                    await dirHandle.removeEntry(entry.name, { recursive: true });
+                    count++;
+                }
+                showFeedback(`Deleted ${count} items.`);
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         function resetForm() {
@@ -1597,16 +1435,9 @@ CSRF_COOKIE_SECURE=False
                 el.checked = el.defaultChecked;
             });
             updateDbFields();
+            handleRepoChange(); // Re-apply repo defaults
+            updateFrameworkDefaults(); // Re-apply framework defaults
         }
-
-        // Initialize on page load
-        window.addEventListener('load', () => {
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            if (savedTheme === 'dark') {
-                document.documentElement.classList.add('dark');
-            }
-            updateDbFields();
-        });
     </script>
 </body>
 
