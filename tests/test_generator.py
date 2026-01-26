@@ -531,9 +531,10 @@ def test_open_edx_specifics(page_on_index: Page):
     
     setup_code = page_on_index.locator("#setupCode").inner_text()
     
-    assert 'Detected Open edX platform' in setup_code
-    assert 'pip install -r requirements/pip.txt' in setup_code
-    assert 'pip install -r requirements/edx/base.txt' in setup_code
+    # Modern explicit dependency configuration
+    assert 'Using configured dependencies' in setup_code
+    # It should explicitly list the files from repos.js
+    assert 'pip install -r "requirements/edx/base.txt"' in setup_code
 
 def test_sentry_build_logic(page_on_index: Page):
     """Verify Sentry/Complex repo logic uses Editable Install"""
@@ -544,9 +545,10 @@ def test_sentry_build_logic(page_on_index: Page):
     
     setup_code = page_on_index.locator("#setupCode").inner_text()
     
-    # It should fall through to the pyproject.toml section logic check
-    assert 'Detected buildable project (pyproject.toml/setup.py)' in setup_code
-    # And specifically prefer editable install
+    setup_code = page_on_index.locator("#setupCode").inner_text()
+    
+    # Sentry now uses explicit dependencies config in repos.js
+    assert 'Using configured dependencies' in setup_code
     assert 'pip install -e .' in setup_code
 
 def test_pre_install_command_population(page_on_index: Page):
@@ -567,8 +569,8 @@ def test_pre_install_command_population(page_on_index: Page):
     
     setup_code = page_on_index.locator("#setupCode").inner_text()
     
-    # Sentry config in repos.js has preInstall: "sentry init --dev"
-    assert "sentry init --dev" in setup_code
+    # Sentry config in repos.js has preInstall: "echo 'Sentry requires...'"
+    assert "Sentry requires significant system resources" in setup_code
 
 def test_horilla_specific_setup(page_on_index: Page):
     """Test that Horilla HRM/CRM are in the dropdown and generate specific commands"""
@@ -588,7 +590,7 @@ def test_horilla_specific_setup(page_on_index: Page):
     
     # Verify setup.sh has demo data command and REPLACED password
     setup_code = page_on_index.locator("#setupCode").inner_text()
-    assert "loaddata demo_data.json" in setup_code
+    assert "Load Demo Data" in setup_code
     assert "createhorillauser" in setup_code
     assert "secret_horilla_pass" in setup_code
     
@@ -613,3 +615,17 @@ def test_horilla_specific_setup(page_on_index: Page):
     
     setup_code = page_on_index.locator("#setupCode").inner_text()
     assert "Skipping database initialization" in setup_code
+
+def test_directory_check_logic(page_on_index: Page):
+    """Verify that setup script contains the non-empty directory check logic"""
+    page_on_index.select_option("#repoSelect", value="custom")
+    page_on_index.fill("#customRepoUrl", "https://github.com/test/check.git")
+    page_on_index.click("button:has-text('Continue to Scripts')")
+    page_on_index.wait_for_timeout(500)
+    
+    setup_code = page_on_index.locator("#setupCode").inner_text()
+    
+    # Check for components of the new logic
+    assert 'if [ -d "$PROJECT_PATH" ]; then' in setup_code
+    assert 'ERROR: Target directory $PROJECT_PATH exists and is not empty' in setup_code
+    assert 'Directory exists but is empty. Proceeding...' in setup_code

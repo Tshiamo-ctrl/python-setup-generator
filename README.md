@@ -55,6 +55,8 @@ Setting up local development environments often involves repetitive terminal wor
   - `setup.sh` - Complete environment initialization
   - `fresh-db.sh` - Database reset and cleanup
   - `dev-server.sh` - Development server launcher
+  - `dev-server.sh` - Development server launcher
+  - `clear_env.sh` - Virtual environment and config cleanup (Source safe)
   - `.env.example` - Environment variables template
 
 ### Quick Actions Panel
@@ -62,6 +64,7 @@ Setting up local development environments often involves repetitive terminal wor
 - **Make Executable**: Copy `chmod +x` command
 - **Run Setup**: Copy `./setup.sh` command
 - **Start Server**: Copy `./dev-server.sh` command
+- **Clear Env Only**: Copy `chmod +x clear_env.sh && ./clear_env.sh` command (via Danger Zone)
 
 ### Framework Support
 - **Django**: Migrations, superuser creation, static files, demo data
@@ -161,7 +164,13 @@ This script acts as a regression test to ensure that dependency commands and set
 3. Choose framework type manually
 4. Configure all settings as needed
 5. Generate scripts tailored to your project
+5. Generate scripts tailored to your project
 
+### Example 4: Resetting Environment
+1. Scroll to **Danger Zone**
+2. Click **Clear Env Only** if you want to rebuild venv/deps but keep source code
+3. Or click **Clear Workspace** to delete everything including the project folder
+4. Use the generated `clear_env.sh` script to safely wipe `venv` and `node_modules`
 ## 🤝 Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:

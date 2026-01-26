@@ -25,7 +25,7 @@ const REPO_LIST = [
                     preInstall: "cp .env.dist .env 2>/dev/null || cp .env.example .env 2>/dev/null || true",
                     postInstall: "python3 manage.py makemigrations && python3 manage.py migrate",
                     adminCreate: "python3 manage.py createhorillauser --first_name Admin --last_name Admin --username __USER__ --password __PASS__ --email __EMAIL__ --phone 1234567890",
-                    demoData: "python3 manage.py loaddata demo_data.json"
+                    demoData: "echo \"To load demo data, login and click 'Load Demo Data' button.\""
                 },
                 dependencies: {
                     mode: 'pip',
@@ -47,7 +47,7 @@ const REPO_LIST = [
                     preInstall: "cp .env.dist .env 2>/dev/null || cp .env.example .env 2>/dev/null || true",
                     postInstall: "python3 manage.py makemigrations && python3 manage.py migrate",
                     adminCreate: "export DJANGO_SUPERUSER_PASSWORD=__PASS__ && python3 manage.py createsuperuser --noinput --username __USER__ --email __EMAIL__",
-                    demoData: "python3 manage.py loaddata demo_data.json"
+                    demoData: "echo \"To load demo data, login and click 'Load Demo Data' button.\""
                 },
                 features: {
                     hasDb: true,

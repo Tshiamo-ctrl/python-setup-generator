@@ -480,7 +480,7 @@
                             <button class="btn-primary"
                                 onclick="downloadFile('setupCode', 'setup.sh')">Download</button>
                         </div>
-                        <pre id="oldSetupCode"></pre>
+                        <pre id="setupCodeTab"></pre>
                     </div>
                 </div>
 
@@ -493,7 +493,7 @@
                             <button class="btn-primary"
                                 onclick="downloadFile('freshCode', 'fresh-db.sh')">Download</button>
                         </div>
-                        <pre id="oldFreshCode"></pre>
+                        <pre id="freshCodeTab"></pre>
                     </div>
                 </div>
 
@@ -506,7 +506,7 @@
                             <button class="btn-primary"
                                 onclick="downloadFile('serverCode', 'dev-server.sh')">Download</button>
                         </div>
-                        <pre id="oldServerCode"></pre>
+                        <pre id="serverCodeTab"></pre>
                     </div>
                 </div>
 
@@ -520,7 +520,7 @@
                             <button class="btn-primary"
                                 onclick="downloadFile('clearCode', 'clear_workspace.sh')">Download</button>
                         </div>
-                        <pre id="oldClearCode"></pre>
+                        <pre id="clearCode"></pre>
                     </div>
                 </div>
 
@@ -534,7 +534,7 @@
                             <button class="btn-primary"
                                 onclick="downloadFile('clearRepoCode', 'clear_repo.sh')">Download</button>
                         </div>
-                        <pre id="oldClearRepoCode"></pre>
+                        <pre id="clearRepoCode"></pre>
                     </div>
                 </div>
 
@@ -548,7 +548,7 @@
                             <button class="btn-primary"
                                 onclick="downloadFile('clearEnvCode', 'clear_env.sh')">Download</button>
                         </div>
-                        <pre id="oldClearEnvCode"></pre>
+                        <pre id="clearEnvCode"></pre>
                     </div>
                 </div>
 
@@ -561,7 +561,7 @@
                             <button class="btn-primary"
                                 onclick="downloadFile('envCode', '.env.example')">Download</button>
                         </div>
-                        <pre id="oldEnvCode"></pre>
+                        <pre id="envCodeTab"></pre>
                     </div>
                 </div>
 
@@ -834,7 +834,7 @@ PROJECT_PATH="${projectPath}"
 VENV_NAME="${venvName}"
 CUSTOM_REQ_PATH="${customReqPath}"
 CUSTOM_INSTALL_CMD="${customInstallCmd}"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
 
 echo "Starting setup for ${repoName}..."
 
@@ -845,7 +845,6 @@ if [ -f "package.json" ]; then
     command -v npm >/dev/null 2>&1 || echo "⚠️  Node.js/NPM not found but package.json detected. UI builds may fail."
 fi
 
-# --- Clone ---
 # --- Clone ---
 if [ -d "$PROJECT_PATH" ]; then
     if [ "$(ls -A "$PROJECT_PATH")" ]; then
@@ -1385,10 +1384,27 @@ echo "Done."
             // Extract repo name from URL
             const repoName = repoUrl.split('/').pop().replace('.git', '') || 'my-project';
 
-            document.getElementById('setupCode').textContent = generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, preInstall, customReqPath, runServer, demoDataCmd, initDb, dependencies, customInstallCmd);
-            document.getElementById('freshCode').textContent = generateFreshDbScript(repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin);
-            document.getElementById('serverCode').textContent = generateServerScript(repoName, projectPath, venvName, framework, serverPort);
-            document.getElementById('envCode').textContent = generateEnvFile(repoName, dbType, adminPass, serverPort);
+            const setupContent = generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, preInstall, customReqPath, runServer, demoDataCmd, initDb, dependencies, customInstallCmd);
+            const freshContent = generateFreshDbScript(repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin);
+            const serverContent = generateServerScript(repoName, projectPath, venvName, framework, serverPort);
+            const envContent = generateEnvFile(repoName, dbType, adminPass, serverPort);
+
+            // Populate Carousel
+            document.getElementById('setupCode').textContent = setupContent;
+            document.getElementById('freshCode').textContent = freshContent;
+            document.getElementById('serverCode').textContent = serverContent;
+            document.getElementById('envCode').textContent = envContent;
+
+            // Populate Tabs
+            document.getElementById('setupCodeTab').textContent = setupContent;
+            document.getElementById('freshCodeTab').textContent = freshContent;
+            document.getElementById('serverCodeTab').textContent = serverContent;
+            document.getElementById('envCodeTab').textContent = envContent;
+
+            // Populate Clear Scripts (Tabs)
+            document.getElementById('clearCode').textContent = generateClearScript(projectPath, venvName, dbType, 'workspace');
+            document.getElementById('clearRepoCode').textContent = generateClearScript(projectPath, venvName, dbType, 'repo');
+            document.getElementById('clearEnvCode').textContent = generateClearScript(projectPath, venvName, dbType, 'env');
 
             // Show configuration summary and carousel sections
             displayConfigSummary(repoName, framework, projectPath, dbType, initDb, loadDemo, createSuper, adminUser, adminPass);
