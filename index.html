@@ -878,7 +878,7 @@
                             <p class="help-text"
                                 style="font-weight: 600; margin-bottom: 8px; color: var(--foreground);">1. Make scripts
                                 executable</p>
-                            <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0;">
+                            <div class="code-block" style="margin: 0;">
                                 <button class="btn-secondary"
                                     style="position: absolute; right: 8px; top: 8px; font-size: 10px; padding: 4px 8px; height: auto;"
                                     onclick="copyCode('cmdChmod')">Copy</button>
@@ -891,7 +891,7 @@
                             <p class="help-text"
                                 style="font-weight: 600; margin-bottom: 8px; color: var(--foreground);">2. Run initial
                                 setup</p>
-                            <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0;">
+                            <div class="code-block" style="margin: 0;">
                                 <button class="btn-secondary"
                                     style="position: absolute; right: 8px; top: 8px; font-size: 10px; padding: 4px 8px; height: auto;"
                                     onclick="copyCode('cmdSetup')">Copy</button>
@@ -903,7 +903,7 @@
                             <p class="help-text"
                                 style="font-weight: 600; margin-bottom: 8px; color: var(--foreground);">3. Start server
                             </p>
-                            <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0;">
+                            <div class="code-block" style="margin: 0;">
                                 <button class="btn-secondary"
                                     style="position: absolute; right: 8px; top: 8px; font-size: 10px; padding: 4px 8px; height: auto;"
                                     onclick="copyCode('cmdServer')">Copy</button>
@@ -915,7 +915,7 @@
                             <p class="help-text"
                                 style="font-weight: 600; margin-bottom: 8px; color: var(--foreground);">4. Reset
                                 database</p>
-                            <div class="code-block" style="background: rgba(255,255,255,0.03); margin: 0;">
+                            <div class="code-block" style="margin: 0;">
                                 <button class="btn-secondary"
                                     style="position: absolute; right: 8px; top: 8px; font-size: 10px; padding: 4px 8px; height: auto;"
                                     onclick="copyCode('cmdReset')">Copy</button>
@@ -1449,6 +1449,17 @@ DB_NAME=db.sqlite3
                 showFeedback(`Deleted ${count} items.`);
             } catch (e) {
                 console.error(e);
+            }
+        }
+
+        async function copyCode(elementId) {
+            try {
+                const text = document.getElementById(elementId).textContent;
+                await navigator.clipboard.writeText(text);
+                showFeedback("Copied to clipboard!");
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                showFeedback("Failed to copy code.");
             }
         }
 
