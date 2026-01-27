@@ -23,17 +23,20 @@ const REPO_LIST = [
                 stars: "1.2k+",
                 setupCommands: {
                     preInstall: "cp .env.dist .env 2>/dev/null || cp .env.example .env 2>/dev/null || true",
-                    postInstall: "python3 manage.py makemigrations && python3 manage.py migrate",
-                    adminCreate: "python3 manage.py createhorillauser --first_name Admin --last_name Admin --username __USER__ --password __PASS__ --email __EMAIL__ --phone 1234567890",
-                    demoData: "echo \"To load demo data, login and click 'Load Demo Data' button.\""
+                    postInstall: "python3 manage.py makemigrations && python3 manage.py migrate && echo \"\" && echo \"IMPORTANT: To initialize the database or load demo data, use the web UI. Authentication Password: d3f6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d\"",
+                    adminCreate: "python3 manage.py createhorillauser --first_name Admin --last_name Admin --username __USER__ --password __PASS__ --email __EMAIL__ --phone 1234567890"
                 },
                 dependencies: {
                     mode: 'pip',
                     files: ['requirements.txt']
                 },
+                defaults: {
+                    adminUser: "admin",
+                    adminPass: "admin"
+                },
                 features: {
                     hasDb: true,
-                    hasDemo: true
+                    hasDemo: false
                 },
                 knownIssues: "⚠️ Requires libpq-dev: Run 'sudo apt-get install libpq-dev' before setup, or edit requirements.txt to use psycopg[binary] instead of psycopg[c]"
             },
@@ -46,13 +49,16 @@ const REPO_LIST = [
                 stars: "500+",
                 setupCommands: {
                     preInstall: "cp .env.dist .env 2>/dev/null || cp .env.example .env 2>/dev/null || true",
-                    postInstall: "python3 manage.py makemigrations && python3 manage.py migrate",
-                    adminCreate: "export DJANGO_SUPERUSER_PASSWORD=__PASS__ && python3 manage.py createsuperuser --noinput --username __USER__ --email __EMAIL__",
-                    demoData: "echo \"To load demo data, login and click 'Load Demo Data' button.\""
+                    postInstall: "python3 manage.py makemigrations && python3 manage.py migrate && echo \"\" && echo \"IMPORTANT: To initialize the database or load demo data, use the web UI. Authentication Password: d3f6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d\"",
+                    adminCreate: "export DJANGO_SUPERUSER_PASSWORD=__PASS__ && python3 manage.py createsuperuser --noinput --username __USER__ --email __EMAIL__"
+                },
+                defaults: {
+                    adminUser: "admin",
+                    adminPass: "admin"
                 },
                 features: {
                     hasDb: true,
-                    hasDemo: true
+                    hasDemo: false
                 }
             }
         ]
@@ -94,20 +100,46 @@ const REPO_LIST = [
                 }
             },
             {
-                name: "Open edX",
+                name: "Open edX (Tutor/Devstack)",
                 url: "https://github.com/openedx/edx-platform.git",
                 description: "LMS and Enterprise Learning Platform",
                 framework: "django",
                 complexity: "Expert",
                 stars: "7k+",
                 setupCommands: {
-                    preInstall: "sudo apt-get install -y build-essential python3-dev libmysqlclient-dev libssl-dev libffi-dev || echo 'System deps install skipped'",
-                    postInstall: "pip install -r requirements/pip.txt && pip install -r requirements/edx/base.txt",
-                    runServer: "python3 manage.py runserver 0.0.0.0:8000 --settings=lms.envs.devstack"
+                    preInstall: "echo 'Recommended: Use Tutor (https://docs.tutor.edly.io/) for easiest setup.' && (command -v docker >/dev/null || echo '⚠️ Docker is required for Tutor/Devstack') && sudo apt-get install -y build-essential python3-dev libmysqlclient-dev libssl-dev libffi-dev || echo 'System deps install skipped'",
+                    postInstall: "echo 'To use Tutor (Recommended): pip install tutor && tutor local launch'\necho 'To use legacy Devstack: pip install -r requirements/pip.txt && pip install -r requirements/edx/base.txt'",
+                    runServer: "echo 'Run: tutor local start -d' # Or python3 manage.py runserver for legacy"
                 },
                 dependencies: {
                     mode: 'pip',
                     files: ['requirements/pip.txt', 'requirements/edx/base.txt']
+                },
+                knownIssues: "⚠️ High Resource Usage: Minimum 8GB RAM recommended. Docker required for Tutor."
+            },
+            {
+                name: "ERPNext (Frappe)",
+                url: "https://github.com/frappe/erpnext.git",
+                description: "World's best 100% open source ERP",
+                framework: "frappe",
+                complexity: "Expert",
+                stars: "18k+",
+                setupCommands: {
+                    preInstall: "sudo apt-get install -y git python3-dev python3-setuptools python3-pip virtualenv libffi-dev libssl-dev libmysqlclient-dev redis-server software-properties-common mariadb-server mariadb-client xvfb libfontconfig wkhtmltopdf || echo 'System deps install skipped'",
+                    postInstall: "pip install frappe-bench && bench init frappe-bench && cd frappe-bench && bench get-app erpnext && bench new-site mysite.local --admin-password admin",
+                    runServer: "cd frappe-bench && bench start"
+                },
+                dependencies: {
+                    mode: 'manual',
+                    command: 'pip install frappe-bench'
+                },
+                features: {
+                    hasDb: true,
+                    hasDemo: true
+                },
+                defaults: {
+                    adminUser: "Administrator",
+                    adminPass: "admin"
                 }
             },
             {
@@ -281,7 +313,14 @@ const REPO_LIST = [
                 description: "Integrated Django authentication",
                 framework: "django",
                 complexity: "Intermediate",
-                stars: "9k+"
+                stars: "9k+",
+                setupCommands: {
+                    postInstall: "pip install -e . && echo 'Add \"allauth\" to INSTALLED_APPS and run manage.py migrate'",
+                },
+                dependencies: {
+                    mode: 'pip',
+                    command: 'pip install -e .'
+                }
             }
         ]
     },
@@ -760,7 +799,7 @@ const REPO_LIST = [
                 complexity: "Expert",
                 stars: "36k+",
                 setupCommands: {
-                    postInstall: "pip install -e . && pip install -r requirements.txt"
+                    postInstall: "pip install -e . && pip install -r requirements.txt && airflow db init && airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@example.com --password admin"
                 }
             }
         ]
