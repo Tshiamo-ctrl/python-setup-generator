@@ -190,17 +190,31 @@ ipcMain.handle('run-external-terminal', async (event, { directory }) => {
 
     try {
         if (platform === 'linux') {
-            // Robust execution: Use absolute path and explicit bash
+            // Robust execution: Create a wrapper script to bypass argument parsing hell
+            const wrapperPath = path.join(directory, '.run_setup.sh');
             const cleanPath = setupScript.replace(/"/g, '\\"');
-            const cmdStr = `bash "${cleanPath}"; exec bash`;
 
-            // Multiple terminal fallback chain
+            // Log for debugging
+            console.log('Creating wrapper script at:', wrapperPath);
+
+            // Create wrapper content
+            const wrapperContent = `#!/bin/bash
+echo "🚀 Starting Setup in: ${directory}"
+cd "${directory}"
+bash "${cleanPath}"
+echo "✅ Setup script finished."
+exec bash
+`;
+            fs.writeFileSync(wrapperPath, wrapperContent);
+            fs.chmodSync(wrapperPath, '755');
+
+            // Explicitly use the wrapper check
             terminals.push(
-                { cmd: 'gnome-terminal', args: ['--', 'bash', '-c', cmdStr] },
-                { cmd: 'konsole', args: ['-e', 'bash', '-c', cmdStr] },
-                { cmd: 'xfce4-terminal', args: ['-e', 'bash', '-c', cmdStr] },
-                { cmd: 'xterm', args: ['-e', 'bash', '-c', cmdStr] },
-                { cmd: 'lxterminal', args: ['-e', 'bash', '-c', cmdStr] }
+                { cmd: 'gnome-terminal', args: ['--', wrapperPath] },
+                { cmd: 'konsole', args: ['-e', wrapperPath] },
+                { cmd: 'xfce4-terminal', args: ['-e', wrapperPath] },
+                { cmd: 'xterm', args: ['-e', wrapperPath] },
+                { cmd: 'lxterminal', args: ['-e', wrapperPath] }
             );
 
             for (const terminal of terminals) {
@@ -210,7 +224,7 @@ ipcMain.handle('run-external-terminal', async (event, { directory }) => {
                         detached: true,
                         stdio: 'ignore'
                     });
-                    child.unref();
+                    child.unref(); // Allow app to continue regardless of terminal logic
 
                     // Give it a moment to start
                     await new Promise(resolve => setTimeout(resolve, 500));
