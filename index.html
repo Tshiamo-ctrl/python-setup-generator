@@ -181,13 +181,6 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="serverPort">Server Port</label>
-                        <input type="number" id="serverPort" value="8000" placeholder="8000">
-                        <p class="help-text">Port to run the development server on</p>
-                    </div>
-
-
                     <div class="divider"></div>
 
                     <div class="form-group">
@@ -1149,24 +1142,32 @@ npm start</pre>
 
         function populateRepoDropdown() {
             const select = document.getElementById('repoSelect');
-            if (typeof REPO_LIST === 'undefined') {
-                console.error("REPO_LIST not found. Is repos.js loaded?");
+            if (!select) return;
+
+            if (typeof REPO_LIST === 'undefined' || !Array.isArray(REPO_LIST)) {
+                console.error("REPO_LIST not found or invalid. Is repos.js loaded correctly?");
                 return;
             }
 
+            // Clear and start with the custom option
+            select.innerHTML = '<option value="custom">Custom Repository URL...</option>';
+
             REPO_LIST.forEach(category => {
+                if (!category.category || !category.repos || !Array.isArray(category.repos)) return;
+
                 const optgroup = document.createElement('optgroup');
                 optgroup.label = category.category;
-                category.repos.forEach((repo, index) => {
+
+                category.repos.forEach(repo => {
                     const option = document.createElement('option');
-                    option.value = repo.url; // Use URL as the value
+                    option.value = repo.url || "";
                     option.textContent = repo.name + (repo.stars ? ` (${repo.stars})` : "");
                     optgroup.appendChild(option);
                 });
+
                 select.appendChild(optgroup);
             });
 
-            // Trigger change handler for initial state
             handleRepoChange();
         }
 
@@ -1236,292 +1237,6 @@ npm start</pre>
             setTimeout(() => feedback.classList.remove('show'), 3000);
         }
 
-        // --- Bash Script Generation Helpers ---
-
-        /**
-         * Generates Bash script content for robust virtual environment creation.
-         * Includes fallbacks for different Python versions and system packages.
-         * @param {string} venvName - Name of the virtual environment directory
-         * @returns {string} - Bash script logic
-         */
-        function getVenvCreationLogic(venvName) {
-            return `
-# --- Enhanced Virtual Environment Setup ---
-create_venv_with_fallback() {
-    local venv_path="$1"
-    local python_cmd="python3"
-    
-    # Try multiple python commands
-    for py_cmd in python3 python3.11 python3.10 python3.9; do
-        if command -v "$py_cmd" >/dev/null 2>&1; then
-            python_cmd="$py_cmd"
-            echo "🐍 Using Python: $python_cmd ($($python_cmd --version))"
-            break
-        fi
-    done
-    
-    # Check if venv module is available
-    if ! $python_cmd -c "import venv" 2>/dev/null; then
-        echo "❌ ERROR: Python venv module not available"
-        echo "💡 Install with: sudo apt install python3-venv"
-        exit 1
-    fi
-    
-    # Create virtual environment with error handling
-    echo "📦 Creating virtual environment: $venv_path"
-    if $python_cmd -m venv "$venv_path" 2>&1 | tee venv.log; then
-        echo "✅ Virtual environment created successfully"
-    else
-        local exit_code=$?
-        echo "❌ Failed to create virtual environment"
-        
-        # Common issues and solutions
-        if grep -q "ensurepip" venv.log 2>/dev/null; then
-            echo "🔧 ensurepip issue detected. Trying with --system-site-packages..."
-            $python_cmd -m venv "$venv_path" --system-site-packages && return 0
-        elif grep -q "Permission denied" venv.log 2>/dev/null; then
-            echo "🔧 Permission denied. Check directory permissions."
-        fi
-        
-        rm -f venv.log
-        exit $exit_code
-    fi
-    
-    rm -f venv.log
-}
-
-if [ ! -d "${venvName}" ]; then
-    create_venv_with_fallback "${venvName}"
-else
-    echo "📁 Virtual environment already exists: ${venvName}"
-fi
-
-# Activate with validation
-if [ -f "${venvName}/bin/activate" ]; then
-    source "${venvName}/bin/activate"
-    echo "✅ Virtual environment activated"
-    
-    # Verify pip is available
-    if ! command -v pip >/dev/null 2>&1; then
-        echo "🔧 Pip not found in venv, reinstalling..."
-        python3 -m ensurepip --default-pip || {
-            echo "❌ Failed to install pip"
-            exit 1
-        }
-    fi
-else
-    echo "❌ ERROR: Cannot find activation script: ${venvName}/bin/activate"
-    echo "💡 Virtual environment may be corrupted. Try deleting and recreating."
-    exit 1
-fi
-`;
-        }
-
-        /**
-         * Generates Bash script content for installing dependencies with multiple fallback strategies.
-         * Handles simple pip install, custom paths, and platform-specific requirements.
-         * @param {string} customReqPath - Optional custom requirements path
-         * @param {string} customInstallCmd - Optional custom install command
-         * @param {Object} dependencies - Repository specific dependency config
-         * @param {string} repoUrl - Repository URL for specific overrides
-         * @returns {string} - Bash script logic
-         */
-        function getDepInstallLogic(customReqPath, customInstallCmd, dependencies, repoUrl) {
-            return `
-# --- Enhanced Dependencies Installation with Multiple Fallbacks ---
-echo "📦 Installing dependencies..."
-
-# Upgrade essential tools with fallbacks
-upgrade_pip_with_fallback() {
-    echo "🔄 Upgrading pip and essential tools..."
-    
-    # Try standard upgrade first
-    if python3 -m pip install --upgrade pip setuptools wheel 2>/dev/null; then
-        echo "✅ Pip upgraded successfully"
-        return 0
-    fi
-    
-    # Fallback: Try with --user flag
-    if python3 -m pip install --upgrade --user pip setuptools wheel 2>/dev/null; then
-        echo "✅ Pip upgraded (user install)"
-        return 0
-    fi
-    
-    # Fallback: Try without upgrade
-    echo "⚠️  Standard upgrade failed, trying alternative approach..."
-    python3 -m pip install --no-cache-dir pip setuptools wheel 2>/dev/null || {
-        echo "⚠️  WARNING: Could not upgrade pip, continuing with existing version"
-    }
-}
-
-install_with_fallback() {
-    local install_cmd="$1"
-    local description="$2"
-    local max_attempts=3
-    local attempt=1
-    
-    echo "🔄 Installing $description..."
-    
-    while [[ $attempt -le $max_attempts ]]; do
-        if eval $install_cmd 2>&1 | tee install.log; then
-            echo "✅ Successfully installed: $description"
-            rm -f install.log
-            return 0
-        else
-            local exit_code=$?
-            echo "⚠️  Install attempt $attempt failed for $description"
-            
-            # Analyze common pip errors
-            if [[ $attempt -eq 1 ]]; then
-                if grep -q "network" install.log 2>/dev/null || grep -q "timeout" install.log 2>/dev/null; then
-                    echo "🔧 Network issue detected. Trying with different index..."
-                    eval "\${install_cmd/pip install/pip install --index-url https://pypi.org/simple/}" && return 0
-                elif grep -q "build.*failed" install.log 2>/dev/null; then
-                    echo "🔧 Build failure. Trying with pre-compiled wheels..."
-                    eval "\${install_cmd/pip install/pip install --only-binary=all}" && return 0
-                elif grep -q "python version" install.log 2>/dev/null; then
-                    echo "🔧 Python version issue. Checking compatibility..."
-                    python3 --version
-                fi
-            fi
-            
-            if [[ $attempt -lt $max_attempts ]]; then
-                echo "⏳ Waiting 3 seconds before retry..."
-                sleep 3
-            fi
-            ((attempt++))
-        fi
-    done
-    
-    echo "❌ Failed to install: $description"
-    echo "🔍 Check install.log for details"
-    return 1
-}
-
-upgrade_pip_with_fallback
-
-INSTALLED_DEPS=false
-FAILED_INSTALLS=""
-
-# 1. Custom Requirements Path (highest priority)
-if [ -n "${customReqPath}" ] && [ -f "${customReqPath}" ]; then
-    if install_with_fallback "pip install -r \\"${customReqPath}\\"" "custom requirements"; then
-        INSTALLED_DEPS=true
-    else
-        FAILED_INSTALLS="$FAILED_INSTALLS ${customReqPath}"
-    fi
-fi
-
-# 1.5 Custom Install Command
-${customInstallCmd ? `
-if [ -n "${customInstallCmd}" ]; then
-    echo "🔧 Running custom install command..."
-    if install_with_fallback "${customInstallCmd}" "custom install command"; then
-        INSTALLED_DEPS=true
-    else
-        FAILED_INSTALLS="$FAILED_INSTALLS custom-command"
-    fi
-fi
-` : ''}
-
-# 2. Configured Dependencies (from repos.js)
-${dependencies ? `
-    echo "📋 Using configured dependencies..."
-    ${dependencies.command ?
-                        `if install_with_fallback "${dependencies.command}" "configured dependencies"; then
-        INSTALLED_DEPS=true
-    else
-        FAILED_INSTALLS="$FAILED_INSTALLS configured-deps"
-    fi` :
-                        dependencies.files ? dependencies.files.map(f => `
-    if [ -f "${f}" ]; then
-        if install_with_fallback "pip install -r \\"${f}\\"" "${f}"; then
-            INSTALLED_DEPS=true
-        else
-            FAILED_INSTALLS="$FAILED_INSTALLS ${f}"
-        fi
-    fi`).join('\n    ') :
-                            'echo "ℹ️  No specific dependency files configured."'}
-` : `
-    # 3. Smart Fallback: Repository-specific logic
-    if [[ "${repoUrl}" == *"edx-platform"* ]]; then
-        echo "🎓 Detected Open edX platform..."
-        [ -f "requirements/pip.txt" ] && install_with_fallback "pip install -r requirements/pip.txt" "Open edX pip requirements" && INSTALLED_DEPS=true
-        [ -f "requirements/edx/base.txt" ] && install_with_fallback "pip install -r requirements/edx/base.txt" "Open edX base requirements" && INSTALLED_DEPS=true
-    fi
-
-    # 4. Enhanced Auto-Discovery with Multiple Patterns
-    if [ "$INSTALLED_DEPS" = false ]; then
-        echo "🔍 Auto-discovering dependency files..."
-        declare -A DEP_PATTERNS=(
-            ["requirements.txt"]="standard requirements"
-            ["requirements/dev.txt"]="development requirements" 
-            ["requirements/development.txt"]="development requirements"
-            ["requirements/base.txt"]="base requirements"
-            ["requirements-dev.txt"]="dev requirements (alt)"
-            ["Pipfile"]="Pipfile dependencies"
-            ["pyproject.toml"]="PEP 518 dependencies"
-        )
-        
-        for dep_file in "\${!DEP_PATTERNS[@]}"; do
-            if [ -f "$dep_file" ]; then
-                local description="\${DEP_PATTERNS[$dep_file]}"
-                
-                case "$dep_file" in
-                    "Pipfile")
-                        if install_with_fallback "pipenv install --deploy" "$description"; then
-                            INSTALLED_DEPS=true
-                            break
-                        fi
-                        ;;
-                    "pyproject.toml")
-                        if install_with_fallback "pip install -e ." "$description"; then
-                            INSTALLED_DEPS=true
-                            break
-                        fi
-                        ;;
-                    *)
-                        if install_with_fallback "pip install -r \\"$dep_file\\"" "$description"; then
-                            INSTALLED_DEPS=true
-                            break
-                        fi
-                        ;;
-                esac
-            fi
-        done
-    fi
-`}
-
-    # 5. Build System Fallback
-    if [ "$INSTALLED_DEPS" = false ] && ([ -f "setup.py" ] || [ -f "pyproject.toml" ]); then
-        echo "🔨 Detected buildable project, trying installation..."
-        if install_with_fallback "pip install -e ." "editable install"; then
-            INSTALLED_DEPS=true
-        elif install_with_fallback "pip install ." "standard install"; then
-            INSTALLED_DEPS=true
-        fi
-    fi
-
-# Final Status and Guidance
-if [ "$INSTALLED_DEPS" = true ]; then
-    echo "✅ Dependencies installation completed"
-else
-    echo "⚠️  WARNING: Could not install dependencies automatically"
-    echo "🔍 Failed installs: $FAILED_INSTALLS"
-    echo ""
-    echo "💡 Manual installation suggestions:"
-    echo "   1. Check the log files (install.log, venv.log, clone.log)"
-    echo "   2. Try installing manually: pip install -r requirements.txt"
-    echo "   3. Check Python version compatibility"
-    echo "   4. Verify internet connection and DNS"
-    echo ""
-    echo "📋 Common solutions:"
-    echo "   - Network issues: pip install --index-url https://pypi.org/simple/"
-    echo "   - Build failures: pip install --only-binary=all"
-    echo "   - Permission errors: Use virtual environment (already created)"
-fi
-`;
-        }
 
 
         function generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, preInstall, customReqPath, runServer, demoDataCmd, initDb, dependencies, customInstallCmd) {
@@ -1611,283 +1326,7 @@ check_disk_space() {
     fi
 }
 
-
-        // --- Bash Script Generation Helpers ---
-
-        function getVenvCreationLogic(venvName) {
-            return `
-# -- - Enhanced Virtual Environment Setup-- -
-                create_venv_with_fallback() {
-    local venv_path = "$1"
-    local python_cmd = "python3"
-    
-    # Try multiple python commands
-                for py_cmd in python3 python3.11 python3.10 python3.9; do
-                    if command - v "$py_cmd" > /dev/null 2 >& 1; then
-                python_cmd = "$py_cmd"
-            echo "🐍 Using Python: $python_cmd ($($python_cmd --version))"
-                break
-                fi
-                done
-    
-    # Check if venv module is available
-                if !$python_cmd - c "import venv" 2 > /dev/null; then
-        echo "❌ ERROR: Python venv module not available"
-        echo "💡 Install with: sudo apt install python3-venv"
-        exit 1
-                fi
-    
-    # Create virtual environment with error handling
-    echo "📦 Creating virtual environment: $venv_path"
-                if $python_cmd - m venv "$venv_path" 2 >& 1 | tee venv.log; then
-        echo "✅ Virtual environment created successfully"
-    else
-        local exit_code = $ ?
-                    echo "❌ Failed to create virtual environment"
-        
-        # Common issues and solutions
-                if grep - q "ensurepip" venv.log 2 > /dev/null; then
-            echo "🔧 ensurepip issue detected. Trying with --system-site-packages..."
-                $python_cmd - m venv "$venv_path" --system - site - packages && return 0
-        elif grep - q "Permission denied" venv.log 2 > /dev/null; then
-            echo "🔧 Permission denied. Check directory permissions."
-                fi
-
-                rm - f venv.log
-        exit $exit_code
-                fi
-
-                rm - f venv.log
-            }
-
-            if [! -d "${venvName}"]; then
-    create_venv_with_fallback "${venvName}"
-else
-    echo "📁 Virtual environment already exists: ${venvName}"
-            fi
-
-# Activate with validation
-if [-f "${venvName}/bin/activate"]; then
-    source "${venvName}/bin/activate"
-    echo "✅ Virtual environment activated"
-    
-    # Verify pip is available
-            if !command - v pip > /dev/null 2 >& 1; then
-        echo "🔧 Pip not found in venv, reinstalling..."
-            python3 - m ensurepip--default -pip || {
-                echo "❌ Failed to install pip"
-            exit 1
-        }
-            fi
-else
-    echo "❌ ERROR: Cannot find activation script: ${venvName}/bin/activate"
-    echo "💡 Virtual environment may be corrupted. Try deleting and recreating."
-    exit 1
-            fi
-                `;
-        }
-
-        function getDepInstallLogic(customReqPath, customInstallCmd, dependencies, repoUrl) {
-            return `
-# -- - Enhanced Dependencies Installation with Multiple Fallbacks-- -
-                echo "📦 Installing dependencies..."
-
-# Upgrade essential tools with fallbacks
-upgrade_pip_with_fallback() {
-    echo "🔄 Upgrading pip and essential tools..."
-    
-    # Try standard upgrade first
-                if python3 - m pip install--upgrade pip setuptools wheel 2 > /dev/null; then
-        echo "✅ Pip upgraded successfully"
-                return 0
-                fi
-    
-    # Fallback: Try with --user flag
-                if python3 - m pip install--upgrade--user pip setuptools wheel 2 > /dev/null; then
-        echo "✅ Pip upgraded (user install)"
-                return 0
-                fi
-    
-    # Fallback: Try without upgrade
-    echo "⚠️  Standard upgrade failed, trying alternative approach..."
-                python3 - m pip install--no - cache - dir pip setuptools wheel 2 > /dev/null || {
-                    echo "⚠️  WARNING: Could not upgrade pip, continuing with existing version"
-    }
-            }
-
-            install_with_fallback() {
-    local install_cmd = "$1"
-    local description = "$2"
-    local max_attempts = 3
-    local attempt = 1
-    
-    echo "🔄 Installing $description..."
-
-                while [[$attempt - le $max_attempts]]; do
-                    if eval $install_cmd 2 >& 1 | tee install.log; then
-            echo "✅ Successfully installed: $description"
-                rm - f install.log
-                return 0
-        else
-            local exit_code = $ ?
-                    echo "⚠️  Install attempt $attempt failed for $description"
-            
-            # Analyze common pip errors
-                if [[$attempt - eq 1]]; then
-                if grep - q "network" install.log 2 > /dev/null || grep - q "timeout" install.log 2 > /dev/null; then
-                    echo "🔧 Network issue detected. Trying with different index..."
-                    eval "\${install_cmd/pip install/pip install --index-url https://pypi.org/simple/}" && return 0
-                elif grep - q "build.*failed" install.log 2 > /dev/null; then
-                    echo "🔧 Build failure. Trying with pre-compiled wheels..."
-                    eval "\${install_cmd/pip install/pip install --only-binary=all}" && return 0
-                elif grep - q "python version" install.log 2 > /dev/null; then
-                    echo "🔧 Python version issue. Checking compatibility..."
-                python3--version
-                fi
-                fi
-
-                if [[$attempt - lt $max_attempts]]; then
-                echo "⏳ Waiting 3 seconds before retry..."
-                sleep 3
-                fi
-                    ((attempt++))
-                fi
-                done
-    
-    echo "❌ Failed to install: $description"
-    echo "🔍 Check install.log for details"
-                return 1
-            }
-
-            upgrade_pip_with_fallback
-
-            INSTALLED_DEPS = false
-            FAILED_INSTALLS = ""
-
-# 1. Custom Requirements Path(highest priority)
-            if [-n "${customReqPath}"] && [-f "${customReqPath}"]; then
-            if install_with_fallback "pip install -r \\"${ customReqPath } \\"" "custom requirements"; then
-            INSTALLED_DEPS = true
-    else
-            FAILED_INSTALLS = "$FAILED_INSTALLS ${customReqPath}"
-            fi
-            fi
-
-# 1.5 Custom Install Command
-${
-                customInstallCmd ? `
-if [ -n "${customInstallCmd}" ]; then
-    echo "🔧 Running custom install command..."
-    if install_with_fallback "${customInstallCmd}" "custom install command"; then
-        INSTALLED_DEPS=true
-    else
-        FAILED_INSTALLS="$FAILED_INSTALLS custom-command"
-    fi
-fi
-` : ''
-            }
-
-# 2. Configured Dependencies(from repos.js)
-${
-                dependencies ? `
-    echo "📋 Using configured dependencies..."
-    ${dependencies.command ?
-                        `if install_with_fallback "${dependencies.command}" "configured dependencies"; then
-        INSTALLED_DEPS=true
-    else
-        FAILED_INSTALLS="$FAILED_INSTALLS configured-deps"
-    fi` :
-                        dependencies.files ? dependencies.files.map(f => `
-    if [ -f "${f}" ]; then
-        if install_with_fallback "pip install -r \\"${f}\\"" "${f}"; then
-            INSTALLED_DEPS=true
-        else
-            FAILED_INSTALLS="$FAILED_INSTALLS ${f}"
-        fi
-    fi`).join('\n    ') :
-                            'echo "ℹ️  No specific dependency files configured."'}
-` : `
-    # 3. Smart Fallback: Repository-specific logic
-    if [[ "${repoUrl}" == *"edx-platform"* ]]; then
-        echo "🎓 Detected Open edX platform..."
-        [ -f "requirements/pip.txt" ] && install_with_fallback "pip install -r requirements/pip.txt" "Open edX pip requirements" && INSTALLED_DEPS=true
-        [ -f "requirements/edx/base.txt" ] && install_with_fallback "pip install -r requirements/edx/base.txt" "Open edX base requirements" && INSTALLED_DEPS=true
-    fi
-
-    # 4. Enhanced Auto-Discovery with Multiple Patterns
-    if [ "$INSTALLED_DEPS" = false ]; then
-        echo "🔍 Auto-discovering dependency files..."
-        declare -A DEP_PATTERNS=(
-            ["requirements.txt"]="standard requirements"
-            ["requirements/dev.txt"]="development requirements" 
-            ["requirements/development.txt"]="development requirements"
-            ["requirements/base.txt"]="base requirements"
-            ["requirements-dev.txt"]="dev requirements (alt)"
-            ["Pipfile"]="Pipfile dependencies"
-            ["pyproject.toml"]="PEP 518 dependencies"
-        )
-        
-        for dep_file in "\${!DEP_PATTERNS[@]}"; do
-            if [ -f "$dep_file" ]; then
-                local description="\${DEP_PATTERNS[$dep_file]}"
-                
-                case "$dep_file" in
-                    "Pipfile")
-                        if install_with_fallback "pipenv install --deploy" "$description"; then
-                            INSTALLED_DEPS=true
-                            break
-                        fi
-                        ;;
-                    "pyproject.toml")
-                        if install_with_fallback "pip install -e ." "$description"; then
-                            INSTALLED_DEPS=true
-                            break
-                        fi
-                        ;;
-                    *)
-                        if install_with_fallback "pip install -r \\"$dep_file\\"" "$description"; then
-                            INSTALLED_DEPS=true
-                            break
-                        fi
-                        ;;
-                esac
-            fi
-        done
-    fi
-`}
-
-    # 5. Build System Fallback
-            if ["$INSTALLED_DEPS" = false] && ([-f "setup.py"] || [-f "pyproject.toml"]); then
-        echo "🔨 Detected buildable project, trying installation..."
-            if install_with_fallback "pip install -e ." "editable install"; then
-            INSTALLED_DEPS = true
-        elif install_with_fallback "pip install ." "standard install"; then
-            INSTALLED_DEPS = true
-            fi
-            fi
-
-# Final Status and Guidance
-            if ["$INSTALLED_DEPS" = true]; then
-    echo "✅ Dependencies installation completed"
-else
-    echo "⚠️  WARNING: Could not install dependencies automatically"
-    echo "🔍 Failed installs: $FAILED_INSTALLS"
-    echo ""
-    echo "💡 Manual installation suggestions:"
-    echo "   1. Check the log files (install.log, venv.log, clone.log)"
-    echo "   2. Try installing manually: pip install -r requirements.txt"
-    echo "   3. Check Python version compatibility"
-    echo "   4. Verify internet connection and DNS"
-    echo ""
-    echo "📋 Common solutions:"
-    echo "   - Network issues: pip install --index-url https://pypi.org/simple/"
-    echo "   - Build failures: pip install --only-binary=all"
-    echo "   - Permission errors: Use virtual environment (already created)"
-            fi
-                `;
-        }
-
-        check_disk_space
+check_disk_space
 
 # --- Enhanced Clone with fallbacks ---
 clone_with_fallback() {
@@ -2306,8 +1745,7 @@ echo "Launching Server..."
 `;
         }
 
-
-        function generateFreshDbScript(repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, customReqPath, customInstallCmd, dependencies, repoUrl) {
+        function generateFreshDbScript(repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin) {
             if (framework !== 'django') {
                 return `#!/bin/bash
 echo "Fresh DB script is currently optimized for Django.";
@@ -2316,99 +1754,45 @@ echo "For generic Python projects, manual cleanup is recommended.";
             }
 
             return `#!/bin/bash
-# Fresh Database Reset & Environment Rebuild (${repoName})
-# WARNING: This performs a FULL RESET of the environment and database.
-
+# Fresh Database Reset (${repoName})
 set -e
-SCRIPT_DIR="$(cd "$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
-# Try to detect project root by generic name logic or relative path
-# If we are in the root, fine. If not, assume standard structure.
-PROJECT_PATH="." 
-if [ -d "${projectPath.startsWith('~/') ? '$HOME' + projectPath.substring(1) : projectPath}" ]; then
-    PROJECT_PATH="${projectPath.startsWith('~/') ? '$HOME' + projectPath.substring(1) : projectPath}"
-# Fallback to current dir if configured path not found
-elif [ ! -f "manage.py" ]; then
-    echo "⚠️  Warning: manage.py not found in current directory."
-    echo "   Expected at: ${projectPath}"
-    read -p "   Enter path to project root (or dot for current): " PROJECT_PATH
-fi
-
+PROJECT_PATH="${projectPath.startsWith('~/') ? '$HOME' + projectPath.substring(1) : projectPath}"
 VENV_NAME="${venvName}"
-PORT=${serverPort}
 
-echo "⚠️  DANGER ZONE: This script will:"
-echo "  1. DELETE and RECREATE the virtual environment ($VENV_NAME)"
-echo "  2. DELETE the database (db.sqlite3) and all migrations"
-echo "  3. Re-install ALL dependencies"
-echo "  4. Re-initialize the database or load demo data"
-echo ""
-
+echo "⚠️  This will DELETE your database (db.sqlite3) and migrations!"
 if [[ "$1" != "--force" ]]; then
-    read -p "Are you sure you want to proceed? (type 'RESET' to confirm): " confirm
-    if [[ "$confirm" != "RESET" ]]; then 
-        echo "Aborted."
-        exit 0; 
-    fi
+    read -p "Confirm? (y/n): " confirm
+    if [[ "$confirm" != "y" ]]; then exit 0; fi
 fi
 
 cd "$PROJECT_PATH"
+source "$VENV_NAME/bin/activate"
 
-echo "🧹 Cleaning up old environment..."
-rm -rf "$VENV_NAME"
+# Cleanup
 rm -f db.sqlite3
 find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
 find . -path "*/migrations/*.pyc"  -delete
 find . -name "__pycache__" -type d -exec rm -rf {} +
 
-# --- Rebuild Environment ---
-${getVenvCreationLogic('${venvName}')}
-
-# --- Re-install Dependencies ---
-# (Using shared logic from setup.sh)
-CUSTOM_REQ_PATH="${customReqPath}"
-CUSTOM_INSTALL_CMD="${customInstallCmd}"
-${getDepInstallLogic('${customReqPath}', '${customInstallCmd}', dependencies ? JSON.parse('${JSON.stringify(dependencies)}') : null, '${repoUrl}')}
-
-# --- Database Initialization ---
-echo "🔄 Re-initializing Database..."
+# Re-init
 python3 manage.py makemigrations
 python3 manage.py migrate
 
-# --- Interactive Post-Install Choice ---
-echo ""
-echo "=========================================="
-echo "      Database Ready. Choose Action:      "
-echo "=========================================="
-echo "1) Check Readiness / Create Admin"
-echo "2) Load Demo Data (Fresh Install)"
-echo ""
-read -p "Enter choice [1/2]: " choice
+${createSuper ? `
+export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
+${cmdAdmin} || true
+` : ''}
 
-if [[ "$choice" == "2" ]]; then
-    echo "📂 Loading Demo Data..."
-    python3 manage.py loaddata demo_data.json 2>/dev/null || echo "⚠️  Demo data loading failed or 'demo_data.json' not found."
-    
-    echo ""
-    echo "✅ Demo Data Loaded."
-    echo "ℹ️  Authentication Password for Demo Users: d3f6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d"
+${loadDemo ? `
+echo "Loading Demo Data..."
+python3 manage.py loaddata demo_data.json 2>/dev/null || echo "Demo data loading failed or not applicable."
+` : ''}
 
-else
-    echo "👤 Admin User Creation..."
-    ${createSuper ? `
-    export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
-    ${cmdAdmin} || echo "Admin creation failed (already exists?)"
-    ` : 'python3 manage.py createsuperuser'}
-fi
-
-echo ""
-echo "🎉 Reset Complete!"
-echo "🚀 Starting Server on Port $PORT..."
-python3 manage.py runserver 0.0.0.0:$PORT
+echo "Database reset complete."
 `;
         }
 
-
-        function generateServerScript(repoName, projectPath, venvName, framework, serverPort) {
+        function generateServerScript(repoName, projectPath, venvName, framework, serverPort, runServerCmd) {
             return `#!/bin/bash
 # Development Server (${repoName})
 PROJECT_PATH="${projectPath.startsWith('~/') ? '$HOME' + projectPath.substring(1) : projectPath}"
@@ -2420,7 +1804,9 @@ source "$VENV_NAME/bin/activate"
 
 echo "Starting Server on port $PORT..."
 
-${framework === 'django' ? `
+${runServerCmd ? `
+${runServerCmd}
+` : framework === 'django' ? `
 python3 manage.py runserver 0.0.0.0:$PORT
 ` : framework === 'flask' ? `
 export FLASK_APP=app  # Change as needed
@@ -2441,7 +1827,7 @@ echo "Please edit the server script to run your specific entry point (e.g. pytho
 # Local Setup Generator - ${mode === 'repo' ? 'Clear Repository Only' : mode === 'env' ? 'Clear Environment Only' : 'Clean Workspace Script'}
 # WARNING: This will DELETE ${mode === 'repo' ? 'your project repository folder' : mode === 'env' ? 'your virtual environment and database' : 'your project, virtual environment, and database'}.
 
-PROJECT_PATH="${projectPath.startsWith('~/') ? '$HOME' + projectPath.substring(1) : projectPath}"
+PROJECT_PATH="${projectPath}"
 VENV_NAME="${venvName}"
 
 echo "⚠️  WARNING: You are about to DESTROY ${mode === 'repo' ? 'the project repository' : mode === 'env' ? 'your virtual environment' : 'your entire development environment'}."
@@ -2622,7 +2008,7 @@ echo "Done."
                 const cleanName = repo.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
                 // Project Path: clean-name (Relative to script location)
-                document.getElementById('projectPath').value = `${cleanName}`;
+                document.getElementById('projectPath').value = cleanName;
 
                 // Venv Name: clean-nameVENV
                 document.getElementById('venvName').value = `${cleanName}VENV`;
@@ -2732,9 +2118,7 @@ echo "Done."
             const adminUser = document.getElementById('adminUser').value;
             const adminEmail = document.getElementById('adminEmail').value;
             const adminPass = document.getElementById('adminPass').value;
-            let serverPort = document.getElementById('serverPort').value || 8000;
-            // Validate port
-            if (serverPort < 1024 || serverPort > 65535) serverPort = 8000;
+            const serverPort = 8000;
             let cmdAdmin = document.getElementById('cmdAdmin').value;
             const cmdPostInstall = document.getElementById('cmdPostInstall').value;
             const customReqPath = document.getElementById('customReqPath').value;
@@ -2747,6 +2131,7 @@ echo "Done."
             // Get preInstall command and Dependencies if available from repo list
             let preInstall = "";
             let demoDataCmd = "";
+            let runServerCmd = "";
             let dependencies = null;
             let repo = null;
             let knownIssues = null;
@@ -2758,6 +2143,7 @@ echo "Done."
                 if (repo.setupCommands) {
                     if (repo.setupCommands.preInstall) preInstall = repo.setupCommands.preInstall;
                     if (repo.setupCommands.loadDemoCmd) demoDataCmd = repo.setupCommands.loadDemoCmd;
+                    if (repo.setupCommands.runServer) runServerCmd = repo.setupCommands.runServer;
                     if (repo.setupCommands.adminCreate) {
                         cmdAdmin = repo.setupCommands.adminCreate
                             .replace(/__USER__/g, adminUser)
@@ -2782,8 +2168,8 @@ echo "Done."
             const repoName = repoUrl.split('/').pop().replace('.git', '') || 'my-project';
 
             const setupContent = generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, preInstall, customReqPath, runServer, demoDataCmd, initDb, dependencies, customInstallCmd);
-            const freshContent = generateFreshDbScript(repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, customReqPath, customInstallCmd, dependencies, repoUrl);
-            const serverContent = generateServerScript(repoName, projectPath, venvName, framework, serverPort);
+            const freshContent = generateFreshDbScript(repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin);
+            const serverContent = generateServerScript(repoName, projectPath, venvName, framework, serverPort, runServerCmd);
             const envContent = generateEnvFile(repoName, dbType, adminPass, serverPort, repo);
 
             // Populate Carousel
@@ -2828,7 +2214,6 @@ echo "Done."
 DEBUG=True
 SECRET_KEY=dev-secret-key-CHANGE-IN-PROD
 ALLOWED_HOSTS=*
-PORT=${serverPort}
 
 # Database
 ${dbType === 'postgresql' ? `
