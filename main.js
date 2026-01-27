@@ -144,13 +144,17 @@ ipcMain.handle('run-external-terminal', async (event, { directory }) => {
 
     try {
         if (platform === 'linux') {
+            // Robust execution: Use absolute path and explicit bash
+            const cleanPath = setupScript.replace(/"/g, '\\"');
+            const cmdStr = `bash "${cleanPath}"; exec bash`;
+
             // Multiple terminal fallback chain
             terminals.push(
-                { cmd: 'gnome-terminal', args: ['--', 'bash', '-c', './setup.sh; exec bash'] },
-                { cmd: 'konsole', args: ['--', 'bash', '-c', './setup.sh; exec bash'] },
-                { cmd: 'xfce4-terminal', args: ['--', 'bash', '-c', './setup.sh; exec bash'] },
-                { cmd: 'xterm', args: ['-e', 'bash', '-c', './setup.sh; exec bash'] },
-                { cmd: 'lxterminal', args: ['-e', 'bash', '-c', './setup.sh; exec bash'] }
+                { cmd: 'gnome-terminal', args: ['--', 'bash', '-c', cmdStr] },
+                { cmd: 'konsole', args: ['-e', 'bash', '-c', cmdStr] },
+                { cmd: 'xfce4-terminal', args: ['-e', 'bash', '-c', cmdStr] },
+                { cmd: 'xterm', args: ['-e', 'bash', '-c', cmdStr] },
+                { cmd: 'lxterminal', args: ['-e', 'bash', '-c', cmdStr] }
             );
 
             for (const terminal of terminals) {
@@ -163,7 +167,7 @@ ipcMain.handle('run-external-terminal', async (event, { directory }) => {
                     child.unref();
 
                     // Give it a moment to start
-                    await new Promise(resolve => setTimeout(resolve, 100));
+                    await new Promise(resolve => setTimeout(resolve, 500));
 
                     // Check if process is still running
                     if (child.pid && !child.killed) {
