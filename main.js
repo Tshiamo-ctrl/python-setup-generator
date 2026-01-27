@@ -107,7 +107,43 @@ ipcMain.handle('save-file', async (event, { directory, filename, content }) => {
     }
 });
 
-// 3. Run External Terminal
+// 3. Delete Items (for Clear Workspace)
+ipcMain.handle('delete-items', async (event, { directory, mode, venvName }) => {
+    try {
+        if (!directory || !fs.existsSync(directory)) {
+            return { success: false, error: 'Directory not found' };
+        }
+
+        const items = fs.readdirSync(directory);
+        let count = 0;
+
+        for (const item of items) {
+            const itemPath = path.join(directory, item);
+
+            // Logic matching index.html
+            if (mode === 'repo' && item === venvName) continue;
+
+            if (mode === 'env') {
+                const targets = [venvName, 'node_modules', 'db.sqlite3', '__pycache__'];
+                const isPyc = item.endsWith('.pyc');
+                if (!targets.includes(item) && !isPyc) continue;
+            }
+
+            try {
+                fs.rmSync(itemPath, { recursive: true, force: true });
+                count++;
+            } catch (err) {
+                console.warn(`Failed to delete ${item}: ${err.message}`);
+            }
+        }
+        return { success: true, count };
+    } catch (error) {
+        console.error('Delete error:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// 4. Run External Terminal
 ipcMain.handle('run-external-terminal', async (event, { directory }) => {
     const platform = os.platform();
     console.log(`Launching terminal in: ${directory} on ${platform}`);
@@ -185,14 +221,18 @@ ipcMain.handle('run-external-terminal', async (event, { directory }) => {
         }
         else if (platform === 'darwin') {
             // macOS Terminal with fallback to iTerm
+            // Robust execution: Use absolute path
+            const cleanPath = setupScript.replace(/"/g, '\\"');
+            const cmdStr = `bash "${cleanPath}"`;
+
             terminals.push(
                 {
                     cmd: 'osascript',
-                    args: ['-e', `tell application "Terminal" to do script "cd '${directory}' && ./setup.sh"`]
+                    args: ['-e', `tell application "Terminal" to do script "${cmdStr}" activate`]
                 },
                 {
                     cmd: 'osascript',
-                    args: ['-e', `tell application "iTerm" to create window with default profile command "cd '${directory}' && ./setup.sh"`]
+                    args: ['-e', `tell application "iTerm" to create window with default profile command "${cmdStr}"`]
                 }
             );
 
@@ -217,18 +257,24 @@ ipcMain.handle('run-external-terminal', async (event, { directory }) => {
         }
         else if (platform === 'win32') {
             // Windows with PowerShell and CMD fallbacks
+            // Robust execution: Use absolute path and explicit bash execution
+            // Use forward slashes for safe bash execution on Windows
+            const bashPath = setupScript.replace(/\\/g, '/');
+            const cmdStr = `bash "${bashPath}"`;
+
             terminals.push(
                 {
                     cmd: 'powershell.exe',
-                    args: ['-Command', `Start-Process cmd.exe -ArgumentList '/k', 'setup.sh' -WorkingDirectory '${directory}'`]
+                    args: ['-Command', `Start-Process cmd.exe -ArgumentList '/k', 'bash', '"${bashPath}"'`]
                 },
                 {
                     cmd: 'cmd.exe',
-                    args: ['/c', 'start', 'cmd.exe', '/k', 'setup.sh']
+                    // cd /d combined with bash execution
+                    args: ['/c', 'start', 'cmd.exe', '/k', `cd /d "${directory}" && ${cmdStr}`]
                 },
                 {
                     cmd: 'wt.exe',
-                    args: ['new', 'cmd', '/k', 'setup.sh']
+                    args: ['new', 'cmd', '/k', `cd /d "${directory}" && ${cmdStr}`]
                 }
             );
 

@@ -2173,7 +2173,26 @@ DATABASE_URL=sqlite:///db.sqlite3
             isDeletionInProgress = true;
 
             try {
-                // Basic implementation reusing user's clear logic
+                // --- DESKTOP MODE (ELECTRON) ---
+                if (window.electron) {
+                    const dirPath = await window.electron.selectDirectory();
+                    if (!dirPath) return;
+
+                    const confirmMessage = `Are you sure you want to delete contents of ${dirPath}?\nMode: ${mode.toUpperCase()}`;
+                    if (!confirm(confirmMessage)) return;
+
+                    const venvName = document.getElementById('venvName').value;
+                    const result = await window.electron.deleteItems(dirPath, mode, venvName);
+
+                    if (result.success) {
+                        showFeedback(`Deleted ${result.count} items.`);
+                    } else {
+                        alert(`Deletion failed: ${result.error}`);
+                    }
+                    return;
+                }
+
+                // --- WEB MODE (BROWSER) ---
                 if (!('showDirectoryPicker' in window)) {
                     alert("Browser not supported for deletion");
                     return;
