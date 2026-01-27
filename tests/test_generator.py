@@ -629,3 +629,40 @@ def test_directory_check_logic(page_on_index: Page):
     assert 'if [ -d "$PROJECT_PATH" ]; then' in setup_code
     assert 'ERROR: Target directory $PROJECT_PATH exists and is not empty' in setup_code
     assert 'Directory exists but is empty. Proceeding...' in setup_code
+
+def test_archive_modal_interaction(page_on_index: Page):
+    """Test that the archive modal works correctly"""
+    # 1. Check initially hidden
+    expect(page_on_index.locator("#archiveModal")).to_be_hidden()
+    expect(page_on_index.locator("#archiveOverlay")).to_be_hidden()
+
+    # 2. Click Archive Workspace button
+    # The button is inside the Utils section. 
+    # Searching by text seems reliable: "Archive Workspace"
+    
+    # We may need to mock properties if the test browser doesn't support them, 
+    # but the modal opener check checks for window.showDirectoryPicker support first.
+    # Playwright's browser usually supports it or we can mock it.
+    
+    # Mock showDirectoryPicker to avoid the alert "Browser not supported"
+    page_on_index.evaluate("window.showDirectoryPicker = async () => true")
+
+    page_on_index.click("button:has-text('Archive Workspace')")
+    
+    # 3. Check modal appears
+    expect(page_on_index.locator("#archiveModal")).to_be_visible()
+    expect(page_on_index.locator("#archiveOverlay")).to_be_visible()
+    
+    # Check default name format (workspace-backup-YYYY-MM-DD.tar.gz)
+    import datetime
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    name_value = page_on_index.locator("#archiveNameInput").input_value()
+    assert "workspace-backup" in name_value
+    assert today in name_value
+    assert ".tar.gz" in name_value
+    
+    # 4. Check Cancel button
+    page_on_index.click("button:has-text('Cancel')")
+    expect(page_on_index.locator("#archiveModal")).to_be_hidden()
+    expect(page_on_index.locator("#archiveOverlay")).to_be_hidden()
+
