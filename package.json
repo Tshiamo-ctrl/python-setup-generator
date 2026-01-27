@@ -4,7 +4,7 @@
     "description": "Desktop wrapper for Horilla Setup Generator",
     "main": "main.js",
     "scripts": {
-        "start": "electron ."
+        "start": "electron . --no-sandbox"
     },
     "keywords": [],
     "author": "",
