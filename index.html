@@ -845,6 +845,11 @@ npm start</pre>
             document.getElementById('archiveModal').style.display = 'none';
         }
 
+        /**
+         * Archive the current workspace or selected directory.
+         * Handles both Electron (native tar) and Web (client-side zip/tar) modes.
+         * Shows a modal to configure the archive name.
+         */
         async function executeArchive() {
             closeArchiveModal();
 
@@ -870,22 +875,6 @@ npm start</pre>
                         return;
                     }
 
-                    showFeedback(`Reading files from ${sourceDir}...`);
-                    const result = await window.electron.readDirectoryRecursive(sourceDir);
-                    
-                    if (!result.success) {
-                        throw new Error(result.error || "Failed to read directory");
-                    }
-
-                    const files = result.files;
-                    if (files.length === 0) {
-                        alert("No files found to archive.");
-                        return;
-                    }
-
-                    showFeedback(`Archiving ${files.length} files...`);
-                    const tarData = await createTarGz(files);
-
                     // Save Dialog
                     const saveResult = await window.electron.showSaveDialog({
                         defaultPath: archiveName,
@@ -897,29 +886,16 @@ npm start</pre>
                         return;
                     }
 
-                    const savePath = saveResult.filePath;
-                    showFeedback("Saving archive...");
-                    
-                    // We can use saveFile, but we need to pass directory and filename separately or just raw path
-                    // Our saveFile IPC takes (directory, filename, content)
-                    // Let's split the path
-                    // Actually, let's just use the exposed saveFile which does path.join
-                    // BUT showSaveDialog returns a full path.
-                    // We should probably rely on a simpler 'writeFile' or just parse the path in renderer.
-                    
-                    // Simple path parsing in JS:
-                    const isWin = navigator.platform.toLowerCase().includes('win');
-                    const sep = isWin ? '\\' : '/';
-                    const lastSep = savePath.lastIndexOf(sep);
-                    const directory = savePath.substring(0, lastSep);
-                    const filename = savePath.substring(lastSep + 1);
+                    const destPath = saveResult.filePath;
+                    showFeedback("Archiving in background...");
 
-                    const writeResult = await window.electron.saveFile(directory, filename, tarData);
-                    
-                    if (writeResult.success) {
-                        showFeedback(`Archive saved to: ${savePath}`);
+                    const result = await window.electron.archiveWorkspace(sourceDir, destPath);
+
+                    if (result.success) {
+                        showFeedback(`Archive saved: ${destPath}`);
+                        // Optional: Open directory?
                     } else {
-                        throw new Error(writeResult.error);
+                        throw new Error(result.error);
                     }
                     return;
                 }
@@ -1000,6 +976,14 @@ npm start</pre>
             updateDbFields();
             updateFrameworkDefaults(); // Set initial defaults
             checkForElectron();
+
+            if (!window.electron && !('showDirectoryPicker' in window)) {
+                const warning = document.createElement('div');
+                warning.style.cssText = "position: fixed; top: 0; left: 0; right: 0; z-index: 9999; background: #fee2e2; color: #991b1b; padding: 12px; text-align: center; border-bottom: 1px solid #fca5a5; font-weight: 500;";
+                warning.innerHTML = "<strong>⚠️ Browser Compatibility Warning:</strong> Your browser does not support essential features. Please use Chrome, Edge, Opera, or the Desktop App.";
+                document.body.prepend(warning);
+                document.body.style.paddingTop = "50px";
+            }
         });
 
         function checkForElectron() {
@@ -1302,7 +1286,7 @@ check_disk_space() {
     local available_gb=\$(df . | tail -1 | awk '{print int(\$4/1024/1024)}')
     
     if [[ \$available_gb -lt \$required_gb ]]; then
-        echo "⚠️  WARNING: Low disk space (\${available_gb}GB available, ${required_gb}GB recommended)"
+        echo "⚠️  WARNING: Low disk space (\${available_gb}GB available, \${required_gb}GB recommended)"
         echo "   Setup may fail due to insufficient space." >&2
         read -p "Continue anyway? (y/N): " -n 1 -r
         echo
@@ -2107,7 +2091,7 @@ echo "Done."
             const setupContent = generateSetupScript(repoUrl, repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin, cmdPostInstall, preInstall, customReqPath, runServer, demoDataCmd, initDb, dependencies, customInstallCmd);
             const freshContent = generateFreshDbScript(repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin);
             const serverContent = generateServerScript(repoName, projectPath, venvName, framework, serverPort);
-            const envContent = generateEnvFile(repoName, dbType, adminPass, serverPort);
+            const envContent = generateEnvFile(repoName, dbType, adminPass, serverPort, repo);
 
             // Populate Carousel
             document.getElementById('setupCode').textContent = setupContent;
@@ -2139,7 +2123,8 @@ echo "Done."
             return true;
         }
 
-        function generateEnvFile(repoName, dbType, adminPass, serverPort) {
+        function generateEnvFile(repoName, dbType, adminPass, serverPort, repo = null) {
+            console.log("Generating .env for", repoName);
             const dbName = document.getElementById('dbName').value;
             const dbUser = document.getElementById('dbUser').value;
             const dbPass = document.getElementById('dbPass').value;
@@ -2193,7 +2178,10 @@ DATABASE_URL=sqlite:///db.sqlite3
                         { name: 'setup.sh', id: 'setupCode' },
                         { name: 'fresh-db.sh', id: 'freshCode' },
                         { name: 'dev-server.sh', id: 'serverCode' },
-                        { name: '.env', id: 'envCode' }
+                        { name: '.env', id: 'envCode' },
+                        { name: 'clear_workspace.sh', id: 'clearCode' },
+                        { name: 'clear_repo.sh', id: 'clearRepoCode' },
+                        { name: 'clear_env.sh', id: 'clearEnvCode' }
                     ];
 
                     for (const f of files) {
@@ -2230,7 +2218,10 @@ DATABASE_URL=sqlite:///db.sqlite3
                     { name: 'setup.sh', id: 'setupCode' },
                     { name: 'fresh-db.sh', id: 'freshCode' },
                     { name: 'dev-server.sh', id: 'serverCode' },
-                    { name: '.env', id: 'envCode' }
+                    { name: '.env', id: 'envCode' },
+                    { name: 'clear_workspace.sh', id: 'clearCode' },
+                    { name: 'clear_repo.sh', id: 'clearRepoCode' },
+                    { name: 'clear_env.sh', id: 'clearEnvCode' }
                 ];
                 for (const file of files) {
                     const content = document.getElementById(file.id).textContent;

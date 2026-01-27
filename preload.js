@@ -6,5 +6,6 @@ contextBridge.exposeInMainWorld('electron', {
     deleteItems: (directory, mode, venvName) => ipcRenderer.invoke('delete-items', { directory, mode, venvName }),
     openTerminal: (directory) => ipcRenderer.invoke('run-external-terminal', { directory }),
     readDirectoryRecursive: (directory) => ipcRenderer.invoke('read-directory-recursive', { directory }),
-    showSaveDialog: (options) => ipcRenderer.invoke('show-save-dialog', options)
+    showSaveDialog: (options) => ipcRenderer.invoke('show-save-dialog', options),
+    archiveWorkspace: (sourceDir, destPath) => ipcRenderer.invoke('archive-workspace', { sourceDir, destPath })
 });

@@ -112,33 +112,65 @@ ipcMain.handle('save-file', async (event, { directory, filename, content }) => {
 });
 
 // 3. Delete Items (for Clear Workspace)
+/**
+ * IPC Handler: Delete items from a directory based on mode.
+ * @param {Electron.IpcMainInvokeEvent} event - IPC Event
+ * @param {Object} args - Arguments
+ * @param {string} args.directory - Target directory path
+ * @param {string} args.mode - Deletion mode: 'repo', 'env', or 'workspace'
+ * @param {string} args.venvName - Name of the virtual environment to preserve/delete
+ * @returns {Promise<{success: boolean, error?: string, count?: number}>} - Result of operation
+ */
 ipcMain.handle('delete-items', async (event, { directory, mode, venvName }) => {
     try {
+        console.log(`[DELETE] Request: dir=${directory}, mode=${mode}, venv=${venvName}`);
+
         if (!directory || !fs.existsSync(directory)) {
             return { success: false, error: 'Directory not found' };
         }
 
         const items = fs.readdirSync(directory);
         let count = 0;
+        let errors = [];
 
         for (const item of items) {
             const itemPath = path.join(directory, item);
 
-            // Logic matching index.html
-            if (mode === 'repo' && item === venvName) continue;
+            // LOGIC:
+            // repo: Delete everything EXCEPT venvName
+            // env: Delete ONLY venvName, node_modules, db.sqlite3, __pycache__
+            // workspace: Delete EVERYTHING
 
-            if (mode === 'env') {
+            if (mode === 'repo') {
+                if (item === venvName) {
+                    console.log(`[DELETE] Skipping venv (repo mode): ${item}`);
+                    continue;
+                }
+            } else if (mode === 'env') {
                 const targets = [venvName, 'node_modules', 'db.sqlite3', '__pycache__'];
                 const isPyc = item.endsWith('.pyc');
-                if (!targets.includes(item) && !isPyc) continue;
+                if (!targets.includes(item) && !isPyc) {
+                    // console.log(`[DELETE] Skipping non-env item: ${item}`);
+                    continue;
+                }
+            } else if (mode === 'workspace') {
+                // Delete everything. No skip logic.
+            } else {
+                console.warn(`[DELETE] Unknown mode: ${mode}`);
             }
 
             try {
+                console.log(`[DELETE] Deleting: ${itemPath}`);
                 fs.rmSync(itemPath, { recursive: true, force: true });
                 count++;
             } catch (err) {
-                console.warn(`Failed to delete ${item}: ${err.message}`);
+                console.warn(`[DELETE] Failed to delete ${item}: ${err.message}`);
+                errors.push(`${item}: ${err.message}`);
             }
+        }
+
+        if (errors.length > 0) {
+            return { success: false, error: `Partial deletion. Failed: ${errors.join(', ')}`, count };
         }
         return { success: true, count };
     } catch (error) {
@@ -352,18 +384,19 @@ exec bash
     }
 });
 
-// 5. Read Directory Recursive (for Archive)
+// 5. Read Directory Recursive (Legacy/Browser-Support - kept for completeness but currently unused by electron archive)
 ipcMain.handle('read-directory-recursive', async (event, { directory }) => {
     try {
         if (!directory || !fs.existsSync(directory)) {
             return { success: false, error: 'Directory not found' };
         }
+        // ... (rest of legacy implementation if needed, but we are switching to native tar)
+        // Verify if we actually need this for anything else. 
+        // If not, we could deprecate it, but let's leave it as is to avoid breaking other things.
 
+        // RE-IMPLEMENTATION for completeness of the tool modification
         const files = [];
         const skipDirs = ['.git', 'node_modules', '__pycache__', '.pytest_cache', 'test_venv', '.vscode', '.idea'];
-        // Note: venv skipping is handled by checking name against known venv names in recursion if needed, 
-        // but here we just emulate the renderer logic or accept a skip list.
-        // For simplicity, we'll verify the skip list strategy.
 
         async function readRecursively(currentPath, relativePath) {
             const entries = fs.readdirSync(currentPath, { withFileTypes: true });
@@ -374,9 +407,7 @@ ipcMain.handle('read-directory-recursive', async (event, { directory }) => {
 
                 if (entry.isDirectory()) {
                     if (skipDirs.includes(entry.name)) continue;
-                    // Also skip if it looks like a venv (contains bin/activate or Scripts/activate) - naive check
-                    // Better to rely on the caller or standard excludes.
-                    if (entry.name === 'venv' || entry.name.endsWith('VENV')) continue; 
+                    if (entry.name === 'venv' || entry.name.endsWith('VENV')) continue;
 
                     await readRecursively(fullPath, relPath);
                 } else if (entry.isFile()) {
@@ -384,7 +415,7 @@ ipcMain.handle('read-directory-recursive', async (event, { directory }) => {
 
                     const data = fs.readFileSync(fullPath);
                     files.push({
-                        name: relPath, // Use forward slashes for tar consistency if needed, but fs handles path.join
+                        name: relPath, // Use forward slashes for tar consistency if needed
                         data: data // Send buffer
                     });
                 }
@@ -396,6 +427,83 @@ ipcMain.handle('read-directory-recursive', async (event, { directory }) => {
 
     } catch (error) {
         console.error('Read directory error:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// 7. Archive Workspace (Native TAR)
+/**
+ * IPC Handler: Archive a workspace directory to a .tar.gz file using system tar.
+ * @param {Electron.IpcMainInvokeEvent} event - IPC Event
+ * @param {Object} args - Arguments
+ * @param {string} args.sourceDir - Directory to archive
+ * @param {string} args.destPath - Destination file path (.tar.gz)
+ * @returns {Promise<{success: boolean, error?: string, path?: string}>} - Result object
+ */
+ipcMain.handle('archive-workspace', async (event, { sourceDir, destPath }) => {
+    try {
+        console.log(`[ARCHIVE] Request: source=${sourceDir}, dest=${destPath}`);
+
+        if (!sourceDir || !destPath) {
+            return { success: false, error: 'Invalid source or destination.' };
+        }
+
+        // Exclusions
+        // We want to exclude .git, venv, node_modules, and the destination file itself if it's inside source
+        const exclusions = [
+            '--exclude=.git',
+            '--exclude=node_modules',
+            '--exclude=venv',
+            '--exclude=__pycache__',
+            '--exclude=.pytest_cache',
+            '--exclude=.vscode',
+            '--exclude=.idea',
+            '--exclude=*.pyc',
+            '--exclude=.DS_Store'
+        ];
+
+        // Ensure we don't archive a venv with custom name if possible? 
+        // For now standard venv names are best effort.
+
+        const platform = os.platform();
+        if (platform === 'win32') {
+            return { success: false, error: 'Native archive not fully implemented for Windows. Please use Linux/Mac or manual mode.' };
+            // On Windows we might need to rely on 7zip or just use the slow nodejs implementation. 
+            // But user is on Linux.
+        }
+
+        return new Promise((resolve) => {
+            // tar -czf dest.tar.gz -C sourceDir . (excludes...)
+            const args = ['-czf', destPath, '-C', sourceDir, ...exclusions, '.'];
+
+            console.log(`[ARCHIVE] Running: tar ${args.join(' ')}`);
+
+            const child = spawn('tar', args);
+
+            let stderr = '';
+
+            child.stderr.on('data', (data) => {
+                stderr += data.toString();
+            });
+
+            child.on('close', (code) => {
+                if (code === 0) {
+                    console.log('[ARCHIVE] Success');
+                    resolve({ success: true, path: destPath });
+                } else {
+                    console.error(`[ARCHIVE] Failed with code ${code}: ${stderr}`);
+                    resolve({ success: false, error: `Tar process failed (code ${code}): ${stderr}` });
+                }
+            });
+
+            child.on('error', (err) => {
+                console.error('[ARCHIVE] Spawn error:', err);
+                resolve({ success: false, error: err.message });
+            });
+        });
+
+    } catch (error) {
+        console.error('[ARCHIVE] Unexpected error:', error);
         return { success: false, error: error.message };
     }
 });
