@@ -1639,7 +1639,7 @@ ${dependencies ? `
         
         for dep_file in "\${!DEP_PATTERNS[@]}"; do
             if [ -f "\$dep_file" ]; then
-                local description="\${DEP_PATTERNS[\$dep_file]}"
+                description="\${DEP_PATTERNS[\$dep_file]}"
                 
                 case "\$dep_file" in
                     "Pipfile")
