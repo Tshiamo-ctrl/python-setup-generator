@@ -203,17 +203,23 @@
                 <div class="divider"></div>
 
                 <div class="form-group">
+                    <label>Server Configuration</label>
+                    <div class="form-group">
+                        <label for="serverPort">Development Server Port</label>
+                        <input type="number" id="serverPort" value="8000" placeholder="8000">
+                    </div>
+                </div>
+
+
+                <div class="divider"></div>
+
+                <div class="form-group">
                     <label>Features & Automation</label>
                     <div class="checkbox-group">
                         <div class="checkbox-item" id="initDbContainer"
                             onclick="document.getElementById('initDb').click()">
                             <input type="checkbox" id="initDb" checked onclick="event.stopPropagation()">
                             <span>Initialize Database</span>
-                        </div>
-                        <div class="checkbox-item" id="demoOptionContainer"
-                            onclick="document.getElementById('loadDemo').click()">
-                            <input type="checkbox" id="loadDemo" onclick="event.stopPropagation()">
-                            <span>Load Demo Data</span>
                         </div>
                         <div class="checkbox-item" id="createSuperContainer"
                             onclick="document.getElementById('createSuper').click()">
@@ -243,6 +249,16 @@
                             <label for="adminPass">Admin Password</label>
                             <input type="password" id="adminPass" value="admin123">
                         </div>
+                    </div>
+
+                    <div id="horillaAuthNote"
+                        style="display: none; margin-top: 12px; padding: 12px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px;">
+                        <div style="font-size: 13px; font-weight: 600; color: #60a5fa; margin-bottom: 4px;">ℹ️ Horilla
+                            Authentication</div>
+                        <div style="font-size: 12px; color: var(--muted-foreground);">Default DB Initialization
+                            Password:</div>
+                        <code
+                            style="display: block; margin-top: 4px; padding: 4px; background: rgba(0,0,0,0.2); border-radius: 4px; font-family: monospace; user-select: all;">d3f6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d</code>
                     </div>
                 </div>
 
@@ -1382,12 +1398,23 @@ if [ -d "$PROJECT_PATH" ]; then
              cd "$PROJECT_PATH"
              git pull origin main 2>/dev/null || git pull origin master 2>/dev/null || echo "⚠️  Could not pull updates (remote unavailable or different branch)"
         else
-             echo "❌ ERROR: Target directory $PROJECT_PATH exists and is not empty."
-             echo "💡 Solutions:"
-             echo "   1. Choose a different project path"
-             echo "   2. Clear the directory manually"
-             echo "   3. Use 'Clear Workspace' option"
-             exit 1
+             echo "⚠️  Target directory $PROJECT_PATH exists and is not empty."
+             echo "🔄 Attempting to initialize repository in-place..."
+             
+             cd "$PROJECT_PATH"
+             if [ ! -d ".git" ]; then
+                 git init
+                 git remote add origin "$REPO_URL"
+             fi
+             
+             echo "⬇️  Pulling from remote..."
+             if git pull origin main 2>/dev/null || git pull origin master; then
+                 echo "✅ Repository initialized and pulled successfully"
+             else
+                 echo "❌ Failed to pull from remote." 
+                 echo "   This might happen if the directory contains file conflicts."
+                 exit 1
+             fi
         fi
     else
         echo "📁 Directory exists but is empty. Proceeding..."
@@ -1711,31 +1738,26 @@ if [ -f "manage.py" ]; then
     python3 manage.py compilemessages 2>/dev/null || true
     ` : 'echo "Skipping database initialization as requested."'}
     
-    ${loadDemo ? `
-    echo "Loading Demo Data..."
-    ${demoDataCmd ? demoDataCmd : 'python3 manage.py loaddata initial_data 2>/dev/null || echo "No \'initial_data\' fixture found."'}
-    ` : `
-        # If neither InitDB nor LoadDemo is selected, show helpful info for manual setup
-        ${!initDb ? `
-        echo ""
-        echo "ℹ️  Manual Initialization Note:"
-        echo "   If you perform a manual setup for Horilla, you might need this password:"
-        echo "   Authentication Password: d3f6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d"
-        echo ""
-        ` : ''}
-    `}
-
-    ${createSuper && !loadDemo ? `
+    ${createSuper ? `
     echo "Creating Admin User..."
     export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
-    ${cmdAdmin} || echo "Admin creation failed or user exists."
+    ${cmdAdmin ? cmdAdmin : 'python3 manage.py createsuperuser --noinput --username admin --email admin@example.com'} || echo "Admin user creation failed (it might already exist)."
     ` : ''}
+
+    # Horilla Password Reminder
+    if [[ "$REPO_URL" == *"horilla"* ]]; then
+        echo ""
+        echo "🔐 IMPORTANT: Horilla Authentication"
+        echo "   If prompted for a password during database initialization:"
+        echo "   d3f6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d"
+        echo ""
+    fi
 else
     echo "Warning: manage.py not found!"
 fi
-` : `
+            ` : `
 echo "Non-Django framework selected. Skipping manage.py commands."
-`}
+            `}
 
 echo ""
 echo "Setup Complete!"
@@ -1978,8 +2000,9 @@ echo "Done."
                 selectedRepo = null;
                 // Show all options for custom
                 document.getElementById('dbOptionContainer').style.display = 'block';
-                document.getElementById('demoOptionContainer').style.display = 'block';
                 document.getElementById('adminOptionContainer').style.display = 'block';
+                // Hide Auth Note for custom by default
+                document.getElementById('horillaAuthNote').style.display = 'none';
                 return;
             }
 
@@ -2007,8 +2030,8 @@ echo "Done."
                 // Auto-configure defaults based on Repo Name
                 const cleanName = repo.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-                // Project Path: clean-name (Relative to script location)
-                document.getElementById('projectPath').value = cleanName;
+                // Project Path: . (Install directly in the current directory)
+                document.getElementById('projectPath').value = '.';
 
                 // Venv Name: clean-nameVENV
                 document.getElementById('venvName').value = `${cleanName}VENV`;
@@ -2047,6 +2070,10 @@ echo "Done."
                 // adminOptionContainer is a block
                 document.getElementById('adminOptionContainer').style.display = hasDb ? 'block' : 'none';
 
+                // Show Horilla Auth Note if applicable
+                const isHorilla = repo.url.includes('horilla');
+                document.getElementById('horillaAuthNote').style.display = isHorilla ? 'block' : 'none';
+
                 // Checkbox Containers (checkbox-item is flex)
                 if (document.getElementById('initDbContainer')) {
                     document.getElementById('initDbContainer').style.display = hasDb ? 'flex' : 'none';
@@ -2054,17 +2081,14 @@ echo "Done."
                 if (document.getElementById('createSuperContainer')) {
                     document.getElementById('createSuperContainer').style.display = hasDb ? 'flex' : 'none';
                 }
-                if (document.getElementById('demoOptionContainer')) {
-                    document.getElementById('demoOptionContainer').style.display = hasDemo ? 'flex' : 'none';
+                if (document.getElementById('createSuperContainer')) {
+                    document.getElementById('createSuperContainer').style.display = hasDb ? 'flex' : 'none';
                 }
 
                 // Uncheck if hidden
                 if (!hasDb) {
                     document.getElementById('initDb').checked = false;
                     document.getElementById('createSuper').checked = false;
-                }
-                if (!hasDemo) {
-                    document.getElementById('loadDemo').checked = false;
                 }
 
                 // Enforce exclusivity after potential state changes
@@ -2076,34 +2100,9 @@ echo "Done."
         }
 
         function resolveMutualExclusivity(source) {
-            const initDb = document.getElementById('initDb');
-            const loadDemo = document.getElementById('loadDemo');
-            const createSuper = document.getElementById('createSuper');
-            const runServer = document.getElementById('runServer');
-
-            if (initDb && loadDemo) {
-                // 1. Enforce Mutually Exclusive (Demo vs Init)
-                if (source === 'initDb' && initDb.checked) {
-                    loadDemo.checked = false;
-                } else if (source === 'loadDemo' && loadDemo.checked) {
-                    initDb.checked = false;
-                } else if (!source && loadDemo.checked && initDb.checked) {
-                    // Initial load fallback: Prioritize Demo
-                    initDb.checked = false;
-                }
-
-                // 2. Handle Create Superuser
-                // If Demo Data is loaded, uncheck create superuser
-                if (loadDemo.checked && createSuper) {
-                    createSuper.checked = false;
-                }
-
-                // 3. Handle Running Server
-                // If NEITHER is checked (Manual Mode), do NOT auto-launch server
-                if (!loadDemo.checked && !initDb.checked) {
-                    if (runServer) runServer.checked = false;
-                }
-            }
+            // Deprecated: Mutual exclusivity logic simplified as Demo Data is now manual only.
+            // Keeping function stub if needed for future logic, or removing entirely.
+            // For now, removing the logic that caused conflicts.
         }
 
         function generateScripts() {
@@ -2112,13 +2111,13 @@ echo "Done."
             const venvName = document.getElementById('venvName').value;
             const dbType = document.getElementById('dbType').value;
             const initDb = document.getElementById('initDb').checked;
-            const loadDemo = document.getElementById('loadDemo').checked;
+            const loadDemo = false; // Manual only
             const createSuper = document.getElementById('createSuper').checked;
             const runServer = document.getElementById('runServer').checked;
             const adminUser = document.getElementById('adminUser').value;
             const adminEmail = document.getElementById('adminEmail').value;
             const adminPass = document.getElementById('adminPass').value;
-            const serverPort = 8000;
+            const serverPort = document.getElementById('serverPort').value || 8000;
             let cmdAdmin = document.getElementById('cmdAdmin').value;
             const cmdPostInstall = document.getElementById('cmdPostInstall').value;
             const customReqPath = document.getElementById('customReqPath').value;
