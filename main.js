@@ -83,13 +83,8 @@ ipcMain.handle('save-file', async (event, { directory, filename, content }) => {
         const fullPath = path.join(directory, sanitizedFilename);
 
         // Defensive: Check if file exists and create backup
-        let backupPath = null;
-        if (fs.existsSync(fullPath)) {
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            backupPath = `${fullPath}.backup.${timestamp}`;
-            fs.copyFileSync(fullPath, backupPath);
-            console.info(`Created backup: ${backupPath}`);
-        }
+        // Defensive: Check if file exists (Overwrite without backup as requested)
+        // const backupPath = null; // Backups disabled to prevent clutter
 
         fs.writeFileSync(fullPath, content);
 
@@ -104,8 +99,7 @@ ipcMain.handle('save-file', async (event, { directory, filename, content }) => {
 
         return {
             success: true,
-            path: fullPath,
-            backup: backupPath
+            path: fullPath
         };
     } catch (error) {
         console.error('File write error:', error);
@@ -198,11 +192,25 @@ ipcMain.handle('run-external-terminal', async (event, { directory }) => {
             console.log('Creating wrapper script at:', wrapperPath);
 
             // Create wrapper content
+            // Create wrapper content - STRICT RELATIVE EXECUTION
             const wrapperContent = `#!/bin/bash
-echo "🚀 Starting Setup in: ${directory}"
-cd "${directory}"
-bash "${cleanPath}"
-echo "✅ Setup script finished."
+echo "🚀 Initializing Setup in: ${directory}"
+cd "${directory}" || { echo "❌ Failed to change directory"; exec bash; }
+
+echo "📂 Working Directory: $(pwd)"
+
+if [ -f "setup.sh" ]; then
+    echo "🔧 Setting permissions..."
+    chmod +x setup.sh dev-server.sh fresh-db.sh 2>/dev/null
+
+    echo "▶️ Running setup.sh..."
+    ./setup.sh
+else
+    echo "❌ Error: setup.sh not found!"
+    ls -la
+fi
+
+echo "✅ Execution process finished."
 exec bash
 `;
             fs.writeFileSync(wrapperPath, wrapperContent);
@@ -342,4 +350,61 @@ exec bash
             code: error.code || 'TERMINAL_LAUNCH_FAILED'
         };
     }
+});
+
+// 5. Read Directory Recursive (for Archive)
+ipcMain.handle('read-directory-recursive', async (event, { directory }) => {
+    try {
+        if (!directory || !fs.existsSync(directory)) {
+            return { success: false, error: 'Directory not found' };
+        }
+
+        const files = [];
+        const skipDirs = ['.git', 'node_modules', '__pycache__', '.pytest_cache', 'test_venv', '.vscode', '.idea'];
+        // Note: venv skipping is handled by checking name against known venv names in recursion if needed, 
+        // but here we just emulate the renderer logic or accept a skip list.
+        // For simplicity, we'll verify the skip list strategy.
+
+        async function readRecursively(currentPath, relativePath) {
+            const entries = fs.readdirSync(currentPath, { withFileTypes: true });
+
+            for (const entry of entries) {
+                const fullPath = path.join(currentPath, entry.name);
+                const relPath = relativePath ? path.join(relativePath, entry.name) : entry.name;
+
+                if (entry.isDirectory()) {
+                    if (skipDirs.includes(entry.name)) continue;
+                    // Also skip if it looks like a venv (contains bin/activate or Scripts/activate) - naive check
+                    // Better to rely on the caller or standard excludes.
+                    if (entry.name === 'venv' || entry.name.endsWith('VENV')) continue; 
+
+                    await readRecursively(fullPath, relPath);
+                } else if (entry.isFile()) {
+                    if (entry.name.endsWith('.pyc') || entry.name === '.DS_Store') continue;
+
+                    const data = fs.readFileSync(fullPath);
+                    files.push({
+                        name: relPath, // Use forward slashes for tar consistency if needed, but fs handles path.join
+                        data: data // Send buffer
+                    });
+                }
+            }
+        }
+
+        await readRecursively(directory, '');
+        return { success: true, files };
+
+    } catch (error) {
+        console.error('Read directory error:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// 6. Show Save Dialog
+ipcMain.handle('show-save-dialog', async (event, { defaultPath, filters }) => {
+    const result = await dialog.showSaveDialog(mainWindow, {
+        defaultPath,
+        filters
+    });
+    return result;
 });

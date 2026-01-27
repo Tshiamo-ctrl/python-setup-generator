@@ -824,10 +824,7 @@ npm start</pre>
             if (isArchiveInProgress) return;
 
             // Check browser support
-            if (!('showDirectoryPicker' in window)) {
-                // If in Electron, this shouldn't happen as we use IPC, but double check
-                if (window.electron) return;
-
+            if (!('showDirectoryPicker' in window) && !window.electron) {
                 alert("Your browser does not support the File System Access API needed for this feature.\n\nPlease use a Chromium-based browser (Chrome, Edge, Opera, Brave) or run this as a Desktop App.");
                 return;
             }
@@ -864,6 +861,70 @@ npm start</pre>
                     archiveName += '.tar.gz';
                 }
 
+                // --- DESKTOP MODE (ELECTRON) ---
+                if (window.electron) {
+                    showFeedback("Select directory to archive...");
+                    const sourceDir = await window.electron.selectDirectory();
+                    if (!sourceDir) {
+                        isArchiveInProgress = false;
+                        return;
+                    }
+
+                    showFeedback(`Reading files from ${sourceDir}...`);
+                    const result = await window.electron.readDirectoryRecursive(sourceDir);
+                    
+                    if (!result.success) {
+                        throw new Error(result.error || "Failed to read directory");
+                    }
+
+                    const files = result.files;
+                    if (files.length === 0) {
+                        alert("No files found to archive.");
+                        return;
+                    }
+
+                    showFeedback(`Archiving ${files.length} files...`);
+                    const tarData = await createTarGz(files);
+
+                    // Save Dialog
+                    const saveResult = await window.electron.showSaveDialog({
+                        defaultPath: archiveName,
+                        filters: [{ name: 'GZIP Archive', extensions: ['tar.gz', 'tgz'] }]
+                    });
+
+                    if (saveResult.canceled) {
+                        isArchiveInProgress = false;
+                        return;
+                    }
+
+                    const savePath = saveResult.filePath;
+                    showFeedback("Saving archive...");
+                    
+                    // We can use saveFile, but we need to pass directory and filename separately or just raw path
+                    // Our saveFile IPC takes (directory, filename, content)
+                    // Let's split the path
+                    // Actually, let's just use the exposed saveFile which does path.join
+                    // BUT showSaveDialog returns a full path.
+                    // We should probably rely on a simpler 'writeFile' or just parse the path in renderer.
+                    
+                    // Simple path parsing in JS:
+                    const isWin = navigator.platform.toLowerCase().includes('win');
+                    const sep = isWin ? '\\' : '/';
+                    const lastSep = savePath.lastIndexOf(sep);
+                    const directory = savePath.substring(0, lastSep);
+                    const filename = savePath.substring(lastSep + 1);
+
+                    const writeResult = await window.electron.saveFile(directory, filename, tarData);
+                    
+                    if (writeResult.success) {
+                        showFeedback(`Archive saved to: ${savePath}`);
+                    } else {
+                        throw new Error(writeResult.error);
+                    }
+                    return;
+                }
+
+                // --- WEB MODE ---
                 // Step 1: Select source directory
                 showFeedback("Select directory to archive...");
                 const sourceHandle = await window.showDirectoryPicker();
@@ -2037,7 +2098,7 @@ echo "Done."
 
             if (!repoUrl) {
                 showFeedback("Please select or enter a repository URL");
-                return;
+                return false;
             }
 
             // Extract repo name from URL
@@ -2074,9 +2135,9 @@ echo "Done."
                 currentSlide = 0;
                 updateCarousel();
             }, 50);
+
+            return true;
         }
-
-
 
         function generateEnvFile(repoName, dbType, adminPass, serverPort) {
             const dbName = document.getElementById('dbName').value;
@@ -2108,6 +2169,18 @@ DATABASE_URL=sqlite:///db.sqlite3
         }
 
         async function saveToFolder() {
+            // Force generation checks
+            try {
+                if (!generateScripts()) {
+                    console.error("Script generation failed validation");
+                    return;
+                }
+            } catch (e) {
+                console.error("Script generation error:", e);
+                alert("Failed to generate scripts: " + e.message);
+                return;
+            }
+
             // --- DESKTOP MODE (ELECTRON) ---
             if (window.electron) {
                 try {
@@ -2125,6 +2198,9 @@ DATABASE_URL=sqlite:///db.sqlite3
 
                     for (const f of files) {
                         const content = document.getElementById(f.id).textContent;
+                        if (!content || content.trim().length === 0) {
+                            throw new Error(`Generated content for ${f.name} is empty!`);
+                        }
                         await window.electron.saveFile(dirPath, f.name, content);
                     }
 
@@ -2145,7 +2221,7 @@ DATABASE_URL=sqlite:///db.sqlite3
 
             // --- WEB MODE (BROWSER) ---
             if (!('showDirectoryPicker' in window)) {
-                alert("Your browser does not support checking/saving to a local folder directly (File System Access API).\n\nPlease use Chrome/Edge/Opera, or manually download the individual files below.");
+                alert("Your browser does not support checking/saving to a local folder directly.\nPlease use Chrome/Edge/Opera or download files manually.");
                 return;
             }
             try {
@@ -2172,6 +2248,9 @@ DATABASE_URL=sqlite:///db.sqlite3
         }
 
         async function handleResetAction() {
+            // Force generation checks
+            if (!generateScripts()) return;
+
             if (!window.electron) {
                 alert("This feature is only available in Desktop App mode.");
                 return;
