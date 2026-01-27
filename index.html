@@ -27,6 +27,15 @@
                 </div>
             </div>
             <div style="display: flex; gap: 8px;">
+                <button class="btn-secondary" onclick="openRunAppModal()" title="Run Locally as Desktop App"
+                    style="padding: 8px 16px; display: flex; align-items: center; gap: 6px;">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                    <span style="font-size: 13px;">Run as App</span>
+                </button>
                 <button class="btn-secondary" onclick="startTour()" id="tourButton" title="Start Interactive Tour"
                     style="padding: 8px 16px; display: flex; align-items: center; gap: 6px;">
                     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -664,12 +673,35 @@
         </div>
     </div>
 
-    <!-- Tour Overlay -->
-    <div id="tourOverlay"
-        style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9998;">
+
+    <!-- Archive Modal -->
+    <div id="archiveOverlay" class="modal-overlay" style="display: none;"></div>
+    <div id="archiveModal" class="modal" style="display: none;">
+        <h3>Archive Workspace</h3>
+        <p>Create a compressed backup of your project files. You can choose a custom name for the archive.</p>
+
+        <div class="form-group">
+            <label for="archiveNameInput">Archive Name</label>
+            <input type="text" id="archiveNameInput" value="workspace-backup.tar.gz"
+                placeholder="project-backup.tar.gz">
+        </div>
+
+        <div class="alert alert-info" style="margin-bottom: 0; padding: 12px; display: flex; align-items: center;">
+            <div style="font-size: 12px;">
+                <strong>Save Location:</strong>
+                <span id="saveLocationText">Browser Default</span>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeArchiveModal()">Cancel</button>
+            <button class="btn-primary" onclick="executeArchive()">Select Source & Create</button>
+        </div>
     </div>
-    <div id="tourModal"
-        style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card); border-radius: 12px; padding: 32px; max-width: 600px; width: 90%; z-index: 9999; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+
+    <!-- Tour Overlay -->
+    <div id="tourOverlay" class="modal-overlay" style="display: none;"></div>
+    <div id="tourModal" class="modal" style="display: none;">
         <h3 id="tourTitle" style="margin: 0 0 16px 0; font-size: 20px; color: var(--foreground);"></h3>
         <p id="tourContent" style="margin: 0 0 24px 0; line-height: 1.6; color: var(--muted-foreground);"></p>
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -682,6 +714,95 @@
         </div>
     </div>
 
+    <!-- Run App Modal -->
+    <div id="runAppOverlay" class="modal-overlay" style="display: none;"></div>
+    <div id="runAppModal" class="modal" style="display: none; max-width: 600px;">
+        <h3>Run Locally as Desktop App</h3>
+        <p style="margin-bottom: 20px; color: var(--muted-foreground);">Get the full experience with automatic file
+            saving and terminal execution. Run these commands in your terminal:</p>
+
+        <div class="tabs" style="margin-bottom: 16px;">
+            <button class="tab-btn active" onclick="switchRunTab(event, 'linux')">Linux</button>
+            <button class="tab-btn" onclick="switchRunTab(event, 'mac')">macOS</button>
+            <button class="tab-btn" onclick="switchRunTab(event, 'win')">Windows</button>
+        </div>
+
+        <div id="linux" class="run-tab-content" style="display: block;">
+            <div class="code-block" style="margin: 0;">
+                <button class="btn-secondary" onclick="copyCode('cmdLinux')"
+                    style="position: absolute; right: 8px; top: 8px;">Copy</button>
+                <pre id="cmdLinux" style="white-space: pre-wrap;">git clone https://github.com/Tshiamo-ctrl/python-setup-generator.git horilla-setup
+cd horilla-setup
+npm install
+npm start</pre>
+            </div>
+        </div>
+
+        <div id="mac" class="run-tab-content" style="display: none;">
+            <div class="code-block" style="margin: 0;">
+                <button class="btn-secondary" onclick="copyCode('cmdMac')"
+                    style="position: absolute; right: 8px; top: 8px;">Copy</button>
+                <pre id="cmdMac" style="white-space: pre-wrap;">git clone https://github.com/Tshiamo-ctrl/python-setup-generator.git horilla-setup
+cd horilla-setup
+npm install
+npm start</pre>
+            </div>
+        </div>
+
+        <div id="win" class="run-tab-content" style="display: none;">
+            <div class="code-block" style="margin: 0;">
+                <button class="btn-secondary" onclick="copyCode('cmdWin')"
+                    style="position: absolute; right: 8px; top: 8px;">Copy</button>
+                <pre id="cmdWin" style="white-space: pre-wrap;">git clone https://github.com/Tshiamo-ctrl/python-setup-generator.git horilla-setup
+cd horilla-setup
+npm install
+npm start</pre>
+            </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 24px;">
+            <button class="btn-secondary" onclick="closeRunAppModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        function openRunAppModal() {
+            document.getElementById('runAppOverlay').style.display = 'block';
+            document.getElementById('runAppModal').style.display = 'block';
+            detectAndSelectOS();
+        }
+
+        function detectAndSelectOS() {
+            const platform = navigator.platform.toLowerCase();
+            const ua = navigator.userAgent.toLowerCase();
+
+            let os = 'linux'; // Default
+            if (platform.includes('mac') || ua.includes('mac')) {
+                os = 'mac';
+            } else if (platform.includes('win') || ua.includes('win')) {
+                os = 'win';
+            }
+
+            // Trigger tab switch
+            const tabBtn = document.querySelector(`.tab-btn[onclick*="'${os}'"]`);
+            if (tabBtn) {
+                tabBtn.click();
+            }
+        }
+
+        function closeRunAppModal() {
+            document.getElementById('runAppOverlay').style.display = 'none';
+            document.getElementById('runAppModal').style.display = 'none';
+        }
+
+        function switchRunTab(evt, tabName) {
+            document.querySelectorAll('.run-tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('#runAppModal .tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).style.display = 'block';
+            evt.currentTarget.classList.add('active');
+        }
+    </script>
+
     <div class="copy-feedback" id="copyFeedback">✓ Copied to clipboard</div>
 
     <script src="repos.js"></script>
@@ -690,6 +811,117 @@
         // Defaults and Globals
         let selectedRepo = null;
         let currentSlide = 0;
+        let isArchiveInProgress = false;
+
+        // Archive Modal Functions
+        function handleArchiveCreation() {
+            if (isArchiveInProgress) return;
+
+            // Check browser support
+            if (!('showDirectoryPicker' in window)) {
+                // If in Electron, this shouldn't happen as we use IPC, but double check
+                if (window.electron) return;
+
+                alert("Your browser does not support the File System Access API needed for this feature.\n\nPlease use a Chromium-based browser (Chrome, Edge, Opera, Brave) or run this as a Desktop App.");
+                return;
+            }
+
+            const date = new Date().toISOString().split('T')[0];
+            document.getElementById('archiveNameInput').value = `workspace-backup-${date}.tar.gz`;
+
+            // Check for Save File Picker support
+            const hasSavePicker = 'showSaveFilePicker' in window;
+            document.getElementById('saveLocationText').textContent = hasSavePicker ? "Pass 'Save As' Prompt" : "Downloads Folder";
+
+            document.getElementById('archiveOverlay').style.display = 'block';
+            document.getElementById('archiveModal').style.display = 'block';
+        }
+
+        function closeArchiveModal() {
+            document.getElementById('archiveOverlay').style.display = 'none';
+            document.getElementById('archiveModal').style.display = 'none';
+        }
+
+        async function executeArchive() {
+            closeArchiveModal();
+
+            if (isArchiveInProgress) return;
+            isArchiveInProgress = true;
+
+            try {
+                // Get name from modal
+                let archiveName = document.getElementById('archiveNameInput').value.trim();
+                if (!archiveName) archiveName = "workspace-backup.tar.gz";
+
+                // Ensure extension
+                if (!archiveName.endsWith('.tar.gz') && !archiveName.endsWith('.tgz')) {
+                    archiveName += '.tar.gz';
+                }
+
+                // Step 1: Select source directory
+                showFeedback("Select directory to archive...");
+                const sourceHandle = await window.showDirectoryPicker();
+
+                showFeedback(`Creating archive: ${archiveName}...`);
+
+                // Step 2: Read directory contents recursively
+                const files = await readDirectoryRecursive(sourceHandle, '');
+
+                if (files.length === 0) {
+                    alert("No files found to archive.");
+                    return;
+                }
+
+                showFeedback(`Archiving ${files.length} files...`);
+
+                // Step 3: Create TAR archive using fflate
+                const tarData = await createTarGz(files);
+
+                // Step 4: Save the file
+                showFeedback("Saving archive...");
+
+                // Try to use File System Access API if available (Chrome/Edge)
+                if ('showSaveFilePicker' in window) {
+                    try {
+                        const handle = await window.showSaveFilePicker({
+                            suggestedName: archiveName,
+                            types: [{
+                                description: 'GZIP Archive',
+                                accept: { 'application/gzip': ['.tar.gz', '.tgz'] },
+                            }],
+                        });
+                        const writable = await handle.createWritable();
+                        await writable.write(tarData);
+                        await writable.close();
+                        showFeedback(`Archive saved: ${archiveName}`);
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            throw err; // Re-throw real errors, ignore user cancellation
+                        }
+                    }
+                } else {
+                    // Fallback for Firefox/Safari
+                    const blob = new Blob([tarData], { type: 'application/gzip' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = archiveName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    showFeedback(`Archive saved to Downloads`);
+                }
+
+            } catch (e) {
+                if (e.name !== 'AbortError') {
+                    console.error(e);
+                    alert(`Error creating archive: ${e.message}`);
+                }
+            } finally {
+                isArchiveInProgress = false;
+            }
+        }
 
         // Initialize on page load
         window.addEventListener('load', () => {
@@ -700,7 +932,41 @@
             populateRepoDropdown();
             updateDbFields();
             updateFrameworkDefaults(); // Set initial defaults
+            checkForElectron();
         });
+
+        function checkForElectron() {
+            if (window.electron) {
+                // We are in Desktop Mode
+                document.body.classList.add('desktop-mode');
+
+                // 1. Hide "Run as App" button (we are already in the app)
+                const runBtn = document.querySelector('button[onclick="openRunAppModal()"]');
+                if (runBtn) runBtn.style.display = 'none';
+
+                // 2. Change "Save Workspace" to "Run Setup"
+                const saveBtn = document.getElementById('saveFolderBtn');
+                if (saveBtn) {
+                    saveBtn.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            Run Setup
+                        </div>`;
+                    saveBtn.title = "Save files and open terminal to run setup";
+                    saveBtn.classList.remove('btn-secondary');
+                    saveBtn.classList.add('btn-primary');
+                }
+
+                // 3. Update Quick Action Card
+                const actionCard = document.querySelector('.action-card[onclick="saveToFolder()"]');
+                if (actionCard) {
+                    actionCard.querySelector('h4').textContent = "Run Setup";
+                    actionCard.querySelector('p').textContent = "Save & Execute";
+                }
+            }
+        }
 
         // Carousel Management
 
@@ -899,11 +1165,23 @@
             return `#!/bin/bash
 # ${repoName} - Development Setup Script
 # Generated: $(date)
+# Enhanced with defensive error handling and fallbacks
 
-set -e
-trap 'echo "Error encountered at line $LINENO"; exit 1' ERR
+set -euo pipefail
+trap 'echo "❌ Error encountered at line $LINENO. Exit code: $?" >&2; 
+      echo "🔧 Troubleshooting:" >&2
+      echo "  - Check internet connection for git clone" >&2
+      echo "  - Verify Python and pip are working" >&2
+      echo "  - Ensure disk space is available" >&2
+      exit 1' ERR
 
-# --- Configuration ---
+# Enhanced error recovery
+trap 'echo "⚠️  Script interrupted. Cleaning up..."; 
+      # Kill any background processes
+      jobs -p | xargs -r kill 2>/dev/null || true;
+      exit 130' INT TERM
+
+# --- Configuration with validation ---
 REPO_URL="${repoUrl}"
 PROJECT_PATH="${projectPath}"
 VENV_NAME="${venvName}"
@@ -911,25 +1189,138 @@ CUSTOM_REQ_PATH="${customReqPath}"
 CUSTOM_INSTALL_CMD="${customInstallCmd}"
 SCRIPT_DIR="$(cd "$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
 
-echo "Starting setup for ${repoName}..."
-
-# --- Checks ---
-command -v python3 >/dev/null 2>&1 || { echo "Python3 required."; exit 1; }
-command -v git >/dev/null 2>&1 || { echo "Git required."; exit 1; }
-if [ -f "package.json" ]; then
-    command -v npm >/dev/null 2>&1 || echo "⚠️  Node.js/NPM not found but package.json detected. UI builds may fail."
+# Validate critical configuration
+if [[ -z "\$REPO_URL" ]]; then
+    echo "❌ ERROR: Repository URL is required" >&2
+    exit 1
 fi
 
-# --- Clone ---
-if [ -d "$PROJECT_PATH" ]; then
-    if [ "$(ls -A "$PROJECT_PATH")" ]; then
-        if [ -d "$PROJECT_PATH/.git" ]; then
-             echo "Repository already exists at $PROJECT_PATH"
+if [[ -z "\$PROJECT_PATH" ]]; then
+    echo "❌ ERROR: Project path is required" >&2
+    exit 1
+fi
+
+echo "🚀 Starting setup for ${repoName}..."
+echo "📍 Target directory: \$PROJECT_PATH"
+
+# --- Enhanced system checks ---
+check_command() {
+    local cmd="\$1"
+    local name="\$2"
+    local install_hint="\$3"
+    
+    if ! command -v "\$cmd" >/dev/null 2>&1; then
+        echo "❌ ERROR: \$name is required but not found." >&2
+        if [[ -n "\$install_hint" ]]; then
+            echo "💡 Install hint: \$install_hint" >&2
+        fi
+        exit 1
+    else
+        echo "✅ Found: \$name (\$(command -v "\$cmd"))"
+    fi
+}
+
+# Essential commands
+check_command "python3" "Python 3" "sudo apt install python3 python3-pip python3-venv"
+check_command "git" "Git" "sudo apt install git"
+
+# Optional but recommended
+if [ -f "package.json" ]; then
+    check_command "npm" "Node.js/NPM" "curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt install nodejs"
+fi
+
+# Check disk space (minimum 2GB)
+check_disk_space() {
+    local required_gb=2
+    local available_gb=\$(df . | tail -1 | awk '{print int(\$4/1024/1024)}')
+    
+    if [[ \$available_gb -lt \$required_gb ]]; then
+        echo "⚠️  WARNING: Low disk space (\${available_gb}GB available, ${required_gb}GB recommended)"
+        echo "   Setup may fail due to insufficient space." >&2
+        read -p "Continue anyway? (y/N): " -n 1 -r
+        echo
+        if [[ ! \$REPLY =~ ^[Yy]\$ ]]; then
+            echo "Setup cancelled by user."
+            exit 0
+        fi
+    else
+        echo "✅ Sufficient disk space available (\${available_gb}GB)"
+    fi
+}
+
+check_disk_space
+
+# --- Enhanced Clone with fallbacks ---
+clone_with_fallback() {
+    local url="\$1"
+    local target="\$2"
+    local max_attempts=3
+    local attempt=1
+    
+    while [[ \$attempt -le \$max_attempts ]]; do
+        echo "🔄 Clone attempt \$attempt of \$max_attempts..."
+        
+        if git clone "\$url" "\$target" 2>&1 | tee clone.log; then
+            echo "✅ Repository cloned successfully"
+            rm -f clone.log
+            return 0
         else
-             echo "ERROR: Target directory $PROJECT_PATH exists and is not empty."
-             echo "Please clear the directory or choose a different path."
+            local exit_code=\$?
+            echo "⚠️  Clone attempt \$attempt failed"
+            
+            # Analyze common errors and provide specific help
+            if [[ \$attempt -eq 1 ]]; then
+                if grep -q "SSL certificate problem" clone.log 2>/dev/null; then
+                    echo "🔧 SSL Issue detected. Trying with certificate verification disabled..."
+                    git -c http.sslVerify=false clone "\$url" "\$target" && return 0
+                elif grep -q "Permission denied" clone.log 2>/dev/null; then
+                    echo "🔧 Permission denied. Checking URL format..."
+                    if [[ "\$url" == git@* ]] && ! ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+                        echo "💡 SSH authentication failed. Try HTTPS URL or add SSH key."
+                    fi
+                elif grep -q "not found" clone.log 2>/dev/null || grep -q "Repository not found" clone.log 2>/dev/null; then
+                    echo "💡 Repository not found. Please verify the URL."
+                fi
+            fi
+            
+            if [[ \$attempt -lt \$max_attempts ]]; then
+                echo "⏳ Waiting 5 seconds before retry..."
+                sleep 5
+            fi
+            ((attempt++))
+        fi
+    done
+    
+    echo "❌ All clone attempts failed"
+    echo "🔍 Check clone.log for details"
+    exit 1
+}
+
+if [ -d "$PROJECT_PATH" ]; then
+    if [ "$(ls -A "$PROJECT_PATH" 2>/dev/null)" ]; then
+        if [ -d "$PROJECT_PATH/.git" ]; then
+             echo "📁 Repository already exists at $PROJECT_PATH"
+             echo "🔄 Pulling latest changes..."
+             cd "$PROJECT_PATH"
+             git pull origin main 2>/dev/null || git pull origin master 2>/dev/null || echo "⚠️  Could not pull updates (remote unavailable or different branch)"
+        else
+             echo "❌ ERROR: Target directory $PROJECT_PATH exists and is not empty."
+             echo "💡 Solutions:"
+             echo "   1. Choose a different project path"
+             echo "   2. Clear the directory manually"
+             echo "   3. Use 'Clear Workspace' option"
              exit 1
         fi
+    else
+        echo "📁 Directory exists but is empty. Proceeding..."
+        mkdir -p "$(dirname "$PROJECT_PATH")"
+        clone_with_fallback "$REPO_URL" "$PROJECT_PATH"
+    fi
+else
+    echo "📥 Cloning repository to $PROJECT_PATH..."
+    mkdir -p "$(dirname "$PROJECT_PATH")"
+    clone_with_fallback "$REPO_URL" "$PROJECT_PATH"
+fi
     else
         echo "Directory exists but is empty. Proceeding..."
         git clone "$REPO_URL" "$PROJECT_PATH" || { echo "Clone failed."; exit 1; }
@@ -947,76 +1338,264 @@ echo "Running pre-install commands..."
 ${preInstall}
 ` : ''}
 
-# --- Virtual Environment ---
-if [ ! -d "$VENV_NAME" ]; then
-    echo "Creating virtual env..."
-    # Check if python3-venv is installed (debian/ubuntu issue often)
-    python3 -m venv "$VENV_NAME" || { echo "Failed to create venv. Try: sudo apt install python3-venv"; exit 1; }
-fi
-source "$VENV_NAME/bin/activate"
+# --- Enhanced Virtual Environment Setup ---
+create_venv_with_fallback() {
+    local venv_path="\$1"
+    local python_cmd="python3"
+    
+    # Try multiple python commands
+    for py_cmd in python3 python3.11 python3.10 python3.9; do
+        if command -v "\$py_cmd" >/dev/null 2>&1; then
+            python_cmd="\$py_cmd"
+            echo "🐍 Using Python: \$python_cmd (\$(\$python_cmd --version))"
+            break
+        fi
+    done
+    
+    # Check if venv module is available
+    if ! \$python_cmd -c "import venv" 2>/dev/null; then
+        echo "❌ ERROR: Python venv module not available"
+        echo "💡 Install with: sudo apt install python3-venv"
+        exit 1
+    fi
+    
+    # Create virtual environment with error handling
+    echo "📦 Creating virtual environment: \$venv_path"
+    if \$python_cmd -m venv "\$venv_path" 2>&1 | tee venv.log; then
+        echo "✅ Virtual environment created successfully"
+    else
+        local exit_code=\$?
+        echo "❌ Failed to create virtual environment"
+        
+        # Common issues and solutions
+        if grep -q "ensurepip" venv.log 2>/dev/null; then
+            echo "🔧 ensurepip issue detected. Trying with --system-site-packages..."
+            \$python_cmd -m venv "\$venv_path" --system-site-packages && return 0
+        elif grep -q "Permission denied" venv.log 2>/dev/null; then
+            echo "🔧 Permission denied. Check directory permissions."
+        fi
+        
+        rm -f venv.log
+        exit \$exit_code
+    fi
+    
+    rm -f venv.log
+}
 
-# --- Dependencies ---
-echo "Installing dependencies..."
-python3 -m pip install --upgrade pip setuptools wheel
+if [ ! -d "$VENV_NAME" ]; then
+    create_venv_with_fallback "$VENV_NAME"
+else
+    echo "📁 Virtual environment already exists: $VENV_NAME"
+fi
+
+# Activate with validation
+if [ -f "$VENV_NAME/bin/activate" ]; then
+    source "$VENV_NAME/bin/activate"
+    echo "✅ Virtual environment activated"
+    
+    # Verify pip is available
+    if ! command -v pip >/dev/null 2>&1; then
+        echo "🔧 Pip not found in venv, reinstalling..."
+        python3 -m ensurepip --default-pip || {
+            echo "❌ Failed to install pip"
+            exit 1
+        }
+    fi
+else
+    echo "❌ ERROR: Cannot find activation script: $VENV_NAME/bin/activate"
+    echo "💡 Virtual environment may be corrupted. Try deleting and recreating."
+    exit 1
+fi
+
+# --- Enhanced Dependencies Installation with Multiple Fallbacks ---
+echo "📦 Installing dependencies..."
+
+# Upgrade essential tools with fallbacks
+upgrade_pip_with_fallback() {
+    echo "🔄 Upgrading pip and essential tools..."
+    
+    # Try standard upgrade first
+    if python3 -m pip install --upgrade pip setuptools wheel 2>/dev/null; then
+        echo "✅ Pip upgraded successfully"
+        return 0
+    fi
+    
+    # Fallback: Try with --user flag
+    if python3 -m pip install --upgrade --user pip setuptools wheel 2>/dev/null; then
+        echo "✅ Pip upgraded (user install)"
+        return 0
+    fi
+    
+    # Fallback: Try without upgrade
+    echo "⚠️  Standard upgrade failed, trying alternative approach..."
+    python3 -m pip install --no-cache-dir pip setuptools wheel 2>/dev/null || {
+        echo "⚠️  WARNING: Could not upgrade pip, continuing with existing version"
+    }
+}
+
+install_with_fallback() {
+    local install_cmd="\$1"
+    local description="\$2"
+    local max_attempts=3
+    local attempt=1
+    
+    echo "🔄 Installing \$description..."
+    
+    while [[ \$attempt -le \$max_attempts ]]; do
+        if eval \$install_cmd 2>&1 | tee install.log; then
+            echo "✅ Successfully installed: \$description"
+            rm -f install.log
+            return 0
+        else
+            local exit_code=\$?
+            echo "⚠️  Install attempt \$attempt failed for \$description"
+            
+            # Analyze common pip errors
+            if [[ \$attempt -eq 1 ]]; then
+                if grep -q "network" install.log 2>/dev/null || grep -q "timeout" install.log 2>/dev/null; then
+                    echo "🔧 Network issue detected. Trying with different index..."
+                    eval "\${install_cmd/pip install/pip install --index-url https://pypi.org/simple/}" && return 0
+                elif grep -q "build.*failed" install.log 2>/dev/null; then
+                    echo "🔧 Build failure. Trying with pre-compiled wheels..."
+                    eval "\${install_cmd/pip install/pip install --only-binary=all}" && return 0
+                elif grep -q "python version" install.log 2>/dev/null; then
+                    echo "🔧 Python version issue. Checking compatibility..."
+                    python3 --version
+                fi
+            fi
+            
+            if [[ \$attempt -lt \$max_attempts ]]; then
+                echo "⏳ Waiting 3 seconds before retry..."
+                sleep 3
+            fi
+            ((attempt++))
+        fi
+    done
+    
+    echo "❌ Failed to install: \$description"
+    echo "🔍 Check install.log for details"
+    return 1
+}
+
+upgrade_pip_with_fallback
 
 INSTALLED_DEPS=false
+FAILED_INSTALLS=""
 
-# 1. Custom Path
+# 1. Custom Requirements Path (highest priority)
 if [ -n "$CUSTOM_REQ_PATH" ] && [ -f "$CUSTOM_REQ_PATH" ]; then
-    echo "Installing from custom path: $CUSTOM_REQ_PATH"
-    pip install -r "$CUSTOM_REQ_PATH"
-    INSTALLED_DEPS=true
+    if install_with_fallback "pip install -r \"$CUSTOM_REQ_PATH\"" "custom requirements"; then
+        INSTALLED_DEPS=true
+    else
+        FAILED_INSTALLS="\$FAILED_INSTALLS \$CUSTOM_REQ_PATH"
+    fi
 fi
 
 # 1.5 Custom Install Command
 if [ -n "$CUSTOM_INSTALL_CMD" ]; then
-    echo "Running custom install command..."
-    $CUSTOM_INSTALL_CMD
-    INSTALLED_DEPS=true
+    echo "🔧 Running custom install command..."
+    if install_with_fallback "\$CUSTOM_INSTALL_CMD" "custom install command"; then
+        INSTALLED_DEPS=true
+    else
+        FAILED_INSTALLS="\$FAILED_INSTALLS custom-command"
+    fi
 fi
 
 # 2. Configured Dependencies (from repos.js)
 ${dependencies ? `
-    echo "Using configured dependencies..."
-    ${dependencies.command ? dependencies.command :
-                        dependencies.files ? dependencies.files.map(f => `pip install -r "${f}"`).join('\n    ') :
-                            'echo "No specific dependency files configured."'}
-    INSTALLED_DEPS=true
-` : `
-    # 3. Fallback: Open edX / Specific Logic (Legacy/Backup)
-    if [[ "$REPO_URL" == *"edx-platform"* ]]; then
-        echo "Detected Open edX platform..."
-        if [ -f "requirements/pip.txt" ]; then pip install -r requirements/pip.txt; fi
-        if [ -f "requirements/edx/base.txt" ]; then 
-            pip install -r requirements/edx/base.txt
+    echo "📋 Using configured dependencies..."
+    ${dependencies.command ?
+                        `if install_with_fallback "${dependencies.command}" "configured dependencies"; then
             INSTALLED_DEPS=true
+        else
+            FAILED_INSTALLS="\$FAILED_INSTALLS configured-deps"
+        fi` :
+                        dependencies.files ? dependencies.files.map(f => `
+    if [ -f "${f}" ]; then
+        if install_with_fallback "pip install -r \"${f}\"" "${f}"; then
+            INSTALLED_DEPS=true
+        else
+            FAILED_INSTALLS="\$FAILED_INSTALLS ${f}"
         fi
+    fi`).join('\n    ') :
+                            'echo "ℹ️  No specific dependency files configured."'}
+` : `
+    # 3. Smart Fallback: Repository-specific logic
+    if [[ "$REPO_URL" == *"edx-platform"* ]]; then
+        echo "🎓 Detected Open edX platform..."
+        [ -f "requirements/pip.txt" ] && install_with_fallback "pip install -r requirements/pip.txt" "Open edX pip requirements" && INSTALLED_DEPS=true
+        [ -f "requirements/edx/base.txt" ] && install_with_fallback "pip install -r requirements/edx/base.txt" "Open edX base requirements" && INSTALLED_DEPS=true
     fi
 
-    # 4. Fallback: Auto-Discovery
+    # 4. Enhanced Auto-Discovery with Multiple Patterns
     if [ "$INSTALLED_DEPS" = false ]; then
-        DEP_FILES=("requirements.txt" "requirements/dev.txt" "requirements/development.txt" "requirements/base.txt" "requirements-dev.txt")
-        for main_file in "\${DEP_FILES[@]}"; do
-            if [ -f "$main_file" ]; then
-                echo "Found $main_file, installing..."
-                pip install -r "$main_file"
-                INSTALLED_DEPS=true
-                break 
+        echo "🔍 Auto-discovering dependency files..."
+        declare -A DEP_PATTERNS=(
+            ["requirements.txt"]="standard requirements"
+            ["requirements/dev.txt"]="development requirements" 
+            ["requirements/development.txt"]="development requirements"
+            ["requirements/base.txt"]="base requirements"
+            ["requirements-dev.txt"]="dev requirements (alt)"
+            ["Pipfile"]="Pipfile dependencies"
+            ["pyproject.toml"]="PEP 518 dependencies"
+        )
+        
+        for dep_file in "\${!DEP_PATTERNS[@]}"; do
+            if [ -f "\$dep_file" ]; then
+                local description="\${DEP_PATTERNS[\$dep_file]}"
+                
+                case "\$dep_file" in
+                    "Pipfile")
+                        if install_with_fallback "pipenv install --deploy" "\$description"; then
+                            INSTALLED_DEPS=true
+                            break
+                        fi
+                        ;;
+                    "pyproject.toml")
+                        if install_with_fallback "pip install -e ." "\$description"; then
+                            INSTALLED_DEPS=true
+                            break
+                        fi
+                        ;;
+                    *)
+                        if install_with_fallback "pip install -r \"\$dep_file\"" "\$description"; then
+                            INSTALLED_DEPS=true
+                            break
+                        fi
+                        ;;
+                esac
             fi
         done
     fi
 
-    # 5. Fallback: Build Systems
-    if [ "$INSTALLED_DEPS" = false ] && ([ -f "pyproject.toml" ] || [ -f "setup.py" ]); then
-        echo "Detected buildable project..."
-        pip install -e . || pip install .
-        INSTALLED_DEPS=true
+    # 5. Build System Fallback
+    if [ "$INSTALLED_DEPS" = false ] && ([ -f "setup.py" ] || [ -f "pyproject.toml" ]); then
+        echo "🔨 Detected buildable project, trying installation..."
+        if install_with_fallback "pip install -e ." "editable install"; then
+            INSTALLED_DEPS=true
+        elif install_with_fallback "pip install ." "standard install"; then
+            INSTALLED_DEPS=true
+        fi
     fi
 `}
 
-if [ "$INSTALLED_DEPS" = false ]; then
-    echo "WARNING: No standard dependency files found (requirements.txt, pyproject.toml, etc)."
-    echo "You may need to manually install dependencies."
+# Final Status and Guidance
+if [ "$INSTALLED_DEPS" = true ]; then
+    echo "✅ Dependencies installation completed"
+else
+    echo "⚠️  WARNING: Could not install dependencies automatically"
+    echo "🔍 Failed installs: \$FAILED_INSTALLS"
+    echo ""
+    echo "💡 Manual installation suggestions:"
+    echo "   1. Check the log files (install.log, venv.log, clone.log)"
+    echo "   2. Try installing manually: pip install -r requirements.txt"
+    echo "   3. Check Python version compatibility"
+    echo "   4. Verify internet connection and DNS"
+    echo ""
+    echo "📋 Common solutions:"
+    echo "   - Network issues: pip install --index-url https://pypi.org/simple/"
+    echo "   - Build failures: pip install --only-binary=all"
+    echo "   - Permission errors: Use virtual environment (already created)"
 fi
 
 ${dbType === 'postgresql' ? `
@@ -1357,17 +1936,12 @@ echo "Done."
                     document.getElementById('cmdPostInstall').value = "";
                 }
 
-                // Horilla Specials: Default to admin/admin for demo data compatibility
-                if (repo.name.includes("Horilla")) {
-                    document.getElementById('adminUser').value = "admin";
-                    document.getElementById('adminPass').value = "admin";
-                } else {
-                    // Reset to generic defaults if switching OUT of Horilla
-                    if (document.getElementById('adminUser').value === "admin" && document.getElementById('adminPass').value === "admin") {
-                        document.getElementById('adminUser').value = "admin";
-                        document.getElementById('adminPass').value = "admin123";
-                    }
-                }
+                // Apply Repo Defaults (if configured) or Standard Defaults
+                const defaultUser = (repo.defaults && repo.defaults.adminUser) ? repo.defaults.adminUser : "admin";
+                const defaultPass = (repo.defaults && repo.defaults.adminPass) ? repo.defaults.adminPass : "admin123";
+
+                document.getElementById('adminUser').value = defaultUser;
+                document.getElementById('adminPass').value = defaultPass;
 
                 // Feature Flags Control
                 const hasDb = repo.features ? (repo.features.hasDb !== false) : true;
@@ -1524,21 +2098,57 @@ DB_ENGINE=django.db.backends.sqlite3
 DB_NAME=db.sqlite3
 DATABASE_URL=sqlite:///db.sqlite3
 `}
-${repoName.toLowerCase().includes('horilla') ? `
-# Horilla Specific
-DB_IN_PASSWORD=horilla` : ''}
 `;
         }
 
         async function saveToFolder() {
-            if (!('showDirectoryPicker' in window)) { showFeedback("Browser not supported."); return; }
+            // --- DESKTOP MODE (ELECTRON) ---
+            if (window.electron) {
+                try {
+                    const dirPath = await window.electron.selectDirectory();
+                    if (!dirPath) return; // User cancelled
+
+                    showFeedback("Saving files...");
+
+                    const files = [
+                        { name: 'setup.sh', id: 'setupCode' },
+                        { name: 'fresh-db.sh', id: 'freshCode' },
+                        { name: 'dev-server.sh', id: 'serverCode' },
+                        { name: '.env', id: 'envCode' }
+                    ];
+
+                    for (const f of files) {
+                        const content = document.getElementById(f.id).textContent;
+                        await window.electron.saveFile(dirPath, f.name, content);
+                    }
+
+                    showFeedback("Files saved. Launching terminal...");
+
+                    // Trigger External Terminal
+                    const result = await window.electron.openTerminal(dirPath);
+                    if (!result.success) {
+                        alert("Failed to launch terminal: " + result.error);
+                    }
+
+                } catch (err) {
+                    console.error(err);
+                    alert("Error in desktop mode: " + err.message);
+                }
+                return;
+            }
+
+            // --- WEB MODE (BROWSER) ---
+            if (!('showDirectoryPicker' in window)) {
+                alert("Your browser does not support checking/saving to a local folder directly (File System Access API).\n\nPlease use Chrome/Edge/Opera, or manually download the individual files below.");
+                return;
+            }
             try {
                 const dirHandle = await window.showDirectoryPicker();
                 const files = [
                     { name: 'setup.sh', id: 'setupCode' },
                     { name: 'fresh-db.sh', id: 'freshCode' },
                     { name: 'dev-server.sh', id: 'serverCode' },
-                    { name: '.env.example', id: 'envCode' }
+                    { name: '.env', id: 'envCode' }
                 ];
                 for (const file of files) {
                     const content = document.getElementById(file.id).textContent;
@@ -1599,79 +2209,7 @@ DB_IN_PASSWORD=horilla` : ''}
             }
         }
 
-        let isArchiveInProgress = false;
 
-        async function handleArchiveCreation() {
-            // Prevent multiple simultaneous executions
-            if (isArchiveInProgress) return;
-            isArchiveInProgress = true;
-
-            try {
-                // Check browser support
-                if (!('showDirectoryPicker' in window)) {
-                    alert("Browser not supported. Please use Chrome, Edge, or Opera 86+");
-                    return;
-                }
-
-                // Check if fflate is loaded
-                if (typeof fflate === 'undefined') {
-                    alert("Archive library not loaded. Please refresh the page.");
-                    return;
-                }
-
-                // Step 1: Select source directory
-                showFeedback("Select directory to archive...");
-                const sourceHandle = await window.showDirectoryPicker();
-
-                // Step 2: Prompt for archive name with smart default
-                const date = new Date().toISOString().split('T')[0];
-                const defaultName = `${sourceHandle.name}-backup-${date}.tar.gz`;
-                const archiveName = prompt("Enter archive name:", defaultName);
-
-                if (!archiveName) return; // User cancelled
-
-                // Ensure .tar.gz extension
-                const finalName = archiveName.endsWith('.tar.gz') ? archiveName :
-                    archiveName.endsWith('.tar') ? archiveName + '.gz' :
-                        archiveName + '.tar.gz';
-
-                showFeedback(`Creating archive: ${finalName}...`);
-
-                // Step 3: Read directory contents recursively
-                const files = await readDirectoryRecursive(sourceHandle, '');
-
-                if (files.length === 0) {
-                    alert("No files found to archive.");
-                    return;
-                }
-
-                showFeedback(`Archiving ${files.length} files...`);
-
-                // Step 4: Create TAR archive using fflate
-                const tarData = await createTarGz(files);
-
-                // Step 5: Save the file
-                showFeedback("Saving archive...");
-                const blob = new Blob([tarData], { type: 'application/gzip' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = finalName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-
-                showFeedback(`Archive created successfully: ${files.length} files archived!`);
-            } catch (e) {
-                if (e.name !== 'AbortError') {
-                    console.error(e);
-                    alert(`Error creating archive: ${e.message}`);
-                }
-            } finally {
-                isArchiveInProgress = false;
-            }
-        }
 
         /**
          * Recursively read directory contents

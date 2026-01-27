@@ -677,3 +677,52 @@ button,
     color: hsl(var(--primary));
     margin-right: 4px;
 }
+
+/* =========================================
+   7. Modals
+   ========================================= */
+.modal-overlay {
+    background: rgba(0, 0, 0, 0.7);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9998;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 500px;
+    width: 90%;
+    z-index: 9999;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal h3 {
+    margin: 0 0 16px 0;
+    font-size: 20px;
+}
+
+.modal p {
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
