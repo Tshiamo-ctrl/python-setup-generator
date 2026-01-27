@@ -92,6 +92,16 @@ ipcMain.handle('save-file', async (event, { directory, filename, content }) => {
         }
 
         fs.writeFileSync(fullPath, content);
+
+        // Auto-make shell scripts executable to avoid race conditions/warnings during execution
+        if (sanitizedFilename.endsWith('.sh') && process.platform !== 'win32') {
+            try {
+                fs.chmodSync(fullPath, '755');
+            } catch (chmodErr) {
+                console.warn(`Failed to set executable permissions for ${fullPath}:`, chmodErr);
+            }
+        }
+
         return {
             success: true,
             path: fullPath,
