@@ -36,7 +36,7 @@ const REPO_LIST = [
                 },
                 features: {
                     hasDb: true,
-                    hasDemo: false
+                    hasDemo: true
                 },
                 knownIssues: "⚠️ Requires libpq-dev: Run 'sudo apt-get install libpq-dev' before setup, or edit requirements.txt to use psycopg[binary] instead of psycopg[c]"
             },
@@ -117,31 +117,7 @@ const REPO_LIST = [
                 },
                 knownIssues: "⚠️ High Resource Usage: Minimum 8GB RAM recommended. Docker required for Tutor."
             },
-            {
-                name: "ERPNext (Frappe)",
-                url: "https://github.com/frappe/erpnext.git",
-                description: "World's best 100% open source ERP",
-                framework: "frappe",
-                complexity: "Expert",
-                stars: "18k+",
-                setupCommands: {
-                    preInstall: "sudo apt-get install -y git python3-dev python3-setuptools python3-pip virtualenv libffi-dev libssl-dev libmysqlclient-dev redis-server software-properties-common mariadb-server mariadb-client xvfb libfontconfig wkhtmltopdf || echo 'System deps install skipped'",
-                    postInstall: "pip install frappe-bench && bench init frappe-bench && cd frappe-bench && bench get-app erpnext && bench new-site mysite.local --admin-password admin",
-                    runServer: "cd frappe-bench && bench start"
-                },
-                dependencies: {
-                    mode: 'manual',
-                    command: 'pip install frappe-bench'
-                },
-                features: {
-                    hasDb: true,
-                    hasDemo: true
-                },
-                defaults: {
-                    adminUser: "Administrator",
-                    adminPass: "admin"
-                }
-            },
+
             {
                 name: "Zulip",
                 url: "https://github.com/zulip/zulip.git",
