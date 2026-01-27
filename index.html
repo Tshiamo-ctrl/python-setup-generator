@@ -397,8 +397,14 @@
                     <div class="quick-actions-grid">
                         <!-- Save Workspace -->
                         <div class="action-card" onclick="saveToFolder()">
-                            <h4>Save All</h4>
-                            <p>Download folder</p>
+                            <h4>Run Setup</h4>
+                            <p>Save & Execute</p>
+                        </div>
+
+                        <!-- Reset Environment -->
+                        <div class="action-card" onclick="handleResetAction()" style="border-left: 4px solid #f59e0b;">
+                            <h4>Reset Env</h4>
+                            <p>Wipe Venv & Re-run</p>
                         </div>
 
                         <!-- Make Executable -->
@@ -2162,6 +2168,65 @@ DATABASE_URL=sqlite:///db.sqlite3
             } catch (e) {
                 console.error(e);
                 showFeedback("Error saving to folder");
+            }
+        }
+
+        async function handleResetAction() {
+            if (!window.electron) {
+                alert("This feature is only available in Desktop App mode.");
+                return;
+            }
+
+            try {
+                // 1. Select Folder
+                const dirPath = await window.electron.selectDirectory();
+                if (!dirPath) return;
+
+                // 2. Confirm
+                const venvName = document.getElementById('venvName').value;
+                const confirmMsg = `⚠️ RESET ENVIRONMENT ⚠️\n\nTarget: ${dirPath}\nAction: DELETE virtual environment (${venvName}), database, and dependencies.\nThen: Re-run setup.sh.\n\nSource code will NOT be touched.\n\nProceed?`;
+
+                if (!confirm(confirmMsg)) return;
+
+                showFeedback("Cleaning environment...");
+
+                // 3. Delete Env Only
+                const result = await window.electron.deleteItems(dirPath, 'env', venvName);
+                if (!result.success) {
+                    alert(`Reset failed: ${result.error}`);
+                    return;
+                }
+
+                // 4. Re-run Setup (Reuse logic)
+                showFeedback("Environment cleared. Re-running setup...");
+
+                // We need to pass the specific path to saveToFolder, but saveToFolder currently asks for user input.
+                // Refactoring saveToFolder to accept an optional path argument would be cleanest.
+                // Let's call the internal logic directly or modify saveToFolder.
+                // For minimally invasive change, let's call the electron save/run logic directly here.
+
+                const files = [
+                    { name: 'setup.sh', id: 'setupCode' },
+                    { name: 'fresh-db.sh', id: 'freshCode' },
+                    { name: 'dev-server.sh', id: 'serverCode' },
+                    { name: '.env', id: 'envCode' }
+                ];
+
+                for (const f of files) {
+                    const content = document.getElementById(f.id).textContent;
+                    await window.electron.saveFile(dirPath, f.name, content);
+                }
+
+                showFeedback("Launching terminal...");
+                const termResult = await window.electron.openTerminal(dirPath);
+
+                if (!termResult.success) {
+                    alert("Failed to launch terminal: " + termResult.error);
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert("Error during reset: " + err.message);
             }
         }
 
