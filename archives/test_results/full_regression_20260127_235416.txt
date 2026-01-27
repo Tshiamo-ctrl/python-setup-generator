@@ -1,0 +1,12 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0
+rootdir: /home/tmo/Documents/Horilla_setup_generator_app
+plugins: playwright-0.7.2, base-url-2.1.0
+collected 44 items
+
+tests/test_demo_data.py ...                                              [  6%]
+tests/test_generator.py ...............................                  [ 77%]
+tests/test_new_repos.py .......                                          [ 93%]
+tests/test_ui_logic.py ...                                               [100%]
+
+======================== 44 passed in 79.81s (0:01:19) =========================

@@ -5,7 +5,7 @@ def test_mutual_exclusivity_basic(page: Page):
     """
     Test basic mutual exclusivity: checks one unchecks the other.
     """
-    page.goto("file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html")
+    page.goto("file:///home/tmo/Documents/Horilla_setup_generator_app/index.html")
     
     # Wait for hydration
     page.wait_for_selector("#initDb")
@@ -28,7 +28,7 @@ def test_create_admin_suppression(page: Page):
     """
     Test that Create Admin is unchecked when Load Demo is checked.
     """
-    page.goto("file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html")
+    page.goto("file:///home/tmo/Documents/Horilla_setup_generator_app/index.html")
     page.wait_for_selector("#initDb")
     
     # Default: Create Admin checked (assuming standard flow)
@@ -55,7 +55,7 @@ def test_run_server_suppression_manual_mode(page: Page):
     """
     Test that Run Server is unchecked if NEITHER InitDB nor LoadDemo is checked.
     """
-    page.goto("file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html")
+    page.goto("file:///home/tmo/Documents/Horilla_setup_generator_app/index.html")
     page.wait_for_selector("#initDb")
     
     # Default: InitDB Checked -> Run Server Checked (default)

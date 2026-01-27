@@ -6,7 +6,7 @@ def test_mutual_exclusivity_init_db_demo_data(page: Page):
     """
     Test that 'Initialize Database' and 'Load Demo Data' are mutually exclusive.
     """
-    page.goto("file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html")
+    page.goto("file:///home/tmo/Documents/Horilla_setup_generator_app/index.html")
     
     # Ensure both are present
     init_db = page.locator("#initDb")
@@ -42,7 +42,7 @@ def test_horilla_hrm_demo_data_script(page: Page):
     """
     Verify script generation for Horilla HRM with Demo Data.
     """
-    page.goto("file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html")
+    page.goto("file:///home/tmo/Documents/Horilla_setup_generator_app/index.html")
     
     # Wait for population (attached, not visible)
     page.wait_for_selector("#repoSelect option:nth-child(2)", state="attached")
@@ -68,7 +68,7 @@ def test_openedx_demo_data_script(page: Page):
     """
     Verify script generation for OpenEdX with Demo Data.
     """
-    page.goto("file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html")
+    page.goto("file:///home/tmo/Documents/Horilla_setup_generator_app/index.html")
     
     # Wait for population
     page.wait_for_selector("#repoSelect option:nth-child(2)", state="attached")

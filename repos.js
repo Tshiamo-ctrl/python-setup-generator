@@ -734,6 +734,51 @@ const REPO_LIST = [
                 }
             },
             {
+                name: "Frappe Docker",
+                url: "https://github.com/frappe/frappe_docker.git",
+                description: "Docker Setup for Frappe/ERPNext",
+                framework: "generic",
+                complexity: "Intermediate",
+                stars: "2k+",
+                setupCommands: {
+                    postInstall: "cp .env.sample .env",
+                    runServer: "docker-compose up -d"
+                }
+            },
+            {
+                name: "Frappe Press",
+                url: "https://github.com/frappe/press.git",
+                description: "Press: Manage Frappe Sites in Production",
+                framework: "frappe",
+                complexity: "Expert",
+                stars: "500+",
+                setupCommands: {
+                    postInstall: "bench get-app https://github.com/frappe/press"
+                }
+            },
+            {
+                name: "Frappe Payments",
+                url: "https://github.com/frappe/payments.git",
+                description: "Payment Gateway integrations for Frappe",
+                framework: "frappe",
+                complexity: "Intermediate",
+                stars: "200+",
+                setupCommands: {
+                    postInstall: "bench --site mysite.local install-app payments"
+                }
+            },
+            {
+                name: "Frappe Helm",
+                url: "https://github.com/frappe/helm.git",
+                description: "Helm Chart for Frappe/ERPNext",
+                framework: "generic",
+                complexity: "Intermediate",
+                stars: "400+",
+                setupCommands: {
+                    postInstall: "helm repo add frappe https://helm.frappe.io"
+                }
+            },
+            {
                 name: "Odoo",
                 url: "https://github.com/odoo/odoo.git",
                 description: "Business management suite",
@@ -947,89 +992,6 @@ const REPO_LIST = [
                 stars: "9k+",
                 setupCommands: {
                     postInstall: "pip install uvicorn[standard] && pip install falcon"
-                }
-            }
-        ]
-    },
-    {
-        category: "Frappe Ecosystem",
-        repos: [
-            {
-                name: "Frappe Docker",
-                url: "https://github.com/frappe/frappe_docker.git",
-                description: "Docker setup for Frappe/ERPNext",
-                framework: "generic",
-                complexity: "Advanced",
-                stars: "1.5k+",
-                setupCommands: {
-                    preInstall: "cp .env.sample .env",
-                    runServer: "docker-compose up -d"
-                },
-                dependencies: {
-                    mode: 'manual',
-                    command: 'echo "Requires Docker and Docker Compose installed."'
-                }
-            },
-            {
-                name: "Frappe Press",
-                url: "https://github.com/frappe/press.git",
-                description: "SaaS Platform for Frappe Apps",
-                framework: "frappe",
-                complexity: "Expert",
-                stars: "500+",
-                setupCommands: {
-                    preInstall: "bench get-app https://github.com/frappe/press",
-                    runServer: "bench start"
-                },
-                dependencies: {
-                    mode: 'manual',
-                    command: 'echo "Requires Frappe Bench environment."'
-                }
-            },
-            {
-                name: "Frappe Bench",
-                url: "https://github.com/frappe/bench.git",
-                description: "CLI to manage Frappe Deployments",
-                framework: "generic",
-                complexity: "Intermediate",
-                stars: "1.5k+",
-                setupCommands: {
-                    postInstall: "pip install -e ."
-                },
-                dependencies: {
-                    mode: 'pip',
-                    command: 'pip install -e .'
-                }
-            },
-            {
-                name: "Frappe Payments",
-                url: "https://github.com/frappe/payments.git",
-                description: "Payments App for Frappe",
-                framework: "frappe",
-                complexity: "Intermediate",
-                stars: "100+",
-                setupCommands: {
-                    preInstall: "bench get-app https://github.com/frappe/payments",
-                    postInstall: "bench --site mysite.local install-app payments && echo 'NOTE: Replace mysite.local with your actual site name'"
-                },
-                dependencies: {
-                    mode: 'manual',
-                    command: 'echo "Requires Frappe Bench environment."'
-                }
-            },
-            {
-                name: "Frappe Helm",
-                url: "https://github.com/frappe/helm.git",
-                description: "Helm Charts for Frappe/ERPNext",
-                framework: "generic",
-                complexity: "Advanced",
-                stars: "200+",
-                setupCommands: {
-                    preInstall: "helm repo add frappe https://helm.erpnext.com"
-                },
-                dependencies: {
-                    mode: 'manual',
-                    command: 'echo "Requires Kubernetes and Helm."'
                 }
             }
         ]
