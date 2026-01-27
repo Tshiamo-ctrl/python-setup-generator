@@ -1,0 +1,33 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0
+rootdir: /home/tmo/Documents/dev/Horilla_setup_generator_app
+plugins: playwright-0.7.2, base-url-2.1.0
+collected 31 items
+
+tests/test_generator.py .........................F.....                  [100%]
+
+=================================== FAILURES ===================================
+______________________ test_open_edx_specifics[chromium] _______________________
+
+page_on_index = <Page url='file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html'>
+
+    def test_open_edx_specifics(page_on_index: Page):
+        """Verify Open edX specific logic is triggered by repo URL"""
+        page_on_index.select_option("#repoSelect", value="custom")
+        # Must contain 'edx-platform' to trigger
+        page_on_index.fill("#customRepoUrl", "https://github.com/openedx/edx-platform.git")
+        page_on_index.click("button:has-text('Continue to Scripts')")
+        page_on_index.wait_for_timeout(500)
+    
+        setup_code = page_on_index.locator("#setupCode").inner_text()
+    
+        # Modern explicit dependency configuration
+        assert 'Using configured dependencies' in setup_code
+        # It should explicitly list the files from repos.js (no quotes around path in generated command)
+>       assert 'pip install -r requirements/edx/base.txt' in setup_code
+E       assert 'pip install -r requirements/edx/base.txt' in '#!/bin/bash\n# edx-platform - Development Setup Script\n# Generated: $(date)\n# Enhanced with defensive error handlin...e.py not found!"\nfi\n\n\necho ""\necho "Setup Complete!"\n\necho "Launching Server..."\n"$SCRIPT_DIR/dev-server.sh"\n'
+
+tests/test_generator.py:536: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_generator.py::test_open_edx_specifics[chromium] - assert 'p...
+=================== 1 failed, 30 passed in 61.98s (0:01:01) ====================

@@ -1,0 +1,93 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0
+rootdir: /home/tmo/Documents/dev/Horilla_setup_generator_app
+plugins: playwright-0.7.2, base-url-2.1.0
+collected 31 items
+
+tests/test_generator.py .................F.....F.F..F..                  [100%]
+
+=================================== FAILURES ===================================
+______________________ test_quick_actions_panel[chromium] ______________________
+
+page_on_index = <Page url='file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html'>
+
+    def test_quick_actions_panel(page_on_index: Page):
+        """Test Quick Actions panel appears and has correct buttons"""
+        # Generate scripts
+        page_on_index.select_option("#repoSelect", value="custom")
+        page_on_index.fill("#customRepoUrl", "https://github.com/test/repo.git")
+        page_on_index.click("button:has-text('Continue to Scripts')")
+    
+        page_on_index.wait_for_timeout(500)
+    
+        # Quick actions should be visible
+        expect(page_on_index.locator("#quickActions")).to_be_visible()
+    
+        # Check all 4 action cards exist by their unique text
+>       expect(page_on_index.locator(".action-card:has-text('Run Setup')")).to_be_visible()
+E       AssertionError: Locator expected to be visible
+E       Actual value: None
+E       Error: strict mode violation: locator(".action-card:has-text('Run Setup')") resolved to 2 elements:
+E           1) <div class="action-card" onclick="saveToFolder()">…</div> aka get_by_text("Run Setup Save & Execute")
+E           2) <div class="action-card" onclick="copyCode('./setup.sh')">…</div> aka get_by_text("Run Setup ./setup.sh")
+E        
+E       Call log:
+E         - Expect "to_be_visible" with timeout 5000ms
+E         - waiting for locator(".action-card:has-text('Run Setup')")
+
+tests/test_generator.py:381: AssertionError
+______________ test_dependency_priority_logic_in_script[chromium] ______________
+
+page_on_index = <Page url='file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html'>
+
+    def test_dependency_priority_logic_in_script(page_on_index: Page):
+        """Verify that the generated script contains the dependency priority list logic"""
+        page_on_index.select_option("#repoSelect", value="custom")
+        page_on_index.fill("#customRepoUrl", "https://github.com/test/generic.git")
+        page_on_index.click("button:has-text('Continue to Scripts')")
+        page_on_index.wait_for_timeout(500)
+    
+        setup_code = page_on_index.locator("#setupCode").inner_text()
+    
+        # Check for the priority list associative array
+        assert 'declare -A DEP_PATTERNS=(' in setup_code
+        assert '["requirements.txt"]="standard requirements"' in setup_code
+>       assert 'pip install -r "$dep_file"' in setup_code
+E       assert 'pip install -r "$main_file"' in '#!/bin/bash\n# generic - Development Setup Script\n# Generated: $(date)\n# Enhanced with defensive error handling and...e.py not found!"\nfi\n\n\necho ""\necho "Setup Complete!"\n\necho "Launching Server..."\n"$SCRIPT_DIR/dev-server.sh"\n'
+
+tests/test_generator.py:510: AssertionError
+______________________ test_open_edx_specifics[chromium] _______________________
+
+page_on_index = <Page url='file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html'>
+
+    def test_open_edx_specifics(page_on_index: Page):
+        """Verify Open edX specific logic is triggered by repo URL"""
+        page_on_index.select_option("#repoSelect", value="custom")
+        # Must contain 'edx-platform' to trigger
+        page_on_index.fill("#customRepoUrl", "https://github.com/openedx/edx-platform.git")
+        page_on_index.click("button:has-text('Continue to Scripts')")
+        page_on_index.wait_for_timeout(500)
+    
+        setup_code = page_on_index.locator("#setupCode").inner_text()
+    
+        # Modern explicit dependency configuration
+        assert 'Using configured dependencies' in setup_code
+        # It should explicitly list the files from repos.js (no quotes around path in generated command)
+>       assert 'pip install -r requirements/edx/base.txt' in setup_code
+E       assert 'pip install -r requirements/edx/base.txt' in '#!/bin/bash\n# edx-platform - Development Setup Script\n# Generated: $(date)\n# Enhanced with defensive error handlin...e.py not found!"\nfi\n\n\necho ""\necho "Setup Complete!"\n\necho "Launching Server..."\n"$SCRIPT_DIR/dev-server.sh"\n'
+
+tests/test_generator.py:535: AssertionError
+____________________ test_horilla_specific_setup[chromium] _____________________
+
+page_on_index = <Page url='file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html'>
+
+>   ???
+E   AssertionError: assert 'DB_IN_PASSWORD=horilla' in '# horilla Environment Variables\nDEBUG=True\nSECRET_KEY=dev-secret-key-CHANGE-IN-PROD\nALLOWED_HOSTS=*\n\n# Database\n\nDB_ENGINE=django.db.backends.sqlite3\nDB_NAME=db.sqlite3\nDATABASE_URL=sqlite:///db.sqlite3\n\n'
+
+tests/test_generator.py:604: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_generator.py::test_quick_actions_panel[chromium] - Assertio...
+FAILED tests/test_generator.py::test_dependency_priority_logic_in_script[chromium]
+FAILED tests/test_generator.py::test_open_edx_specifics[chromium] - assert 'p...
+FAILED tests/test_generator.py::test_horilla_specific_setup[chromium] - Asser...
+=================== 4 failed, 27 passed in 79.43s (0:01:19) ====================

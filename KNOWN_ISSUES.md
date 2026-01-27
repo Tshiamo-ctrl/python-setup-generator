@@ -13,25 +13,25 @@ This document tracks known issues and areas for improvement. Contributors are en
 
 ## ⚠️ Limitations
 
-### 2. File System Access API Browser Compatibility
-**Location**: `index.html` - `saveToFolder()` and `handleDeletionAction()`  
-**Issue**: The `showDirectoryPicker()` API is only supported in Chromium-based browsers (Chrome, Edge, Opera). Firefox and Safari users cannot use the "Save Workspace" or browser-based deletion features.  
-**Workaround**: Users can manually download individual scripts using the "Download" buttons.  
-**Suggestion**: Add a clear browser compatibility warning in the UI when these features are unavailable.
+### 2. File System Access API Browser Compatibility (Fixed)
+**Status**: Fixed in Version 1.X. Added browser check warning banner.
 
 ### 3. Windows Path Support
 **Location**: Generated shell scripts  
 **Issue**: Generated scripts use Bash syntax and Unix paths (e.g., `~/project`). Windows users must use WSL or Git Bash.  
 **Suggestion**: Consider adding PowerShell script generation option in the future.
 
+### 4. Native Archive Support on Windows
+**Location**: `main.js` - `archive-workspace` handler
+**Issue**: The native `tar` command used for archiving is optimized for Linux/macOS. Windows support is currently limited or reliant on basic node.js implementation which may be slower.
+**Suggestion**: Implement a specific Windows fallback using a compatible library or checking for system 7zip/tar availability.
+
 ---
 
 ## 🔧 Enhancements
 
-### 4. Save Workspace Should Include Clear Scripts
-**Location**: `index.html` - `saveToFolder()`  
-**Issue**: The "Save Workspace" feature only saves 4 core scripts (`setup.sh`, `fresh-db.sh`, `dev-server.sh`, `.env.example`). It does not include the clear scripts (`clear_workspace.sh`, `clear_repo.sh`, `clear_env.sh`).  
-**Suggestion**: Add checkboxes or include all scripts in the save operation.
+### 4. Save Workspace Should Include Clear Scripts (Fixed)
+**Status**: Fixed. Added clear scripts to file list in `saveToFolder`.
 
 ### 5. Missing Test Coverage for Edge Cases
 **Location**: `tests/test_generator.py`  
