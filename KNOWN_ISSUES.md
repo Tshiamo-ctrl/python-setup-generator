@@ -24,6 +24,11 @@ This document tracks known issues and areas for improvement. Contributors are en
 **Issue**: The native `tar` command used for archiving is optimized for Linux/macOS. Windows support is currently limited or reliant on basic node.js implementation which may be slower.
 **Suggestion**: Implement a specific Windows fallback using a compatible library or checking for system 7zip/tar availability.
 
+### 5. Demo Data Loading Optimization
+**Location**: `repos.js` - Horilla configuration
+**Issue**: The `initial_data` loading command for Horilla can be slow or fail on some environments.
+**Suggestion**: Optimize the `loaddata` command and verify fixture paths. Need to investigate better seed data strategies.
+
 ---
 
 ## 🔧 Enhancements

@@ -533,9 +533,11 @@ When adding new repositories to `repos.js`:
     url: "https://github.com/user/repo.git",
     framework: "django",  // or flask, fastapi, frappe, generic
     dbType: "postgresql",  // or sqlite
-    postInstallCmd: "command to run",  // optional
-    loadDemoCmd: "demo data command",  // optional
-    adminCommand: "create admin command",  // optional
+    setupCommands: {
+    	postInstall: "command to run",  // optional
+    	loadDemoCmd: "demo data command",  // optional
+    	adminCreate: "create admin command",  // optional
+    },
     knownIssues: "description of issues"  // optional
 }
 ```
