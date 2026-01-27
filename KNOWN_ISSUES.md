@@ -13,8 +13,6 @@ This document tracks known issues and areas for improvement. Contributors are en
 
 ## ⚠️ Limitations
 
-### 2. File System Access API Browser Compatibility (Fixed)
-**Status**: Fixed in Version 1.X. Added browser check warning banner.
 
 ### 3. Windows Path Support
 **Location**: Generated shell scripts  
@@ -30,8 +28,6 @@ This document tracks known issues and areas for improvement. Contributors are en
 
 ## 🔧 Enhancements
 
-### 4. Save Workspace Should Include Clear Scripts (Fixed)
-**Status**: Fixed. Added clear scripts to file list in `saveToFolder`.
 
 ### 5. Missing Test Coverage for Edge Cases
 **Location**: `tests/test_generator.py`  
@@ -45,3 +41,13 @@ This document tracks known issues and areas for improvement. Contributors are en
 **Location**: `tests/verify_repos.js`  
 **Issue**: Main test suite uses Python/Playwright, but repo verification uses Node.js, requiring two different runtimes.  
 **Suggestion**: Consider porting `verify_repos.js` to Python for consistency.
+
+---
+
+## 🟢 Resolved / Closed
+
+### File System Access API Browser Compatibility
+**Status**: Fixed. Added browser check warning banner.
+
+### Save Workspace Includes Clear Scripts
+**Status**: Fixed. Added clear scripts to file list in `saveToFolder`.
