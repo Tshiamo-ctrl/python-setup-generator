@@ -37,7 +37,7 @@ app.on('window-all-closed', function () {
 // 1. Select Directory
 ipcMain.handle('select-directory', async () => {
     const result = await dialog.showOpenDialog(mainWindow, {
-        properties: ['openDirectory', 'createDirectory']
+        properties: ['openDirectory']
     });
     return result.canceled ? null : result.filePaths[0];
 });
@@ -81,7 +81,7 @@ ipcMain.handle('save-file', async (event, { directory, filename, content }) => {
         }
 
         const fullPath = path.join(directory, sanitizedFilename);
-        
+
         // Defensive: Check if file exists and create backup
         let backupPath = null;
         if (fs.existsSync(fullPath)) {
@@ -92,15 +92,15 @@ ipcMain.handle('save-file', async (event, { directory, filename, content }) => {
         }
 
         fs.writeFileSync(fullPath, content);
-        return { 
-            success: true, 
+        return {
+            success: true,
             path: fullPath,
             backup: backupPath
         };
     } catch (error) {
         console.error('File write error:', error);
-        return { 
-            success: false, 
+        return {
+            success: false,
             error: error.message,
             code: error.code || 'UNKNOWN_ERROR'
         };
@@ -155,16 +155,16 @@ ipcMain.handle('run-external-terminal', async (event, { directory }) => {
 
             for (const terminal of terminals) {
                 try {
-                    const child = spawn(terminal.cmd, terminal.args, { 
+                    const child = spawn(terminal.cmd, terminal.args, {
                         cwd: directory,
                         detached: true,
                         stdio: 'ignore'
                     });
                     child.unref();
-                    
+
                     // Give it a moment to start
                     await new Promise(resolve => setTimeout(resolve, 100));
-                    
+
                     // Check if process is still running
                     if (child.pid && !child.killed) {
                         console.log(`Successfully launched terminal: ${terminal.cmd}`);
@@ -182,25 +182,25 @@ ipcMain.handle('run-external-terminal', async (event, { directory }) => {
         else if (platform === 'darwin') {
             // macOS Terminal with fallback to iTerm
             terminals.push(
-                { 
-                    cmd: 'osascript', 
-                    args: ['-e', `tell application "Terminal" to do script "cd '${directory}' && ./setup.sh"`] 
+                {
+                    cmd: 'osascript',
+                    args: ['-e', `tell application "Terminal" to do script "cd '${directory}' && ./setup.sh"`]
                 },
-                { 
-                    cmd: 'osascript', 
-                    args: ['-e', `tell application "iTerm" to create window with default profile command "cd '${directory}' && ./setup.sh"`] 
+                {
+                    cmd: 'osascript',
+                    args: ['-e', `tell application "iTerm" to create window with default profile command "cd '${directory}' && ./setup.sh"`]
                 }
             );
 
             for (const terminal of terminals) {
                 try {
-                    const child = spawn(terminal.cmd, terminal.args, { 
+                    const child = spawn(terminal.cmd, terminal.args, {
                         cwd: directory,
                         detached: true,
                         stdio: 'ignore'
                     });
                     child.unref();
-                    
+
                     await new Promise(resolve => setTimeout(resolve, 100));
                     return { success: true, terminal: terminal.cmd };
                 } catch (terminalError) {
@@ -214,30 +214,30 @@ ipcMain.handle('run-external-terminal', async (event, { directory }) => {
         else if (platform === 'win32') {
             // Windows with PowerShell and CMD fallbacks
             terminals.push(
-                { 
-                    cmd: 'powershell.exe', 
+                {
+                    cmd: 'powershell.exe',
                     args: ['-Command', `Start-Process cmd.exe -ArgumentList '/k', 'setup.sh' -WorkingDirectory '${directory}'`]
                 },
-                { 
-                    cmd: 'cmd.exe', 
-                    args: ['/c', 'start', 'cmd.exe', '/k', 'setup.sh'] 
+                {
+                    cmd: 'cmd.exe',
+                    args: ['/c', 'start', 'cmd.exe', '/k', 'setup.sh']
                 },
-                { 
-                    cmd: 'wt.exe', 
-                    args: ['new', 'cmd', '/k', 'setup.sh'] 
+                {
+                    cmd: 'wt.exe',
+                    args: ['new', 'cmd', '/k', 'setup.sh']
                 }
             );
 
             for (const terminal of terminals) {
                 try {
-                    const child = spawn(terminal.cmd, terminal.args, { 
+                    const child = spawn(terminal.cmd, terminal.args, {
                         cwd: directory,
                         detached: true,
                         stdio: 'ignore',
                         shell: true
                     });
                     child.unref();
-                    
+
                     await new Promise(resolve => setTimeout(resolve, 100));
                     return { success: true, terminal: terminal.cmd };
                 } catch (terminalError) {
@@ -252,7 +252,7 @@ ipcMain.handle('run-external-terminal', async (event, { directory }) => {
         return { success: true };
     } catch (error) {
         console.error('Terminal launch error:', error);
-        
+
         // Provide helpful guidance
         let userMessage = error.message;
         if (platform === 'linux') {
@@ -260,9 +260,9 @@ ipcMain.handle('run-external-terminal', async (event, { directory }) => {
         } else if (platform === 'win32') {
             userMessage += '\n\nSuggestion: Ensure Command Prompt or PowerShell is available';
         }
-        
-        return { 
-            success: false, 
+
+        return {
+            success: false,
             error: userMessage,
             platform: platform,
             code: error.code || 'TERMINAL_LAUNCH_FAILED'
