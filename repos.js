@@ -24,7 +24,8 @@ const REPO_LIST = [
                 setupCommands: {
                     preInstall: "cp .env.dist .env 2>/dev/null || cp .env.example .env 2>/dev/null || true",
                     postInstall: "python3 manage.py makemigrations && python3 manage.py migrate && echo \"\" && echo \"IMPORTANT: To initialize the database or load demo data, use the web UI. Authentication Password: d3f6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d\"",
-                    adminCreate: "python3 manage.py createhorillauser --first_name Admin --last_name Admin --username __USER__ --password __PASS__ --email __EMAIL__ --phone 1234567890"
+                    adminCreate: "python3 manage.py createhorillauser --first_name Admin --last_name Admin --username __USER__ --password __PASS__ --email __EMAIL__ --phone 1234567890",
+                    loadDemoCmd: "python3 manage.py loaddata initial_data"
                 },
                 dependencies: {
                     mode: 'pip',
@@ -50,7 +51,8 @@ const REPO_LIST = [
                 setupCommands: {
                     preInstall: "cp .env.dist .env 2>/dev/null || cp .env.example .env 2>/dev/null || true",
                     postInstall: "python3 manage.py makemigrations && python3 manage.py migrate && echo \"\" && echo \"IMPORTANT: To initialize the database or load demo data, use the web UI. Authentication Password: d3f6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d\"",
-                    adminCreate: "export DJANGO_SUPERUSER_PASSWORD=__PASS__ && python3 manage.py createsuperuser --noinput --username __USER__ --email __EMAIL__"
+                    adminCreate: "export DJANGO_SUPERUSER_PASSWORD=__PASS__ && python3 manage.py createsuperuser --noinput --username __USER__ --email __EMAIL__",
+                    loadDemoCmd: "python3 manage.py loaddata initial_data"
                 },
                 defaults: {
                     adminUser: "admin",
@@ -58,7 +60,7 @@ const REPO_LIST = [
                 },
                 features: {
                     hasDb: true,
-                    hasDemo: false
+                    hasDemo: true
                 }
             }
         ]
@@ -109,7 +111,8 @@ const REPO_LIST = [
                 setupCommands: {
                     preInstall: "echo 'Recommended: Use Tutor (https://docs.tutor.edly.io/) for easiest setup.' && (command -v docker >/dev/null || echo '⚠️ Docker is required for Tutor/Devstack') && sudo apt-get install -y build-essential python3-dev libmysqlclient-dev libssl-dev libffi-dev || echo 'System deps install skipped'",
                     postInstall: "echo 'To use Tutor (Recommended): pip install tutor && tutor local launch'\necho 'To use legacy Devstack: pip install -r requirements/pip.txt && pip install -r requirements/edx/base.txt'",
-                    runServer: "echo 'Run: tutor local start -d' # Or python3 manage.py runserver for legacy"
+                    runServer: "echo 'Run: tutor local start -d' # Or python3 manage.py runserver for legacy",
+                    loadDemoCmd: "tutor local do init --limit=demo"
                 },
                 dependencies: {
                     mode: 'pip',

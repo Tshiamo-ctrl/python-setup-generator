@@ -212,7 +212,7 @@
                         </div>
                         <div class="checkbox-item" id="demoOptionContainer"
                             onclick="document.getElementById('loadDemo').click()">
-                            <input type="checkbox" id="loadDemo" checked onclick="event.stopPropagation()">
+                            <input type="checkbox" id="loadDemo" onclick="event.stopPropagation()">
                             <span>Load Demo Data</span>
                         </div>
                         <div class="checkbox-item" id="createSuperContainer"
@@ -984,7 +984,26 @@ npm start</pre>
                 document.body.prepend(warning);
                 document.body.style.paddingTop = "50px";
             }
+            setupMutualExclusivity();
         });
+
+        function setupMutualExclusivity() {
+            const initDb = document.getElementById('initDb');
+            const loadDemo = document.getElementById('loadDemo');
+
+            if (initDb && loadDemo) {
+                initDb.addEventListener('change', () => {
+                    resolveMutualExclusivity('initDb');
+                });
+
+                loadDemo.addEventListener('change', () => {
+                    resolveMutualExclusivity('loadDemo');
+                });
+
+                // Initial Conflict Resolution
+                resolveMutualExclusivity();
+            }
+        }
 
         function checkForElectron() {
             if (window.electron) {
@@ -1684,16 +1703,25 @@ if [ -f "manage.py" ]; then
     python3 manage.py compilemessages 2>/dev/null || true
     ` : 'echo "Skipping database initialization as requested."'}
     
-    ${createSuper ? `
+    ${loadDemo ? `
+    echo "Loading Demo Data..."
+    ${demoDataCmd ? demoDataCmd : 'python3 manage.py loaddata initial_data 2>/dev/null || echo "No \'initial_data\' fixture found."'}
+    ` : `
+        # If neither InitDB nor LoadDemo is selected, show helpful info for manual setup
+        ${!initDb ? `
+        echo ""
+        echo "ℹ️  Manual Initialization Note:"
+        echo "   If you perform a manual setup for Horilla, you might need this password:"
+        echo "   Authentication Password: d3f6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d"
+        echo ""
+        ` : ''}
+    `}
+
+    ${createSuper && !loadDemo ? `
     echo "Creating Admin User..."
     export DJANGO_SUPERUSER_PASSWORD="${adminPass}"
     ${cmdAdmin} || echo "Admin creation failed or user exists."
     ` : ''}
-    
-    ${loadDemo ? `
-    echo "Loading Demo Data..."
-    ${demoDataCmd ? demoDataCmd : 'python3 manage.py loaddata initial_data 2>/dev/null || echo "No \'initial_data\' fixture found."'}
-    ` : 'echo "Skipping demo data loading as requested."'}
 else
     echo "Warning: manage.py not found!"
 fi
@@ -1813,6 +1841,19 @@ if [ "$confirm" != "DELETE" ]; then
     exit 0
 fi
 `;
+
+            if (mode === 'workspace') {
+                script += `
+echo "Cleaning entire workspace..."
+# Delete all files and directories in the current directory
+# (Preserving the script itself until the end if possible, or just nuking it too)
+find . -mindepth 1 -delete
+echo "Workspace cleared."
+exit 0
+`;
+                // Return early as we are done
+                return script;
+            }
 
             if (mode !== 'repo') {
                 script += `
@@ -2015,10 +2056,44 @@ echo "Done."
                 if (!hasDemo) {
                     document.getElementById('loadDemo').checked = false;
                 }
+
+                // Enforce exclusivity after potential state changes
+                resolveMutualExclusivity();
             }
 
             updateDbFields();
             toggleCustomConfig();
+        }
+
+        function resolveMutualExclusivity(source) {
+            const initDb = document.getElementById('initDb');
+            const loadDemo = document.getElementById('loadDemo');
+            const createSuper = document.getElementById('createSuper');
+            const runServer = document.getElementById('runServer');
+
+            if (initDb && loadDemo) {
+                // 1. Enforce Mutually Exclusive (Demo vs Init)
+                if (source === 'initDb' && initDb.checked) {
+                    loadDemo.checked = false;
+                } else if (source === 'loadDemo' && loadDemo.checked) {
+                    initDb.checked = false;
+                } else if (!source && loadDemo.checked && initDb.checked) {
+                    // Initial load fallback: Prioritize Demo
+                    initDb.checked = false;
+                }
+
+                // 2. Handle Create Superuser
+                // If Demo Data is loaded, uncheck create superuser
+                if (loadDemo.checked && createSuper) {
+                    createSuper.checked = false;
+                }
+
+                // 3. Handle Running Server
+                // If NEITHER is checked (Manual Mode), do NOT auto-launch server
+                if (!loadDemo.checked && !initDb.checked) {
+                    if (runServer) runServer.checked = false;
+                }
+            }
         }
 
         function generateScripts() {
@@ -2056,7 +2131,7 @@ echo "Done."
             if (repo) {
                 if (repo.setupCommands) {
                     if (repo.setupCommands.preInstall) preInstall = repo.setupCommands.preInstall;
-                    if (repo.setupCommands.demoData) demoDataCmd = repo.setupCommands.demoData;
+                    if (repo.setupCommands.loadDemoCmd) demoDataCmd = repo.setupCommands.loadDemoCmd;
                     if (repo.setupCommands.adminCreate) {
                         cmdAdmin = repo.setupCommands.adminCreate
                             .replace(/__USER__/g, adminUser)

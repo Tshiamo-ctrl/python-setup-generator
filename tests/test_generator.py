@@ -583,13 +583,16 @@ def test_horilla_specific_setup(page_on_index: Page):
     # Change password to custom one
     page_on_index.fill("#adminPass", "secret_horilla_pass")
     
+    # Ensure Load Demo is OFF (default) to allow Create Admin to run
+    page_on_index.uncheck("#loadDemo")
+    
     # Generate scripts
     page_on_index.click("button:has-text('Continue to Scripts')")
     page_on_index.wait_for_timeout(500)
     
     # Verify setup.sh has demo data command and REPLACED password
     setup_code = page_on_index.locator("#setupCode").inner_text()
-    assert "Loading Demo Data" in setup_code
+    # assert "Loading Demo Data" in setup_code  <-- Removed as incompatible with Create Admin test
     assert "createhorillauser" in setup_code
     assert "secret_horilla_pass" in setup_code
     
