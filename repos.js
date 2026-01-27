@@ -1106,6 +1106,28 @@ const REPO_LIST = [
                 setupCommands: {
                     postInstall: "pip install ."
                 }
+            },
+            {
+                name: "commit",
+                url: "https://github.com/guilatrova/commit.git",
+                description: "AI commit message generator",
+                framework: "generic",
+                complexity: "Beginner",
+                stars: "1k+",
+                setupCommands: {
+                    postInstall: "pip install commit"
+                }
+            },
+            {
+                name: "fix",
+                url: "https://pypi.org/project/fix/",
+                description: "Test fixtures management",
+                framework: "generic",
+                complexity: "Intermediate",
+                stars: "N/A",
+                setupCommands: {
+                    postInstall: "pip install fix"
+                }
             }
         ]
     }

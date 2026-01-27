@@ -75,3 +75,33 @@ def test_frappe_helm_selection(page_on_index: Page):
     
     setup_code = page_on_index.locator("#setupCode").inner_text()
     assert "helm repo add frappe" in setup_code
+
+def test_commit_repo_selection(page_on_index: Page):
+    """Test 'commit' repository selection and script generation"""
+    page_on_index.wait_for_selector("#repoSelect option:nth-child(2)", state="attached")
+    
+    # Select commit using value
+    page_on_index.select_option("#repoSelect", value="https://github.com/guilatrova/commit.git")
+    
+    # Generate
+    page_on_index.click("button:has-text('Continue to Scripts')")
+    page_on_index.wait_for_timeout(500)
+    
+    # Check Setup Script
+    setup_code = page_on_index.locator("#setupCode").inner_text()
+    assert "pip install commit" in setup_code
+
+def test_fix_repo_selection(page_on_index: Page):
+    """Test 'fix' repository selection and script generation"""
+    page_on_index.wait_for_selector("#repoSelect option:nth-child(2)", state="attached")
+    
+    # Select fix using value
+    page_on_index.select_option("#repoSelect", value="https://pypi.org/project/fix/")
+    
+    # Generate
+    page_on_index.click("button:has-text('Continue to Scripts')")
+    page_on_index.wait_for_timeout(500)
+    
+    # Check Setup Script
+    setup_code = page_on_index.locator("#setupCode").inner_text()
+    assert "pip install fix" in setup_code

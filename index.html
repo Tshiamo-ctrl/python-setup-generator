@@ -1546,7 +1546,7 @@ trap 'echo "⚠️  Script interrupted. Cleaning up...";
 
 # --- Configuration with validation ---
 REPO_URL="${repoUrl}"
-PROJECT_PATH="${projectPath}"
+PROJECT_PATH="${projectPath.startsWith('~/') ? '$HOME' + projectPath.substring(1) : projectPath}"
 VENV_NAME="${venvName}"
 CUSTOM_REQ_PATH="${customReqPath}"
 CUSTOM_INSTALL_CMD="${customInstallCmd}"
@@ -2324,8 +2324,8 @@ SCRIPT_DIR="$(cd "$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
 # Try to detect project root by generic name logic or relative path
 # If we are in the root, fine. If not, assume standard structure.
 PROJECT_PATH="." 
-if [ -d "${projectPath}" ]; then
-    PROJECT_PATH="${projectPath}"
+if [ -d "${projectPath.startsWith('~/') ? '$HOME' + projectPath.substring(1) : projectPath}" ]; then
+    PROJECT_PATH="${projectPath.startsWith('~/') ? '$HOME' + projectPath.substring(1) : projectPath}"
 # Fallback to current dir if configured path not found
 elif [ ! -f "manage.py" ]; then
     echo "⚠️  Warning: manage.py not found in current directory."
@@ -2411,7 +2411,7 @@ python3 manage.py runserver 0.0.0.0:$PORT
         function generateServerScript(repoName, projectPath, venvName, framework, serverPort) {
             return `#!/bin/bash
 # Development Server (${repoName})
-PROJECT_PATH="${projectPath}"
+PROJECT_PATH="${projectPath.startsWith('~/') ? '$HOME' + projectPath.substring(1) : projectPath}"
 VENV_NAME="${venvName}"
 PORT=${serverPort}
 
@@ -2441,7 +2441,7 @@ echo "Please edit the server script to run your specific entry point (e.g. pytho
 # Local Setup Generator - ${mode === 'repo' ? 'Clear Repository Only' : mode === 'env' ? 'Clear Environment Only' : 'Clean Workspace Script'}
 # WARNING: This will DELETE ${mode === 'repo' ? 'your project repository folder' : mode === 'env' ? 'your virtual environment and database' : 'your project, virtual environment, and database'}.
 
-PROJECT_PATH="${projectPath}"
+PROJECT_PATH="${projectPath.startsWith('~/') ? '$HOME' + projectPath.substring(1) : projectPath}"
 VENV_NAME="${venvName}"
 
 echo "⚠️  WARNING: You are about to DESTROY ${mode === 'repo' ? 'the project repository' : mode === 'env' ? 'your virtual environment' : 'your entire development environment'}."
@@ -2621,8 +2621,8 @@ echo "Done."
                 // Auto-configure defaults based on Repo Name
                 const cleanName = repo.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-                // Project Path: ~/clean-name
-                document.getElementById('projectPath').value = `~/${cleanName}`;
+                // Project Path: clean-name (Relative to script location)
+                document.getElementById('projectPath').value = `${cleanName}`;
 
                 // Venv Name: clean-nameVENV
                 document.getElementById('venvName').value = `${cleanName}VENV`;
