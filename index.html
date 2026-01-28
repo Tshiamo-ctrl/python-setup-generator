@@ -1843,6 +1843,113 @@ echo "Please edit the server script to run your specific entry point (e.g. pytho
 `;
         }
 
+        // Reset Environment Script - lightweight venv reset without git operations
+        function generateResetEnvScript(repoName, projectPath, venvName, framework, customReqPath) {
+            const expandedPath = projectPath.startsWith('~/') ? '$HOME' + projectPath.substring(1) : projectPath;
+
+            // Determine requirements installation command
+            let reqInstallCmd = '';
+            if (customReqPath) {
+                reqInstallCmd = `pip install -r "${customReqPath}"`;
+            } else {
+                reqInstallCmd = `
+# Auto-detect requirements file
+if [ -f "requirements.txt" ]; then
+    pip install -r requirements.txt
+elif [ -f "requirements/dev.txt" ]; then
+    pip install -r requirements/dev.txt
+elif [ -f "requirements/base.txt" ]; then
+    pip install -r requirements/base.txt
+elif [ -f "setup.py" ]; then
+    pip install -e .
+elif [ -f "pyproject.toml" ]; then
+    pip install -e .
+else
+    echo "⚠️  No requirements file found. Please install dependencies manually."
+fi`;
+            }
+
+            // Framework-specific post-install commands
+            let postInstallCmd = '';
+            if (framework === 'django') {
+                postInstallCmd = `
+echo "📦 Running Django migrations..."
+python3 manage.py makemigrations 2>/dev/null || true
+python3 manage.py migrate
+`;
+            } else if (framework === 'flask') {
+                postInstallCmd = `
+echo "📦 Checking Flask database..."
+if [ -f "migrations/env.py" ]; then
+    flask db upgrade 2>/dev/null || echo "No Flask-Migrate detected or no migrations to apply."
+fi
+`;
+            } else if (framework === 'fastapi') {
+                postInstallCmd = `
+echo "📦 Checking Alembic migrations..."
+if [ -f "alembic.ini" ]; then
+    alembic upgrade head 2>/dev/null || echo "No Alembic migrations to apply."
+fi
+`;
+            }
+
+            return `#!/bin/bash
+# Reset Environment Script (${repoName})
+# This script ONLY resets the virtual environment - does NOT touch git/source code
+set -e
+
+PROJECT_PATH="${expandedPath}"
+VENV_NAME="${venvName}"
+
+echo "🔄 Reset Environment for ${repoName}"
+echo "📍 Target directory: $PROJECT_PATH"
+
+cd "$PROJECT_PATH" || { echo "❌ Failed to change to project directory"; exit 1; }
+
+# 1. Deactivate if currently active
+if [ -n "$VIRTUAL_ENV" ]; then
+    echo "🔌 Deactivating current virtual environment..."
+    deactivate 2>/dev/null || true
+fi
+
+# 2. Remove old venv
+if [ -d "$VENV_NAME" ]; then
+    echo "🗑️  Removing old virtual environment: $VENV_NAME"
+    rm -rf "$VENV_NAME"
+fi
+
+# 3. Remove other env artifacts
+echo "🧹 Cleaning up..."
+rm -rf node_modules 2>/dev/null || true
+rm -f db.sqlite3 2>/dev/null || true
+find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+find . -name "*.pyc" -delete 2>/dev/null || true
+
+# 4. Create new venv
+echo "📦 Creating new virtual environment: $VENV_NAME"
+python3 -m venv "$VENV_NAME" || { echo "❌ Failed to create venv"; exit 1; }
+
+# 5. Activate venv
+echo "🔌 Activating virtual environment..."
+source "$VENV_NAME/bin/activate"
+
+# 6. Upgrade pip
+echo "⬆️  Upgrading pip..."
+pip install --upgrade pip
+
+# 7. Install requirements
+echo "📥 Installing dependencies..."
+${reqInstallCmd}
+
+${postInstallCmd}
+
+echo ""
+echo "✅ Environment reset complete!"
+echo "📍 Virtual environment: $PROJECT_PATH/$VENV_NAME"
+echo "💡 To activate manually: source $VENV_NAME/bin/activate"
+`;
+        }
+
         function generateClearScript(projectPath, venvName, dbType, mode = 'workspace') {
             let script = `#!/bin/bash
 
@@ -2070,9 +2177,21 @@ echo "Done."
                 // adminOptionContainer is a block
                 document.getElementById('adminOptionContainer').style.display = hasDb ? 'block' : 'none';
 
-                // Show Horilla Auth Note if applicable
+                // Show Horilla Auth Note if applicable and update with repo-specific password
                 const isHorilla = repo.url.includes('horilla');
-                document.getElementById('horillaAuthNote').style.display = isHorilla ? 'block' : 'none';
+                const authNoteEl = document.getElementById('horillaAuthNote');
+                authNoteEl.style.display = isHorilla ? 'block' : 'none';
+
+                if (isHorilla && repo.dbInitPassword) {
+                    const passwordEl = authNoteEl.querySelector('code');
+                    const locationEl = authNoteEl.querySelector('div:nth-child(2)');
+                    if (passwordEl) {
+                        passwordEl.textContent = repo.dbInitPassword;
+                    }
+                    if (locationEl && repo.dbInitPasswordLocation) {
+                        locationEl.innerHTML = `DB Initialization Password <span style="opacity: 0.7; font-size: 11px;">(${repo.dbInitPasswordLocation})</span>:`;
+                    }
+                }
 
                 // Checkbox Containers (checkbox-item is flex)
                 if (document.getElementById('initDbContainer')) {
@@ -2170,6 +2289,10 @@ echo "Done."
             const freshContent = generateFreshDbScript(repoName, projectPath, venvName, dbType, framework, loadDemo, createSuper, adminUser, adminEmail, adminPass, serverPort, cmdAdmin);
             const serverContent = generateServerScript(repoName, projectPath, venvName, framework, serverPort, runServerCmd);
             const envContent = generateEnvFile(repoName, dbType, adminPass, serverPort, repo);
+            const resetEnvContent = generateResetEnvScript(repoName, projectPath, venvName, framework, customReqPath);
+
+            // Store reset env content globally for handleResetAction
+            window._resetEnvScriptContent = resetEnvContent;
 
             // Populate Carousel
             document.getElementById('setupCode').textContent = setupContent;
@@ -2332,41 +2455,28 @@ DATABASE_URL=sqlite:///db.sqlite3
 
                 // 2. Confirm
                 const venvName = document.getElementById('venvName').value;
-                const confirmMsg = `⚠️ RESET ENVIRONMENT ⚠️\n\nTarget: ${dirPath}\nAction: DELETE virtual environment (${venvName}), database, and dependencies.\nThen: Re-run setup.sh.\n\nSource code will NOT be touched.\n\nProceed?`;
+                const confirmMsg = `🔄 RESET ENVIRONMENT\n\nTarget: ${dirPath}\nAction: Delete virtual environment (${venvName}), then recreate it.\n\n• Removes: venv, node_modules, db.sqlite3, __pycache__\n• Creates: fresh venv with dependencies\n• Runs: migrations (if Django/Flask/FastAPI)\n\nSource code will NOT be touched.\n\nProceed?`;
 
                 if (!confirm(confirmMsg)) return;
 
-                showFeedback("Cleaning environment...");
+                showFeedback("Resetting environment...");
 
-                // 3. Delete Env Only
-                const result = await window.electron.deleteItems(dirPath, 'env', venvName);
-                if (!result.success) {
-                    alert(`Reset failed: ${result.error}`);
+                // 3. Save reset_env.sh to the directory
+                const resetEnvContent = window._resetEnvScriptContent;
+                if (!resetEnvContent) {
+                    alert("Error: Reset script not generated. Please click 'Continue to Scripts' first.");
                     return;
                 }
 
-                // 4. Re-run Setup (Reuse logic)
-                showFeedback("Environment cleared. Re-running setup...");
-
-                // We need to pass the specific path to saveToFolder, but saveToFolder currently asks for user input.
-                // Refactoring saveToFolder to accept an optional path argument would be cleanest.
-                // Let's call the internal logic directly or modify saveToFolder.
-                // For minimally invasive change, let's call the electron save/run logic directly here.
-
-                const files = [
-                    { name: 'setup.sh', id: 'setupCode' },
-                    { name: 'fresh-db.sh', id: 'freshCode' },
-                    { name: 'dev-server.sh', id: 'serverCode' },
-                    { name: '.env', id: 'envCode' }
-                ];
-
-                for (const f of files) {
-                    const content = document.getElementById(f.id).textContent;
-                    await window.electron.saveFile(dirPath, f.name, content);
+                const saveResult = await window.electron.saveFile(dirPath, 'reset_env.sh', resetEnvContent);
+                if (!saveResult.success) {
+                    alert(`Failed to save reset script: ${saveResult.error}`);
+                    return;
                 }
 
-                showFeedback("Launching terminal...");
-                const termResult = await window.electron.openTerminal(dirPath);
+                // 4. Launch terminal to run reset_env.sh
+                showFeedback("Launching reset script...");
+                const termResult = await window.electron.runResetTerminal(dirPath);
 
                 if (!termResult.success) {
                     alert("Failed to launch terminal: " + termResult.error);
