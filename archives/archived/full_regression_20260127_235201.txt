@@ -1,0 +1,308 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0
+rootdir: /home/tmo/Documents/Horilla_setup_generator_app
+plugins: playwright-0.7.2, base-url-2.1.0
+collected 44 items
+
+tests/test_demo_data.py FFF                                              [  6%]
+tests/test_generator.py ...............................                  [ 77%]
+tests/test_new_repos.py .......                                          [ 93%]
+tests/test_ui_logic.py FFF                                               [100%]
+
+=================================== FAILURES ===================================
+_____________ test_mutual_exclusivity_init_db_demo_data[chromium] ______________
+
+page = <Page url='about:blank'>
+
+    def test_mutual_exclusivity_init_db_demo_data(page: Page):
+        """
+        Test that 'Initialize Database' and 'Load Demo Data' are mutually exclusive.
+        """
+>       page.goto("file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html")
+
+tests/test_demo_data.py:9: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+test_venv/lib/python3.12/site-packages/playwright/sync_api/_generated.py:9050: in goto
+    self._sync(
+test_venv/lib/python3.12/site-packages/playwright/_impl/_page.py:552: in goto
+    return await self._main_frame.goto(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+test_venv/lib/python3.12/site-packages/playwright/_impl/_frame.py:153: in goto
+    await self._channel.send(
+test_venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x7a5bf9e49ac0>
+cb = <function Channel.send.<locals>.<lambda> at 0x7a5bf9caff60>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: Page.goto: net::ERR_FILE_NOT_FOUND at file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html
+E           Call log:
+E             - navigating to "file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html", waiting until "load"
+
+test_venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:559: Error
+_________________ test_horilla_hrm_demo_data_script[chromium] __________________
+
+page = <Page url='about:blank'>
+
+    def test_horilla_hrm_demo_data_script(page: Page):
+        """
+        Verify script generation for Horilla HRM with Demo Data.
+        """
+>       page.goto("file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html")
+
+tests/test_demo_data.py:45: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+test_venv/lib/python3.12/site-packages/playwright/sync_api/_generated.py:9050: in goto
+    self._sync(
+test_venv/lib/python3.12/site-packages/playwright/_impl/_page.py:552: in goto
+    return await self._main_frame.goto(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+test_venv/lib/python3.12/site-packages/playwright/_impl/_frame.py:153: in goto
+    await self._channel.send(
+test_venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x7a5bf9e49ac0>
+cb = <function Channel.send.<locals>.<lambda> at 0x7a5bf9b31ee0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: Page.goto: net::ERR_FILE_NOT_FOUND at file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html
+E           Call log:
+E             - navigating to "file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html", waiting until "load"
+
+test_venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:559: Error
+___________________ test_openedx_demo_data_script[chromium] ____________________
+
+page = <Page url='about:blank'>
+
+    def test_openedx_demo_data_script(page: Page):
+        """
+        Verify script generation for OpenEdX with Demo Data.
+        """
+>       page.goto("file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html")
+
+tests/test_demo_data.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+test_venv/lib/python3.12/site-packages/playwright/sync_api/_generated.py:9050: in goto
+    self._sync(
+test_venv/lib/python3.12/site-packages/playwright/_impl/_page.py:552: in goto
+    return await self._main_frame.goto(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+test_venv/lib/python3.12/site-packages/playwright/_impl/_frame.py:153: in goto
+    await self._channel.send(
+test_venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x7a5bf9e49ac0>
+cb = <function Channel.send.<locals>.<lambda> at 0x7a5bf9caf9c0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: Page.goto: net::ERR_FILE_NOT_FOUND at file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html
+E           Call log:
+E             - navigating to "file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html", waiting until "load"
+
+test_venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:559: Error
+___________________ test_mutual_exclusivity_basic[chromium] ____________________
+
+page = <Page url='about:blank'>
+
+    def test_mutual_exclusivity_basic(page: Page):
+        """
+        Test basic mutual exclusivity: checks one unchecks the other.
+        """
+>       page.goto("file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html")
+
+tests/test_ui_logic.py:8: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+test_venv/lib/python3.12/site-packages/playwright/sync_api/_generated.py:9050: in goto
+    self._sync(
+test_venv/lib/python3.12/site-packages/playwright/_impl/_page.py:552: in goto
+    return await self._main_frame.goto(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+test_venv/lib/python3.12/site-packages/playwright/_impl/_frame.py:153: in goto
+    await self._channel.send(
+test_venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x7a5bf9e49ac0>
+cb = <function Channel.send.<locals>.<lambda> at 0x7a5bf8b6a980>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: Page.goto: net::ERR_FILE_NOT_FOUND at file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html
+E           Call log:
+E             - navigating to "file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html", waiting until "load"
+
+test_venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:559: Error
+___________________ test_create_admin_suppression[chromium] ____________________
+
+page = <Page url='about:blank'>
+
+    def test_create_admin_suppression(page: Page):
+        """
+        Test that Create Admin is unchecked when Load Demo is checked.
+        """
+>       page.goto("file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html")
+
+tests/test_ui_logic.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+test_venv/lib/python3.12/site-packages/playwright/sync_api/_generated.py:9050: in goto
+    self._sync(
+test_venv/lib/python3.12/site-packages/playwright/_impl/_page.py:552: in goto
+    return await self._main_frame.goto(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+test_venv/lib/python3.12/site-packages/playwright/_impl/_frame.py:153: in goto
+    await self._channel.send(
+test_venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x7a5bf9e49ac0>
+cb = <function Channel.send.<locals>.<lambda> at 0x7a5bf8c3b4c0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: Page.goto: net::ERR_FILE_NOT_FOUND at file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html
+E           Call log:
+E             - navigating to "file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html", waiting until "load"
+
+test_venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:559: Error
+______________ test_run_server_suppression_manual_mode[chromium] _______________
+
+page = <Page url='about:blank'>
+
+    def test_run_server_suppression_manual_mode(page: Page):
+        """
+        Test that Run Server is unchecked if NEITHER InitDB nor LoadDemo is checked.
+        """
+>       page.goto("file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html")
+
+tests/test_ui_logic.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+test_venv/lib/python3.12/site-packages/playwright/sync_api/_generated.py:9050: in goto
+    self._sync(
+test_venv/lib/python3.12/site-packages/playwright/_impl/_page.py:552: in goto
+    return await self._main_frame.goto(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+test_venv/lib/python3.12/site-packages/playwright/_impl/_frame.py:153: in goto
+    await self._channel.send(
+test_venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x7a5bf9e49ac0>
+cb = <function Channel.send.<locals>.<lambda> at 0x7a5bf8c3b740>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: Page.goto: net::ERR_FILE_NOT_FOUND at file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html
+E           Call log:
+E             - navigating to "file:///home/tmo/Documents/dev/Horilla_setup_generator_app/index.html", waiting until "load"
+
+test_venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:559: Error
+=========================== short test summary info ============================
+FAILED tests/test_demo_data.py::test_mutual_exclusivity_init_db_demo_data[chromium]
+FAILED tests/test_demo_data.py::test_horilla_hrm_demo_data_script[chromium]
+FAILED tests/test_demo_data.py::test_openedx_demo_data_script[chromium] - pla...
+FAILED tests/test_ui_logic.py::test_mutual_exclusivity_basic[chromium] - play...
+FAILED tests/test_ui_logic.py::test_create_admin_suppression[chromium] - play...
+FAILED tests/test_ui_logic.py::test_run_server_suppression_manual_mode[chromium]
+=================== 6 failed, 38 passed in 72.87s (0:01:12) ====================
