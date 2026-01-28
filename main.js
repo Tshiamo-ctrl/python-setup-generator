@@ -384,6 +384,173 @@ exec bash
     }
 });
 
+// 4b. Run Reset Terminal (runs reset_env.sh instead of setup.sh)
+ipcMain.handle('run-reset-terminal', async (event, { directory }) => {
+    const platform = os.platform();
+    console.log(`Launching reset terminal in: ${directory} on ${platform}`);
+
+    // Defensive: Validate directory
+    if (!directory || typeof directory !== 'string') {
+        return { success: false, error: 'Invalid directory path provided' };
+    }
+
+    if (!fs.existsSync(directory)) {
+        return { success: false, error: `Directory does not exist: ${directory}` };
+    }
+
+    // Check if reset_env.sh exists
+    const resetScript = path.join(directory, 'reset_env.sh');
+    if (!fs.existsSync(resetScript)) {
+        return { success: false, error: 'reset_env.sh not found in directory' };
+    }
+
+    // Ensure reset_env.sh is executable
+    try {
+        fs.accessSync(resetScript, fs.constants.X_OK);
+    } catch (accessError) {
+        console.warn('reset_env.sh is not executable, attempting to fix permissions...');
+        try {
+            fs.chmodSync(resetScript, '755');
+        } catch (chmodError) {
+            return { success: false, error: `reset_env.sh is not executable and cannot fix permissions: ${chmodError.message}` };
+        }
+    }
+
+    const terminals = [];
+    let lastError = null;
+
+    try {
+        if (platform === 'linux') {
+            // Create a wrapper script for reset_env.sh
+            const wrapperPath = path.join(directory, '.run_reset.sh');
+
+            const wrapperContent = `#!/bin/bash
+echo "🔄 Resetting Environment in: ${directory}"
+cd "${directory}" || { echo "❌ Failed to change directory"; exec bash; }
+
+echo "📂 Working Directory: $(pwd)"
+
+if [ -f "reset_env.sh" ]; then
+    echo "🔧 Setting permissions..."
+    chmod +x reset_env.sh 2>/dev/null
+
+    echo "▶️ Running reset_env.sh..."
+    ./reset_env.sh
+else
+    echo "❌ Error: reset_env.sh not found!"
+    ls -la
+fi
+
+echo "✅ Reset process finished."
+exec bash
+`;
+            fs.writeFileSync(wrapperPath, wrapperContent);
+            fs.chmodSync(wrapperPath, '755');
+
+            terminals.push(
+                { cmd: 'gnome-terminal', args: ['--', wrapperPath] },
+                { cmd: 'konsole', args: ['-e', wrapperPath] },
+                { cmd: 'xfce4-terminal', args: ['-e', wrapperPath] },
+                { cmd: 'xterm', args: ['-e', wrapperPath] },
+                { cmd: 'lxterminal', args: ['-e', wrapperPath] }
+            );
+
+            for (const terminal of terminals) {
+                try {
+                    const child = spawn(terminal.cmd, terminal.args, {
+                        cwd: directory,
+                        detached: true,
+                        stdio: 'ignore'
+                    });
+                    child.unref();
+
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                    if (child.pid && !child.killed) {
+                        console.log(`Successfully launched terminal: ${terminal.cmd}`);
+                        return { success: true, terminal: terminal.cmd };
+                    }
+                } catch (terminalError) {
+                    console.warn(`Failed to launch ${terminal.cmd}:`, terminalError.message);
+                    lastError = terminalError;
+                    continue;
+                }
+            }
+
+            throw lastError || new Error('No suitable terminal found');
+        }
+        else if (platform === 'darwin') {
+            const cleanPath = resetScript.replace(/"/g, '\\"');
+            const cmdStr = `bash "${cleanPath}"`;
+
+            terminals.push(
+                {
+                    cmd: 'osascript',
+                    args: ['-e', `tell application "Terminal" to do script "${cmdStr}" activate`]
+                }
+            );
+
+            for (const terminal of terminals) {
+                try {
+                    const child = spawn(terminal.cmd, terminal.args, {
+                        cwd: directory,
+                        detached: true,
+                        stdio: 'ignore'
+                    });
+                    child.unref();
+
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    return { success: true, terminal: terminal.cmd };
+                } catch (terminalError) {
+                    lastError = terminalError;
+                }
+            }
+
+            throw lastError || new Error('Failed to launch macOS terminal');
+        }
+        else if (platform === 'win32') {
+            const bashPath = resetScript.replace(/\\/g, '/');
+            const cmdStr = `bash "${bashPath}"`;
+
+            terminals.push(
+                {
+                    cmd: 'cmd.exe',
+                    args: ['/c', 'start', 'cmd.exe', '/k', `cd /d "${directory}" && ${cmdStr}`]
+                }
+            );
+
+            for (const terminal of terminals) {
+                try {
+                    const child = spawn(terminal.cmd, terminal.args, {
+                        cwd: directory,
+                        detached: true,
+                        stdio: 'ignore',
+                        shell: true
+                    });
+                    child.unref();
+
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    return { success: true, terminal: terminal.cmd };
+                } catch (terminalError) {
+                    lastError = terminalError;
+                }
+            }
+
+            throw lastError || new Error('Failed to launch Windows terminal');
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Reset terminal launch error:', error);
+        return {
+            success: false,
+            error: error.message,
+            platform: platform,
+            code: error.code || 'TERMINAL_LAUNCH_FAILED'
+        };
+    }
+});
+
 // 5. Read Directory Recursive (Legacy/Browser-Support - kept for completeness but currently unused by electron archive)
 ipcMain.handle('read-directory-recursive', async (event, { directory }) => {
     try {

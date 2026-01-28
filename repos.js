@@ -23,7 +23,7 @@ const REPO_LIST = [
                 stars: "1.2k+",
                 setupCommands: {
                     preInstall: "cp .env.dist .env 2>/dev/null || cp .env.example .env 2>/dev/null || true",
-                    postInstall: "python3 manage.py makemigrations && python3 manage.py migrate && echo \"\" && echo \"IMPORTANT: To initialize the database or load demo data, use the web UI. Authentication Password: d3f6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d\"",
+                    postInstall: "python3 manage.py makemigrations && python3 manage.py migrate && echo \"\" && echo \"IMPORTANT: To initialize the database or load demo data, use the web UI.\"",
                     adminCreate: "python3 manage.py createhorillauser --first_name Admin --last_name Admin --username __USER__ --password __PASS__ --email __EMAIL__ --phone 1234567890",
                     loadDemoCmd: "python3 manage.py loaddata initial_data"
                 },
@@ -39,6 +39,8 @@ const REPO_LIST = [
                     hasDb: true,
                     hasDemo: true
                 },
+                dbInitPassword: "d3f6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d",
+                dbInitPasswordLocation: "Hardcoded in horilla/horilla_views/cbv_methods.py",
                 knownIssues: "⚠️ Requires libpq-dev: Run 'sudo apt-get install libpq-dev' before setup, or edit requirements.txt to use psycopg[binary] instead of psycopg[c]"
             },
             {
@@ -50,7 +52,7 @@ const REPO_LIST = [
                 stars: "500+",
                 setupCommands: {
                     preInstall: "cp .env.dist .env 2>/dev/null || cp .env.example .env 2>/dev/null || true",
-                    postInstall: "python3 manage.py makemigrations && python3 manage.py migrate && echo \"\" && echo \"IMPORTANT: To initialize the database or load demo data, use the web UI. Authentication Password: d3f6a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d\"",
+                    postInstall: "python3 manage.py makemigrations && python3 manage.py migrate && echo \"\" && echo \"IMPORTANT: To initialize the database or load demo data, use the web UI.\"",
                     adminCreate: "export DJANGO_SUPERUSER_PASSWORD=__PASS__ && python3 manage.py createsuperuser --noinput --username __USER__ --email __EMAIL__",
                     loadDemoCmd: "python3 manage.py loaddata initial_data"
                 },
@@ -61,7 +63,9 @@ const REPO_LIST = [
                 features: {
                     hasDb: true,
                     hasDemo: true
-                }
+                },
+                dbInitPassword: "Check init_pass.txt in project root after first run",
+                dbInitPasswordLocation: "Generated in init_pass.txt (created on first run)"
             }
         ]
     },
