@@ -88,6 +88,10 @@ const REPO_LIST = [
                     mode: 'poetry',
                     command: 'pip install poetry && poetry install --no-dev || poetry install'
                 },
+                features: {
+                    hasDb: true,
+                    hasDemo: false
+                },
                 knownIssues: "⚠️ Dependency conflict: vcrpy requires urllib3<2, but Saleor needs urllib3>=2.4. Use 'poetry install --no-dev' to skip test dependencies."
             },
             {
@@ -103,6 +107,10 @@ const REPO_LIST = [
                 dependencies: {
                     mode: 'manual',
                     command: 'echo "Wagtail requires project creation first. See post-install commands."'
+                },
+                features: {
+                    hasDb: true,
+                    hasDemo: false
                 }
             },
             {
@@ -139,6 +147,10 @@ const REPO_LIST = [
                 dependencies: {
                     mode: 'pip',
                     files: ['requirements/dev.txt']
+                },
+                features: {
+                    hasDb: true,
+                    hasDemo: false
                 }
             },
             {
@@ -154,6 +166,10 @@ const REPO_LIST = [
                 dependencies: {
                     mode: 'pip',
                     files: ['requirements.txt']
+                },
+                features: {
+                    hasDb: true,
+                    hasDemo: false
                 }
             },
             {
@@ -170,6 +186,10 @@ const REPO_LIST = [
                 dependencies: {
                     mode: 'pip',
                     files: ['requirements.txt']
+                },
+                features: {
+                    hasDb: true,
+                    hasDemo: false
                 }
             },
             {
@@ -186,6 +206,10 @@ const REPO_LIST = [
                 dependencies: {
                     mode: 'pip',
                     files: ['requirements.txt']
+                },
+                features: {
+                    hasDb: true,
+                    hasDemo: false
                 }
             },
             {
@@ -201,6 +225,10 @@ const REPO_LIST = [
                 dependencies: {
                     mode: 'pip',
                     files: ['requirements.txt']
+                },
+                features: {
+                    hasDb: true,
+                    hasDemo: false
                 }
             },
             {
